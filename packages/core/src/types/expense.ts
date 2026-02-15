@@ -6,4 +6,4 @@ export interface Expense {
   categoryId?: string;
 }
 
-export interface ExpenseCreateInput extends Omit<Expense, 'id'> {}
+export interface ExpenseCreateInput extends Omit<Expense, "id"> {}
