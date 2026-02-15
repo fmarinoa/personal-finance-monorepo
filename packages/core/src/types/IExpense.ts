@@ -4,7 +4,7 @@ export interface IExpense {
   id: string;
   amount: number;
   description: string;
-  date: string;
+  date: Date;
   categoryCode: ICategory["code"];
 
 }
