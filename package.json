@@ -1,0 +1,28 @@
+{
+  "name": "personal-finance-monorepo",
+  "version": "1.0.0",
+  "scripts": {
+    "prettier": "prettier --write .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fmarinoa/personal-finance-monorepo.git"
+  },
+  "keywords": [],
+  "author": "Franco Mariño <franco.marino.aquise@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fmarinoa/personal-finance-monorepo/issues"
+  },
+  "homepage": "https://github.com/fmarinoa/personal-finance-monorepo#readme",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@tsconfig/node22": "22.0.5",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3"
+  }
+}
