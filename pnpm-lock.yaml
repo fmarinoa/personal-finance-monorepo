@@ -1,13 +1,14 @@
-lockfileVersion: "9.0"
+lockfileVersion: '9.0'
 
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
 importers:
+
   .:
     devDependencies:
-      "@tsconfig/node22":
+      '@tsconfig/node22':
         specifier: 22.0.5
         version: 22.0.5
       prettier:
@@ -17,31 +18,34 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
+  apps/backend:
+    dependencies:
+      '@packages/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+
+  apps/infra: {}
+
+  packages/core: {}
+
 packages:
-  "@tsconfig/node22@22.0.5":
-    resolution:
-      {
-        integrity: sha512-hLf2ld+sYN/BtOJjHUWOk568dvjFQkHnLNa6zce25GIH+vxKfvTgm3qpaH6ToF5tu/NN0IH66s+Bb5wElHrLcw==,
-      }
+
+  '@tsconfig/node22@22.0.5':
+    resolution: {integrity: sha512-hLf2ld+sYN/BtOJjHUWOk568dvjFQkHnLNa6zce25GIH+vxKfvTgm3qpaH6ToF5tu/NN0IH66s+Bb5wElHrLcw==}
 
   prettier@3.8.1:
-    resolution:
-      {
-        integrity: sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg==,
-      }
-    engines: { node: ">=14" }
+    resolution: {integrity: sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg==}
+    engines: {node: '>=14'}
     hasBin: true
 
   typescript@5.9.3:
-    resolution:
-      {
-        integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==,
-      }
-    engines: { node: ">=14.17" }
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
     hasBin: true
 
 snapshots:
-  "@tsconfig/node22@22.0.5": {}
+
+  '@tsconfig/node22@22.0.5': {}
 
   prettier@3.8.1: {}
 
