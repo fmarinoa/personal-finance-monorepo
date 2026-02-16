@@ -1,12 +1,8 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
-  "include": ["src"],
+  "include": ["bin/**/*.ts", "lib/**/*.ts"],
   "exclude": ["dist"],
   "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
     "composite": true,
     "declaration": true,
     "declarationMap": true,

@@ -7,6 +7,11 @@
 ├── /apps
 │   ├── /frontend     (Vite + React. Consume la API)
 │   ├── /backend      (Funciones Lambda. Maneja la lógica y conexión a RDS)
+|   |   ├── /handler      (Funciones Lambda organizadas por dominio)
+|   |   └── /services     (Lógica de negocio general, orquestación, etc.)
+|   |   └── /domains     (Lógica de negocio por dominio)
+|   |   └── /controllers    (Controladores de API, validaciones, etc.)
+|   |   └── /repositories    (Acceso a la base de datos, consultas SQL, etc.)
 │   └── /infra        (App de AWS CDK. Define API Gateway, RDS y Lambdas)
 ├── /packages
 │   ├── /core         (Interfaces TS compartidas, validaciones genéricas)

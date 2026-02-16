@@ -40,8 +40,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE FUNCTION update_expense(
-    p_id UUID,
     p_user_id UUID,
+    p_id UUID,
     p_amount NUMERIC,
     p_description VARCHAR(255),
     p_category_code VARCHAR(50)
@@ -61,8 +61,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE FUNCTION delete_expense(
-    p_id UUID,
-    p_user_id UUID
+    p_user_id UUID,
+    p_id UUID
 )
 RETURNS BOOLEAN AS $$
 BEGIN
