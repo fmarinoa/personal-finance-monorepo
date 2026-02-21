@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "prettier": "prettier --write .",
+    "diff:dev": "cdk diff -c stage=Dev",
+    "diff:prod": "cdk diff -c stage=Prod",
     "deploy:dev": "cdk deploy -c stage=Dev --require-approval never",
     "deploy:prod": "cdk deploy -c stage=Prod --require-approval never",
     "test": "echo \"Error: no test specified\" && exit 1"

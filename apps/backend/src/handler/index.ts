@@ -29,7 +29,7 @@ function middyAdapter(
   return handler.use(httpErrorHandler());
 }
 
-export const dispatcher = new Dispatcher<APIGatewayProxyHandler>(middyAdapter)
+export const dispatcher = new Dispatcher(middyAdapter)
   .post("/expenses", (e) => expenseController.create(e), {
     timeout: 10,
     description: "Create a new expense",
@@ -50,3 +50,6 @@ export const dispatcher = new Dispatcher<APIGatewayProxyHandler>(middyAdapter)
     timeout: 5,
     description: "Delete an expense by ID",
   });
+
+export const handler: APIGatewayProxyHandler = (...args) =>
+  dispatcher.getHandler()(...args);

@@ -74,4 +74,22 @@ export class Dispatcher<H = AnyHandler> {
   get routes(): ReadonlyArray<RouteDefinition<H>> {
     return this._routes;
   }
+
+  /**
+   * Get handler for Lambda execution based on ROUTE_ID env var
+   * Used by CDK to create individual Lambda functions
+   */
+  getHandler(): H {
+    const routeId = process.env.ROUTE_ID;
+    if (!routeId) {
+      throw new Error("ROUTE_ID environment variable is not set");
+    }
+
+    const route = this._routes.find((r) => r.id === routeId);
+    if (!route) {
+      throw new Error(`No route found with id: ${routeId}`);
+    }
+
+    return route.handler;
+  }
 }

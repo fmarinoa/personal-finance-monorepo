@@ -21,7 +21,9 @@ export class ExpensesTable extends Construct {
       removalPolicy: props.isProd
         ? cdk.RemovalPolicy.RETAIN
         : cdk.RemovalPolicy.DESTROY,
-      pointInTimeRecovery: props.isProd,
+      pointInTimeRecoverySpecification: {
+        pointInTimeRecoveryEnabled: props.isProd,
+      },
     });
 
     this.table.addGlobalSecondaryIndex({

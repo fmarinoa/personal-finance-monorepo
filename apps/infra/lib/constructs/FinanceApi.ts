@@ -28,10 +28,22 @@ export class FinanceApi extends Construct {
   }
 
   private registerRoutes(props: FinanceApiProps): void {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { dispatcher } = require("../../../backend/src/handler/index.ts") as {
-      dispatcher: Dispatcher;
-    };
+    let dispatcher: Dispatcher;
+    
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const module = require("@/handler/index.ts");
+      dispatcher = module.dispatcher;
+      
+      if (!dispatcher) {
+        throw new Error("dispatcher not exported from handler/index.ts");
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to load dispatcher: ${error instanceof Error ? error.message : error}`
+      );
+    }
+
     const resourceCache = new Map<string, apigateway.IResource>();
 
     for (const route of dispatcher.routes) {
@@ -61,6 +73,7 @@ export class FinanceApi extends Construct {
         environment: {
           EXPENSES_TABLE_NAME: props.expensesTable.tableName,
           NODE_ENV: props.isProd ? "production" : "development",
+          ROUTE_ID: route.id,
         },
         timeout: cdk.Duration.seconds(route.timeout ?? 10),
         memorySize: route.memorySize ?? 1024,
@@ -72,7 +85,6 @@ export class FinanceApi extends Construct {
           mainFields: ["module", "main"],
           externalModules: ["@aws-sdk/*"],
           forceDockerBundling: false,
-          banner: `const { dispatcher } = require('./index'); exports.handler = dispatcher.routes.find(r => r.id === '${route.id}').handler;`,
         },
       },
     );
