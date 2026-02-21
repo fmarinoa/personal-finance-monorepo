@@ -40,7 +40,7 @@ const schemaForList = z.object({
   limit: z
     .string()
     .optional()
-    .default("20")
+    .default("10")
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().positive().min(1).max(100)),
   nextToken: z.string().optional(),
@@ -55,7 +55,7 @@ const schemaForList = z.object({
 });
 
 export interface FiltersForList {
-  limit: number;
+  limit?: number;
   nextToken?: string;
   startDate?: number;
   endDate?: number;

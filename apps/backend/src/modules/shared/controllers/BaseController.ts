@@ -16,7 +16,7 @@ export abstract class BaseController {
     return {
       context: event.requestContext,
       pathParams: event.pathParameters,
-      queryParams: event.queryStringParameters,
+      queryParams: event.queryStringParameters ?? {},
       body: event.body as unknown as Record<string, any>,
     };
   }

@@ -81,7 +81,7 @@ export class DynamoDbRepositoryImp
 
     const queryInput: QueryCommandInput = {
       TableName: this.props.expensesTableName,
-      IndexName: "userIdCreatedAtIndex",
+      IndexName: "userIdCreationDateIndex",
       KeyConditionExpression: keyConditionExpression,
       Limit: filters.limit,
       FilterExpression: "#status <> :activeStatus",

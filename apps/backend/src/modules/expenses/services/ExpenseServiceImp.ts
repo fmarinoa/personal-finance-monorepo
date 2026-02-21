@@ -10,7 +10,7 @@ interface ExpenseServiceProps {
 }
 
 export class ExpenseServiceImp implements ExpenseService {
-  constructor(private readonly props: ExpenseServiceProps) {}
+  constructor(private readonly props: ExpenseServiceProps) { }
   async create(expense: Expense): Promise<{ id: string }> {
     try {
       const response = await this.props.dbRepository.create(expense);
@@ -31,7 +31,7 @@ export class ExpenseServiceImp implements ExpenseService {
 
     return {
       data,
-      pagination: { limit: filters.limit, nextToken, total: data.length },
+      pagination: { limit: filters.limit || 0, nextToken, total: data.length },
     };
   }
 
