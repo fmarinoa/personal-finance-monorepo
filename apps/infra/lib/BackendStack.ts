@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { ExpensesTable } from "./constructs/ExpensesTable";
 import { FinanceApi } from "./constructs/FinanceApi";
+import { CognitoAuth } from "./constructs/CognitoAuth";
 
 interface BackendStackProps extends cdk.StackProps {
   stage: string;
@@ -14,6 +15,12 @@ export class BackendStack extends cdk.Stack {
     const { stage } = props;
     const isProd = stage === "Prod";
 
+    // Create Cognito authentication
+    const cognitoAuth = new CognitoAuth(this, "CognitoAuth", {
+      stage,
+      isProd,
+    });
+
     // Create resources
     const expensesTable = new ExpensesTable(this, "ExpensesTable", {
       stage,
@@ -24,6 +31,7 @@ export class BackendStack extends cdk.Stack {
       stage,
       isProd,
       expensesTable: expensesTable.table,
+      authorizer: cognitoAuth.authorizer,
     });
 
     // Outputs
@@ -49,6 +57,18 @@ export class BackendStack extends cdk.Stack {
     new cdk.CfnOutput(this, "Region", {
       description: "AWS Region where resources are deployed",
       value: this.region,
+    });
+
+    new cdk.CfnOutput(this, "UserPoolId", {
+      description: "Cognito User Pool ID",
+      exportName: `UserPoolId-${stage}`,
+      value: cognitoAuth.userPool.userPoolId,
+    });
+
+    new cdk.CfnOutput(this, "UserPoolClientId", {
+      description: "Cognito User Pool Client ID",
+      exportName: `UserPoolClientId-${stage}`,
+      value: cognitoAuth.userPoolClient.userPoolClientId,
     });
   }
 }

@@ -5,7 +5,7 @@ export class UnauthorizedError extends BaseError {
     message = "Unauthorized",
     details,
   }: {
-    message: string;
+    message?: string;
     details?: unknown;
   }) {
     super({ statusCode: 401, message, details });

@@ -11,6 +11,7 @@ interface FinanceApiProps {
   stage: string;
   isProd: boolean;
   expensesTable: dynamodb.Table;
+  authorizer: apigateway.CognitoUserPoolsAuthorizer;
 }
 
 export class FinanceApi extends Construct {
@@ -51,7 +52,14 @@ export class FinanceApi extends Construct {
       props.expensesTable.grantReadWriteData(fn);
 
       const resource = this.resolveApiResource(route.path, resourceCache);
-      resource.addMethod(route.method, new apigateway.LambdaIntegration(fn));
+      resource.addMethod(
+        route.method,
+        new apigateway.LambdaIntegration(fn),
+        {
+          authorizer: props.authorizer,
+          authorizationType: apigateway.AuthorizationType.COGNITO,
+        }
+      );
     }
   }
 
