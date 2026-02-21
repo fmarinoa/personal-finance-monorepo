@@ -3,7 +3,7 @@ import { BackendStack } from "../lib/BackendStack";
 
 const app = new cdk.App();
 
-const stage = app.node.tryGetContext("stage") || "dev";
+const stage = app.node.tryGetContext("stage") || "Dev";
 
 new BackendStack(app, `FinanceBackendStack${stage}`, {
   stage,

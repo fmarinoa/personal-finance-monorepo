@@ -1,8 +1,8 @@
 export interface PaginatedResponse<T> {
-  items: T[];
+  data: T[];
   pagination: {
     limit: number;
-    offset: number;
+    nextToken?: string;
     total: number;
   };
 }

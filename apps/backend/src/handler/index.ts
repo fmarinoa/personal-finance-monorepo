@@ -1,62 +1,52 @@
-import { APIGatewayProxyEvent, APIGatewayProxyHandler } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import middy from "@middy/core";
 import jsonBodyParser from "@middy/http-json-body-parser";
 import httpErrorHandler from "@middy/http-error-handler";
-import { expenseController } from "@/controllers";
-import { requireBody } from "@/middlewares";
+import { requireBody, requirePathParameters } from "@/middlewares";
+import { expenseController } from "@/modules/expenses/controllers";
+import { Dispatcher, HttpMethod } from "@packages/lambda";
 
-export interface LambdaConfig {
-  handler: APIGatewayProxyHandler;
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-  path: string;
-  timeout?: number;
-  memorySize?: number;
+const BODY_METHODS: HttpMethod[] = ["POST", "PUT", "PATCH"];
+const PATH_PARAM_PATTERN = /\{(\w+)\}/g;
+
+function middyAdapter(
+  method: HttpMethod,
+  path: string,
+  fn: APIGatewayProxyHandler,
+): APIGatewayProxyHandler {
+  const pathParams = [...path.matchAll(PATH_PARAM_PATTERN)].map((m) => m[1]);
+
+  let handler = middy(fn);
+
+  if (pathParams.length) {
+    handler = handler.use(requirePathParameters(pathParams));
+  }
+
+  if (BODY_METHODS.includes(method)) {
+    handler = handler.use(requireBody()).use(jsonBodyParser());
+  }
+
+  return handler.use(httpErrorHandler());
 }
 
-export const lambdas: Record<string, LambdaConfig> = {
-  createExpense: {
-    handler: middy((event: APIGatewayProxyEvent) =>
-      expenseController.create(event),
-    )
-      .use(requireBody())
-      .use(jsonBodyParser())
-      .use(httpErrorHandler()),
-    method: "POST",
-    path: "expenses",
+export const dispatcher = new Dispatcher<APIGatewayProxyHandler>(middyAdapter)
+  .post("/expenses", (e) => expenseController.create(e), {
     timeout: 10,
-  },
-
-  listExpenses: {
-    handler: (event) => expenseController.list(event),
-    method: "GET",
-    path: "expenses",
+    description: "Create a new expense",
+  })
+  .get("/expenses", (e) => expenseController.list(e), {
     timeout: 5,
-  },
-
-  updateExpense: {
-    handler: middy((event: APIGatewayProxyEvent) =>
-      expenseController.update(event),
-    )
-      .use(requireBody())
-      .use(jsonBodyParser())
-      .use(httpErrorHandler()),
-    method: "PUT",
-    path: "expenses/{id}",
+    description: "List all expenses for the authenticated user",
+  })
+  .get("/expenses/{id}", (e) => expenseController.getById(e), {
+    timeout: 5,
+    description: "Get expense by ID",
+  })
+  .put("/expenses/{id}", (e) => expenseController.update(e), {
     timeout: 10,
-  },
-
-  deleteExpense: {
-    handler: (event) => expenseController.delete(event),
-    method: "DELETE",
-    path: "expenses/{id}",
+    description: "Update an existing expense by ID",
+  })
+  .delete("/expenses/{id}", (e) => expenseController.delete(e), {
     timeout: 5,
-  },
-
-  //   getExpensesByMonth: {
-  //     handler: (event) => metricsController.getExpensesByMonth(event),
-  //     method: "GET",
-  //     path: "metrics/expenses-by-month",
-  //     timeout: 15,
-  //     memorySize: 512,
-  //   },
-};
+    description: "Delete an expense by ID",
+  });

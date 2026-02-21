@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "prettier": "prettier --write .",
+    "deploy:dev": "cdk deploy -c stage=Dev --require-approval never",
+    "deploy:prod": "cdk deploy -c stage=Prod --require-approval never",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -10,7 +12,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@packages/lambda": "workspace:*",
     "aws-cdk-lib": "2.238.0",
     "constructs": "10.4.5"
+  },
+  "devDependencies": {
+    "ts-node": "10.9.2",
+    "esbuild": "0.27.3"
   }
 }

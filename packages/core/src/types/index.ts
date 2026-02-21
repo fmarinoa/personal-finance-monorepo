@@ -1,4 +1,3 @@
-export * from "./IExpense";
-export * from "./ICategory";
+export * from "./expense.enums.ts";
 export * from "./common";
 export * from "./metrics";

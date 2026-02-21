@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
-  "include": ["**/*.ts"],
+  "include": ["src"],
   "exclude": ["dist"],
   "compilerOptions": {
     "composite": true,
@@ -8,9 +8,6 @@
     "declarationMap": true,
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": "../backend",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "outDir": "dist"
   }
 }
