@@ -1,9 +1,7 @@
 @import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource/space-mono";
 
 @theme {
-  --color-brand: #2563eb;
-  --color-brand-hover: #1d4ed8;
-  --color-surface: #111827;
-  --color-surface-border: #1e293b;
-  --color-canvas: #0b0f1a;
+  --color-brand: #d4a853;
 }

@@ -22,3 +22,11 @@ export enum ExpenseStatus {
   ACTIVE = "ACTIVE",
   DELETED = "DELETED",
 }
+
+export interface CreateExpensePayload {
+  amount: number;
+  description: string;
+  category: ExpenseCategory;
+  paymentMethod: PaymentMethod;
+  paymentDate: number;
+}

@@ -2,6 +2,7 @@ import z from "zod";
 import { ExpenseCategory, ExpenseStatus, PaymentMethod } from "@packages/core";
 import { BadRequestError } from "@packages/lambda";
 import { User } from "@/modules/shared/domains";
+import { CreateExpensePayload } from "@packages/core";
 import { DateTime } from "luxon";
 
 const schemaForCreate = z.object({
@@ -15,9 +16,7 @@ const schemaForCreate = z.object({
     .number()
     .optional()
     .transform((val) => val ?? DateTime.now().toMillis()),
-  category: z.object({
-    code: z.enum(ExpenseCategory),
-  }),
+  category: z.enum(ExpenseCategory),
 });
 
 const schemaForUpdate = z.object({
@@ -29,11 +28,7 @@ const schemaForUpdate = z.object({
   description: z.string().optional(),
   paymentMethod: z.string().optional(),
   paymentDate: z.number().optional(),
-  category: z
-    .object({
-      code: z.enum(ExpenseCategory),
-    })
-    .optional(),
+  category: z.enum(ExpenseCategory).optional(),
 });
 
 const schemaForList = z.object({
@@ -110,7 +105,9 @@ export class Expense {
     return { filters: data };
   }
 
-  static instanceForCreate(data: Partial<Expense>): Expense {
+  static instanceForCreate(
+    data: CreateExpensePayload & { user: User },
+  ): Expense {
     const { error } = schemaForCreate.safeParse(data);
 
     if (error) {

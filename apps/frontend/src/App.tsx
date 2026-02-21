@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "aws-amplify/auth";
 import { LoginPage } from "./components/LoginPage";
+import { Dashboard } from "./components/dashboard/Dashboard";
 import "./lib/amplify-config";
 
 type AuthState = "loading" | "unauthenticated" | "authenticated";
@@ -16,27 +17,18 @@ function App() {
 
   if (authState === "loading") {
     return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
-          background: "#0b0f1a",
-        }}
-      >
+      <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
         <svg
-          style={{ animation: "spin 0.75s linear infinite" }}
+          className="animate-spin"
           viewBox="0 0 24 24"
           fill="none"
           width="32"
           height="32"
         >
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <circle cx="12" cy="12" r="10" stroke="#1e293b" strokeWidth="3" />
+          <circle cx="12" cy="12" r="10" stroke="#1a1a1a" strokeWidth="3" />
           <path
             d="M12 2a10 10 0 0110 10"
-            stroke="#3b82f6"
+            stroke="#d4a853"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -49,21 +41,7 @@ function App() {
     return <LoginPage onSignIn={() => setAuthState("authenticated")} />;
   }
 
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        background: "#0b0f1a",
-        color: "#e2e8f0",
-        fontFamily: "system-ui, sans-serif",
-      }}
-    >
-      <p>✅ Sesión iniciada — Dashboard próximamente</p>
-    </div>
-  );
+  return <Dashboard onSignOut={() => setAuthState("unauthenticated")} />;
 }
 
 export default App;
