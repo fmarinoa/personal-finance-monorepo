@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { signIn, confirmSignIn } from "aws-amplify/auth";
+import { APP_CONFIG } from "../config/app";
 
 type Step = "login" | "new-password";
 
@@ -133,7 +134,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
               <circle cx="28" cy="13" r="3" fill="#fbbf24" />
             </svg>
             <span className="text-xl font-bold tracking-tight text-slate-100">
-              FinanceOS
+              {APP_CONFIG.NAME}
             </span>
           </div>
 

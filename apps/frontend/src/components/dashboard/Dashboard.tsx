@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { signOut } from "aws-amplify/auth";
 import { CreateExpenseDrawer } from "./CreateExpenseDrawer";
+import { APP_CONFIG } from "../../config/app";
 
 interface DashboardProps {
   onSignOut: () => void;
@@ -48,7 +49,9 @@ export function Dashboard({ onSignOut }: DashboardProps) {
             />
             <circle cx="28" cy="13" r="3" fill="#0a0a0a" />
           </svg>
-          <span className="font-bold text-base tracking-tight">FinanceOS</span>
+          <span className="font-bold text-base tracking-tight">
+            {APP_CONFIG.NAME}
+          </span>
         </div>
 
         {/* Nav items */}
