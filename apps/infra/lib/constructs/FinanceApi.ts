@@ -23,6 +23,18 @@ export class FinanceApi extends Construct {
     this.api = new apigateway.RestApi(this, "RestApi", {
       restApiName: `Finance API - ${props.stage.toUpperCase()}`,
       deployOptions: { stageName: props.stage.toLowerCase() },
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: [
+          "Content-Type",
+          "Authorization",
+          "X-Amz-Date",
+          "X-Api-Key",
+          "X-Amz-Security-Token",
+        ],
+        maxAge: cdk.Duration.hours(1),
+      },
     });
 
     this.registerRoutes(props);
@@ -52,10 +64,16 @@ export class FinanceApi extends Construct {
       props.expensesTable.grantReadWriteData(fn);
 
       const resource = this.resolveApiResource(route.path, resourceCache);
-      resource.addMethod(route.method, new apigateway.LambdaIntegration(fn), {
-        authorizer: props.authorizer,
-        authorizationType: apigateway.AuthorizationType.COGNITO,
-      });
+      resource.addMethod(
+        route.method,
+        new apigateway.LambdaIntegration(fn, {
+          proxy: true,
+        }),
+        {
+          authorizer: props.authorizer,
+          authorizationType: apigateway.AuthorizationType.COGNITO,
+        },
+      );
     }
   }
 
