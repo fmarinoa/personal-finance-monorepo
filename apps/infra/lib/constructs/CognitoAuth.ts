@@ -54,7 +54,7 @@ export class CognitoAuth extends Construct {
         cognitoUserPools: [this.userPool],
         identitySource: "method.request.header.Authorization",
         authorizerName: `finance-authorizer-${props.stage.toLowerCase()}`,
-      }
+      },
     );
   }
 }

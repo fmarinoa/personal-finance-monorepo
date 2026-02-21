@@ -10,7 +10,7 @@ interface ExpenseServiceProps {
 }
 
 export class ExpenseServiceImp implements ExpenseService {
-  constructor(private readonly props: ExpenseServiceProps) { }
+  constructor(private readonly props: ExpenseServiceProps) {}
   async create(expense: Expense): Promise<{ id: string }> {
     try {
       const response = await this.props.dbRepository.create(expense);

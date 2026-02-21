@@ -30,18 +30,18 @@ export class FinanceApi extends Construct {
 
   private registerRoutes(props: FinanceApiProps): void {
     let dispatcher: Dispatcher;
-    
+
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const module = require("@/handler/index.ts");
       dispatcher = module.dispatcher;
-      
+
       if (!dispatcher) {
         throw new Error("dispatcher not exported from handler/index.ts");
       }
     } catch (error) {
       throw new Error(
-        `Failed to load dispatcher: ${error instanceof Error ? error.message : error}`
+        `Failed to load dispatcher: ${error instanceof Error ? error.message : error}`,
       );
     }
 
@@ -52,14 +52,10 @@ export class FinanceApi extends Construct {
       props.expensesTable.grantReadWriteData(fn);
 
       const resource = this.resolveApiResource(route.path, resourceCache);
-      resource.addMethod(
-        route.method,
-        new apigateway.LambdaIntegration(fn),
-        {
-          authorizer: props.authorizer,
-          authorizationType: apigateway.AuthorizationType.COGNITO,
-        }
-      );
+      resource.addMethod(route.method, new apigateway.LambdaIntegration(fn), {
+        authorizer: props.authorizer,
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+      });
     }
   }
 
