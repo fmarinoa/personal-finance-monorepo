@@ -1,35 +1,69 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import { getCurrentUser } from "aws-amplify/auth";
+import { LoginPage } from "./components/LoginPage";
+import "./lib/amplify-config";
+
+type AuthState = "loading" | "unauthenticated" | "authenticated";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [authState, setAuthState] = useState<AuthState>("loading");
+
+  useEffect(() => {
+    getCurrentUser()
+      .then(() => setAuthState("authenticated"))
+      .catch(() => setAuthState("unauthenticated"));
+  }, []);
+
+  if (authState === "loading") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          background: "#0b0f1a",
+        }}
+      >
+        <svg
+          style={{ animation: "spin 0.75s linear infinite" }}
+          viewBox="0 0 24 24"
+          fill="none"
+          width="32"
+          height="32"
+        >
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <circle cx="12" cy="12" r="10" stroke="#1e293b" strokeWidth="3" />
+          <path
+            d="M12 2a10 10 0 0110 10"
+            stroke="#3b82f6"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  if (authState === "unauthenticated") {
+    return <LoginPage onSignIn={() => setAuthState("authenticated")} />;
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        background: "#0b0f1a",
+        color: "#e2e8f0",
+        fontFamily: "system-ui, sans-serif",
+      }}
+    >
+      <p>✅ Sesión iniciada — Dashboard próximamente</p>
+    </div>
+  );
 }
 
-export default App
+export default App;
