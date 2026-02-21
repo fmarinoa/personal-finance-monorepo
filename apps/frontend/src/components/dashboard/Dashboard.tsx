@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { signOut } from "aws-amplify/auth";
 import { CreateExpenseDrawer } from "./CreateExpenseDrawer";
+import { MobileNav } from "./MobileNav";
+import { MobileFAB } from "./MobileFAB";
 import { APP_CONFIG } from "../../config/app";
 
 interface DashboardProps {
@@ -9,6 +11,7 @@ interface DashboardProps {
 
 export function Dashboard({ onSignOut }: DashboardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [successCount, setSuccessCount] = useState(0);
   const [toastVisible, setToastVisible] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -87,22 +90,35 @@ export function Dashboard({ onSignOut }: DashboardProps) {
       {/* ── Main content ── */}
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
         {/* Top bar */}
-        <header className="flex items-center justify-between px-8 md:px-10 py-6 border-b border-white/6">
+        <header className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-white/6">
           <div>
             <p className="text-[10px] font-mono tracking-[0.2em] text-[#d4a853] uppercase mb-0.5">
               Portal de finanzas
             </p>
             <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           </div>
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#d4a853] hover:bg-[#e2b96a] active:scale-[.98] text-[#0a0a0a] text-sm font-bold tracking-wide transition cursor-pointer"
-          >
-            <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
-              <path d="M8 1.5a.75.75 0 01.75.75V7.5h5.25a.75.75 0 010 1.5H8.75v5.25a.75.75 0 01-1.5 0V9H2a.75.75 0 010-1.5h5.25V2.25A.75.75 0 018 1.5z" />
-            </svg>
-            Nuevo gasto
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Hamburger — mobile only */}
+            <button
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Abrir menú"
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-white/8 text-white/40 hover:text-white/80 hover:border-white/20 hover:bg-white/5 transition cursor-pointer"
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15">
+                <path d="M1 2.75A.75.75 0 011.75 2h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 2.75zm0 5A.75.75 0 011.75 7h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 7.75zM1.75 12a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75z" />
+              </svg>
+            </button>
+            {/* Nuevo gasto — desktop only */}
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#d4a853] hover:bg-[#e2b96a] active:scale-[.98] text-[#0a0a0a] text-sm font-bold tracking-wide transition cursor-pointer"
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
+                <path d="M8 1.5a.75.75 0 01.75.75V7.5h5.25a.75.75 0 010 1.5H8.75v5.25a.75.75 0 01-1.5 0V9H2a.75.75 0 010-1.5h5.25V2.25A.75.75 0 018 1.5z" />
+              </svg>
+              Nuevo gasto
+            </button>
+          </div>
         </header>
 
         {/* Body */}
@@ -145,6 +161,17 @@ export function Dashboard({ onSignOut }: DashboardProps) {
           </div>
         </main>
       </div>
+
+      {/* ── Mobile nav ── */}
+      <MobileNav
+        open={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        onSignOut={handleSignOut}
+        signingOut={signingOut}
+      />
+
+      {/* ── Mobile FAB ── */}
+      <MobileFAB onNewExpense={() => setDrawerOpen(true)} />
 
       {/* ── Drawer ── */}
       <CreateExpenseDrawer
