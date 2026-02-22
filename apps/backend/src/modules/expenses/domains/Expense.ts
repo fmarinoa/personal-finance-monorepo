@@ -48,11 +48,11 @@ const schemaForList = z.object({
   startDate: z
     .string()
     .optional()
-    .transform((val) => (val ? new Date(val).getTime() : undefined)),
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
   endDate: z
     .string()
     .optional()
-    .transform((val) => (val ? new Date(val).getTime() : undefined)),
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
 });
 
 export class Expense implements ExpenseInterface {
