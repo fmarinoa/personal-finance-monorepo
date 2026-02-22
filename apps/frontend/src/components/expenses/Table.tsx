@@ -1,14 +1,16 @@
+import { DateTime } from "luxon";
 import type { Expense } from "@packages/core";
+
+import type { Period } from "@/hooks/usePeriod";
 import {
   CATEGORY_ICONS,
   CATEGORY_LABELS,
   PAYMENT_METHOD_LABELS,
 } from "@/types/expense";
-import { DateTime } from "luxon";
-import { PeriodSelector } from "./PeriodSelector";
-import type { Period } from "@/hooks/usePeriod";
 
-interface MonthExpensesProps {
+import { PeriodSelector } from "./PeriodSelector";
+
+interface TableProps {
   totalCount: number;
   data: Expense[];
   loading: boolean;
@@ -16,9 +18,12 @@ interface MonthExpensesProps {
   periodLabel: string;
   period: Period;
   setPeriod: (period: Period) => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
-export function MonthExpenses({
+export function Table({
   totalCount,
   data,
   loading,
@@ -26,7 +31,10 @@ export function MonthExpenses({
   periodLabel,
   period,
   setPeriod,
-}: MonthExpensesProps) {
+  page,
+  totalPages,
+  onPageChange,
+}: TableProps) {
   return (
     <section className="flex flex-col gap-4">
       {/* Section header */}
@@ -102,6 +110,55 @@ export function MonthExpenses({
           {data.map((expense, i) => (
             <ExpenseRow key={expense.id} expense={expense} index={i} />
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && !error && totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1">
+          <button
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-white/40 hover:text-white/70 hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition"
+          >
+            <svg
+              viewBox="0 0 12 12"
+              fill="none"
+              width="10"
+              height="10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M7.5 9L4.5 6l3-3" />
+            </svg>
+            Anterior
+          </button>
+
+          <span className="text-[10px] font-mono text-white/25 tracking-widest">
+            {page} / {totalPages}
+          </span>
+
+          <button
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-white/40 hover:text-white/70 hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition"
+          >
+            Siguiente
+            <svg
+              viewBox="0 0 12 12"
+              fill="none"
+              width="10"
+              height="10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4.5 3l3 3-3 3" />
+            </svg>
+          </button>
         </div>
       )}
     </section>

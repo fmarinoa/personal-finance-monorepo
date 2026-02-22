@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import { AppLayout } from "@/components/layout/AppLayout";
-import { useExpenses } from "@/hooks/useMonthExpenses";
-import { usePeriod } from "@/hooks/usePeriod";
+import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
+import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
+import { useExpenses } from "@/hooks/useExpenses";
+import { getDateRange } from "@/hooks/usePeriod";
 
-import { CreateExpenseDrawer } from "./CreateExpenseDrawer";
 import { MobileFAB } from "./MobileFAB";
-import { MonthExpenses } from "./MonthExpenses";
 
 /* ── Sub-components ── */
 
@@ -62,22 +61,25 @@ function MonthTotal({
 interface DashboardProps {
   username: string | null;
   onSignOut: () => void;
+  activePage: AppPage;
+  onNavigate: (page: AppPage) => void;
 }
 
-export function Dashboard({ username, onSignOut }: DashboardProps) {
+export function Dashboard({
+  username,
+  onSignOut,
+  activePage,
+  onNavigate,
+}: DashboardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
 
-  const { period, setPeriod, dateRange, label: periodLabel } = usePeriod();
-
+  const dateRange = useMemo(() => getDateRange("this-month"), []);
   const {
-    data: monthData,
-    totalCount,
     totalAmount,
     loading: monthLoading,
-    error: monthError,
     refresh: refreshMonth,
-  } = useExpenses(dateRange);
+  } = useExpenses({ ...dateRange, limit: 5 });
 
   function handleCreated() {
     refreshMonth();
@@ -89,6 +91,8 @@ export function Dashboard({ username, onSignOut }: DashboardProps) {
     <AppLayout
       username={username}
       onSignOut={onSignOut}
+      activePage={activePage}
+      onNavigate={onNavigate}
       title="Dashboard"
       headerActions={
         <button
@@ -105,7 +109,7 @@ export function Dashboard({ username, onSignOut }: DashboardProps) {
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
-          label={periodLabel}
+          label="Mes anterior"
           valueNode={
             <MonthTotal loading={monthLoading} totalAmount={totalAmount} />
           }
@@ -114,17 +118,6 @@ export function Dashboard({ username, onSignOut }: DashboardProps) {
         <StatCard label="Promedio diario" value="—" mono />
         <StatCard label="Categorías" value="—" mono />
       </div>
-
-      {/* Month expenses list */}
-      <MonthExpenses
-        data={monthData}
-        loading={monthLoading}
-        error={monthError}
-        periodLabel={periodLabel}
-        totalCount={totalCount}
-        period={period}
-        setPeriod={setPeriod}
-      />
 
       {/* Mobile FAB */}
       <MobileFAB onNewExpense={() => setDrawerOpen(true)} />

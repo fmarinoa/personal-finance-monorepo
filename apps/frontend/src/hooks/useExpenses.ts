@@ -3,76 +3,83 @@ import { listExpenses } from "@/lib/api";
 import type { Expense } from "@packages/core";
 import type { DateRange } from "@/hooks/usePeriod";
 
+interface UseExpensesOptions extends DateRange {
+  limit?: number;
+  page?: number;
+}
+
 interface State {
   data: Expense[];
   totalCount: number;
   totalAmount: number;
+  totalPages: number;
   loading: boolean;
   error: string | null;
 }
 
-type FetchedRange = { startDate: number; endDate: number } | null;
-
-export function useExpenses({ startDate, endDate }: DateRange) {
+export function useExpenses(
+  { startDate, endDate, limit = 10, page = 1 }: UseExpensesOptions,
+  enabled = true,
+) {
   const [state, setState] = useState<State>({
     data: [],
     totalCount: 0,
     totalAmount: 0,
+    totalPages: 1,
     loading: true,
     error: null,
   });
-  const [fetchedRange, setFetchedRange] = useState<FetchedRange>(null);
+  const [fetchedKey, setFetchedKey] = useState<string | null>(null);
   const [trigger, setTrigger] = useState(0);
 
+  const fetchKey = `${startDate}-${endDate}-${page}-${limit}`;
+
   useEffect(() => {
+    if (!enabled) return;
+    const key = `${startDate}-${endDate}-${page}-${limit}`;
     const controller = new AbortController();
-    listExpenses({ limit: 10, page: 1, startDate, endDate })
+    listExpenses({ limit, page, startDate, endDate })
       .then((res) => {
         if (!controller.signal.aborted) {
           setState({
             data: res.data,
             totalCount: res.pagination.total,
             totalAmount: res.pagination.totalAmount,
+            totalPages: res.pagination.totalPages,
             loading: false,
             error: null,
           });
-          setFetchedRange({ startDate, endDate });
+          setFetchedKey(key);
         }
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setState({
-            data: [],
-            totalCount: 0,
-            totalAmount: 0,
+          setState((s) => ({
+            ...s,
             loading: false,
             error:
               err instanceof Error ? err.message : "Error al cargar gastos",
-          });
-          setFetchedRange({ startDate, endDate });
+          }));
+          setFetchedKey(key);
         }
       });
     return () => controller.abort();
-  }, [startDate, endDate, trigger]);
+  }, [startDate, endDate, page, limit, trigger, enabled]);
 
-  // Loading is true while the fetched range doesn't match the requested range.
-  // This covers both initial load and period changes without setState in effect body.
-  const isStale =
-    !fetchedRange ||
-    fetchedRange.startDate !== startDate ||
-    fetchedRange.endDate !== endDate;
+  const isStale = !enabled ? false : fetchedKey !== fetchKey;
 
   const refresh = useCallback(() => {
-    setFetchedRange(null);
+    setFetchedKey(null);
     setTrigger((t) => t + 1);
   }, []);
 
   return {
     data: state.data,
     totalCount: state.totalCount,
+    totalAmount: state.totalAmount,
+    totalPages: state.totalPages,
     loading: state.loading || isStale,
     error: state.error,
-    totalAmount: state.totalAmount,
     refresh,
   };
 }

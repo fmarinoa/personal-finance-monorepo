@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { getCurrentUser, fetchUserAttributes } from "aws-amplify/auth";
-import { LoginPage } from "./components/LoginPage";
-import { Dashboard } from "./components/dashboard/Dashboard";
-import "./lib/amplify-config";
+
+import { LoginPage } from "@/components/LoginPage";
+import { Dashboard } from "@/components/dashboard/Dashboard";
+import { ExpensesPage } from "@/components/expenses/ExpensesPage";
+import type { AppPage } from "@/components/layout/AppLayout";
+import "@/lib/amplify-config";
 
 type AuthState = "loading" | "unauthenticated" | "authenticated";
 
 function App() {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [username, setUsername] = useState<string | null>(null);
+  const [page, setPage] = useState<AppPage>("dashboard");
 
   useEffect(() => {
     getCurrentUser()
@@ -53,15 +57,21 @@ function App() {
     );
   }
 
-  return (
-    <Dashboard
-      username={username}
-      onSignOut={() => {
-        setUsername(null);
-        setAuthState("unauthenticated");
-      }}
-    />
-  );
+  const sharedProps = {
+    username,
+    onSignOut: () => {
+      setUsername(null);
+      setAuthState("unauthenticated");
+    },
+    activePage: page,
+    onNavigate: setPage,
+  };
+
+  if (page === "expenses") {
+    return <ExpensesPage {...sharedProps} />;
+  }
+
+  return <Dashboard {...sharedProps} />;
 }
 
 export default App;

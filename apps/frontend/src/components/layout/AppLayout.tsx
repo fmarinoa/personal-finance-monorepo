@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { signOut } from "aws-amplify/auth";
+
 import { APP_CONFIG } from "@/config/app";
 
-/* ── Shared sub-components ── */
+export type AppPage = "dashboard" | "expenses";
 
 function PoweredBy() {
   return (
@@ -46,13 +47,16 @@ function NavItem({
   icon,
   label,
   active = false,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   active?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <button
+      onClick={onClick}
       className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer w-full text-left ${
         active
           ? "bg-white/8 text-white"
@@ -111,14 +115,16 @@ function ExpensesIcon() {
 }
 
 /* ── Nav items shared between sidebar and mobile panel ── */
-const NAV_ITEMS = [
-  { label: "Dashboard", icon: <DashboardIcon />, active: true },
-  { label: "Gastos", icon: <ExpensesIcon />, active: false },
+const NAV_ITEMS: { label: string; icon: React.ReactNode; page: AppPage }[] = [
+  { label: "Dashboard", icon: <DashboardIcon />, page: "dashboard" },
+  { label: "Gastos", icon: <ExpensesIcon />, page: "expenses" },
 ];
 
 interface AppLayoutProps {
   username: string | null;
   onSignOut: () => void;
+  activePage: AppPage;
+  onNavigate: (page: AppPage) => void;
   title: string;
   headerActions?: React.ReactNode;
   children: React.ReactNode;
@@ -127,6 +133,8 @@ interface AppLayoutProps {
 export function AppLayout({
   username,
   onSignOut,
+  activePage,
+  onNavigate,
   title,
   headerActions,
   children,
@@ -165,7 +173,13 @@ export function AppLayout({
 
         <div className="flex flex-col gap-1">
           {NAV_ITEMS.map((item) => (
-            <NavItem key={item.label} {...item} />
+            <NavItem
+              key={item.label}
+              icon={item.icon}
+              label={item.label}
+              active={item.page === activePage}
+              onClick={() => onNavigate(item.page)}
+            />
           ))}
         </div>
 
@@ -254,25 +268,29 @@ export function AppLayout({
         </div>
 
         <nav className="flex flex-col gap-1 px-3">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => setMobileNavOpen(false)}
-              className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition cursor-pointer w-full text-left ${
-                item.active
-                  ? "bg-white/8 text-white"
-                  : "text-white/35 hover:text-white/70 hover:bg-white/5"
-              }`}
-            >
-              <span className={item.active ? "text-gold" : ""}>
-                {item.icon}
-              </span>
-              {item.label}
-              {item.active && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-gold" />
-              )}
-            </button>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.page === activePage;
+            return (
+              <button
+                key={item.label}
+                onClick={() => {
+                  onNavigate(item.page);
+                  setMobileNavOpen(false);
+                }}
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition cursor-pointer w-full text-left ${
+                  isActive
+                    ? "bg-white/8 text-white"
+                    : "text-white/35 hover:text-white/70 hover:bg-white/5"
+                }`}
+              >
+                <span className={isActive ? "text-gold" : ""}>{item.icon}</span>
+                {item.label}
+                {isActive && (
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-gold" />
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="flex-1" />

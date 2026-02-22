@@ -20,7 +20,7 @@ export const PERIOD_OPTIONS: PeriodOption[] = [
   { id: "last-30-days", label: "Últimos 30 días", shortLabel: "30 días" },
 ];
 
-function getDateRange(period: Period): DateRange {
+export function getDateRange(period: Period): DateRange {
   const now = DateTime.local();
   switch (period) {
     case "this-month":
