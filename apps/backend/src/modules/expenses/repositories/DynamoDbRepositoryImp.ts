@@ -113,9 +113,9 @@ export class DynamoDbRepositoryImp
       return { data: [], nextToken: undefined };
     }
 
-    const data = Items.sort(
-      (a: any, b: any) => b.paymentDate - a.paymentDate,
-    ).map((item: Record<string, any>) => Expense.buildFromDbItem(item));
+    const data = Items.map((item: Record<string, any>) =>
+      Expense.buildFromDbItem(item),
+    ).sort((a: Expense, b: Expense) => b.paymentDate - a.paymentDate);
 
     const nextToken = LastEvaluatedKey
       ? Buffer.from(JSON.stringify(LastEvaluatedKey)).toString("base64")

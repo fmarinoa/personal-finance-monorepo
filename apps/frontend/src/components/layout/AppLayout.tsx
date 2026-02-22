@@ -66,7 +66,7 @@ export function AppLayout({
               {APP_CONFIG.NAME}
             </span>
             <span className="text-sm font-semibold text-white truncate">
-              {username ?? "usuario"}
+              Bienvenido {username ?? "usuario"}👋
             </span>
           </div>
         </div>

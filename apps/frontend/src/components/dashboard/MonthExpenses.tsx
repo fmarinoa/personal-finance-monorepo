@@ -102,7 +102,7 @@ export function MonthExpenses({ data, loading, error }: MonthExpensesProps) {
 
 /* ── Single row ── */
 function ExpenseRow({ expense, index }: { expense: Expense; index: number }) {
-  const time = DateTime.fromMillis(expense.creationDate).toFormat("dd LLL");
+  const time = DateTime.fromMillis(expense.paymentDate).toFormat("dd LLL");
 
   return (
     <div

@@ -6,6 +6,50 @@ import { MonthExpenses } from "./MonthExpenses";
 import { useMonthExpenses } from "@/hooks/useMonthExpenses";
 import type { Expense } from "@packages/core";
 
+/* ── Sub-components ── */
+
+function StatCard({
+  label,
+  value,
+  valueNode,
+  mono = false,
+  accent = false,
+}: {
+  label: string;
+  value?: string;
+  valueNode?: React.ReactNode;
+  mono?: boolean;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 px-5 py-5 rounded-2xl bg-white/3 border border-white/6">
+      <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase">
+        {label}
+      </span>
+      {valueNode ?? (
+        <span
+          className={`text-3xl font-bold tracking-tight ${accent ? "text-gold" : "text-white"} ${mono ? "font-mono" : ""}`}
+        >
+          {value}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function MonthTotal({ data, loading }: { data: Expense[]; loading: boolean }) {
+  const total = data.reduce((s, e) => s + e.amount, 0);
+  if (loading)
+    return (
+      <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
+    );
+  return (
+    <span className="text-3xl font-bold tracking-tight font-mono text-gold">
+      S/ {total.toFixed(2)}
+    </span>
+  );
+}
+
 interface DashboardProps {
   username: string | null;
   onSignOut: () => void;
@@ -96,48 +140,6 @@ export function Dashboard({ username, onSignOut }: DashboardProps) {
         Gasto registrado correctamente
       </div>
     </AppLayout>
-  );
-}
-
-/* ── Sub-components ── */
-
-function StatCard({
-  label,
-  value,
-  valueNode,
-  mono = false,
-  accent = false,
-}: {
-  label: string;
-  value?: string;
-  valueNode?: React.ReactNode;
-  mono?: boolean;
-  accent?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 px-5 py-5 rounded-2xl bg-white/3 border border-white/6">
-      <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase">
-        {label}
-      </span>
-      {valueNode ?? (
-        <span
-          className={`text-3xl font-bold tracking-tight ${accent ? "text-gold" : "text-white"} ${mono ? "font-mono" : ""}`}
-        >
-          {value}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function MonthTotal({ data, loading }: { data: Expense[]; loading: boolean }) {
-  const total = data.reduce((s, e) => s + e.amount, 0);
-  if (loading)
-    return <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />;
-  return (
-    <span className="text-3xl font-bold tracking-tight font-mono text-gold">
-      S/ {total.toFixed(2)}
-    </span>
   );
 }
 
