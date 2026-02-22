@@ -9,11 +9,7 @@ import {
   GetCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { BaseDbRepository } from "@/modules/shared/repositories";
-import {
-  BadRequestError,
-  NotFoundError,
-  InternalError,
-} from "@packages/lambda";
+import { NotFoundError, InternalError } from "@packages/lambda";
 import { ExpenseStatus, FiltersForList } from "@packages/core";
 
 export interface DynamoDbRepositoryImpProps {
@@ -59,7 +55,11 @@ export class DynamoDbRepositoryImp
   async list(
     userId: string,
     filters: FiltersForList,
-  ): Promise<{ data: Expense[]; nextToken?: string }> {
+  ): Promise<{
+    data: Expense[];
+    total: number;
+    totalAmount: number;
+  }> {
     const expressionAttributeValues: Record<string, any> = {
       ":userId": userId,
     };
@@ -83,45 +83,38 @@ export class DynamoDbRepositoryImp
       TableName: this.props.expensesTableName,
       IndexName: "userIdPaymentDateIndex",
       KeyConditionExpression: keyConditionExpression,
-      Limit: filters.limit,
-      FilterExpression: "#status <> :activeStatus",
+      FilterExpression: "#status <> :deletedStatus",
       ExpressionAttributeNames: {
         "#status": "status",
       },
       ExpressionAttributeValues: {
         ...expressionAttributeValues,
-        ":activeStatus": ExpenseStatus.DELETED,
+        ":deletedStatus": ExpenseStatus.DELETED,
       },
       ScanIndexForward: false,
     };
 
-    if (filters.nextToken) {
-      try {
-        queryInput.ExclusiveStartKey = JSON.parse(
-          Buffer.from(filters.nextToken, "base64").toString("utf-8"),
-        );
-      } catch (error) {
-        throw new BadRequestError({ details: `Invalid nextToken: ${error}` });
-      }
-    }
+    const allItems: Record<string, any>[] = [];
+    let lastKey: Record<string, any> | undefined;
+    do {
+      if (lastKey) queryInput.ExclusiveStartKey = lastKey;
+      const { Items, LastEvaluatedKey } = await this.props.dbClient.send(
+        new QueryCommand(queryInput),
+      );
+      if (Items?.length) allItems.push(...Items);
+      lastKey = LastEvaluatedKey;
+    } while (lastKey);
 
-    const { Items, LastEvaluatedKey } = await this.props.dbClient.send(
-      new QueryCommand(queryInput),
-    );
+    const allExpenses = allItems.map((item) => Expense.buildFromDbItem(item));
+    const total = allExpenses.length;
+    const totalAmount = allExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-    if (!Items) {
-      return { data: [], nextToken: undefined };
-    }
+    const limit = filters.limit;
+    const page = filters.page;
+    const start = (page - 1) * limit;
+    const data = allExpenses.slice(start, start + limit);
 
-    const data = Items.map((item: Record<string, any>) =>
-      Expense.buildFromDbItem(item),
-    ).sort((a: Expense, b: Expense) => b.paymentDate - a.paymentDate);
-
-    const nextToken = LastEvaluatedKey
-      ? Buffer.from(JSON.stringify(LastEvaluatedKey)).toString("base64")
-      : undefined;
-
-    return { data, nextToken };
+    return { data, total, totalAmount };
   }
 
   async getById(expense: Expense): Promise<Expense> {

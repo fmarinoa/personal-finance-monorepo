@@ -24,14 +24,18 @@ export class ExpenseServiceImp implements ExpenseService {
     user: User,
     filters: FiltersForList,
   ): Promise<PaginatedResponse<Expense>> {
-    const { data, nextToken } = await this.props.dbRepository.list(
+    const { data, total, totalAmount } = await this.props.dbRepository.list(
       user.id,
       filters,
     );
 
     return {
       data,
-      pagination: { limit: filters.limit || 0, nextToken, total: data.length },
+      pagination: {
+        totalPages: Math.ceil(total / filters.limit),
+        total,
+        totalAmount,
+      },
     };
   }
 

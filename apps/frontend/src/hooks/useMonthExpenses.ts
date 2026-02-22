@@ -5,6 +5,8 @@ import type { DateRange } from "@/hooks/usePeriod";
 
 interface State {
   data: Expense[];
+  totalCount: number;
+  totalAmount: number;
   loading: boolean;
   error: string | null;
 }
@@ -14,6 +16,8 @@ type FetchedRange = { startDate: number; endDate: number } | null;
 export function useExpenses({ startDate, endDate }: DateRange) {
   const [state, setState] = useState<State>({
     data: [],
+    totalCount: 0,
+    totalAmount: 0,
     loading: true,
     error: null,
   });
@@ -22,10 +26,16 @@ export function useExpenses({ startDate, endDate }: DateRange) {
 
   useEffect(() => {
     const controller = new AbortController();
-    listExpenses({ startDate, endDate })
+    listExpenses({ limit: 10, page: 1, startDate, endDate })
       .then((res) => {
         if (!controller.signal.aborted) {
-          setState({ data: res.data, loading: false, error: null });
+          setState({
+            data: res.data,
+            totalCount: res.pagination.total,
+            totalAmount: res.pagination.totalAmount,
+            loading: false,
+            error: null,
+          });
           setFetchedRange({ startDate, endDate });
         }
       })
@@ -33,6 +43,8 @@ export function useExpenses({ startDate, endDate }: DateRange) {
         if (!controller.signal.aborted) {
           setState({
             data: [],
+            totalCount: 0,
+            totalAmount: 0,
             loading: false,
             error:
               err instanceof Error ? err.message : "Error al cargar gastos",
@@ -57,8 +69,10 @@ export function useExpenses({ startDate, endDate }: DateRange) {
 
   return {
     data: state.data,
+    totalCount: state.totalCount,
     loading: state.loading || isStale,
     error: state.error,
+    totalAmount: state.totalAmount,
     refresh,
   };
 }

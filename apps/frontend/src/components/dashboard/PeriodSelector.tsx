@@ -33,7 +33,7 @@ export function PeriodSelector({
     <div
       role="group"
       aria-label="Seleccionar periodo"
-      className="flex items-center gap-0.5 p-1 rounded-xl bg-white/[0.04] border border-white/8"
+      className="flex items-center gap-0.5 p-1 rounded-xl bg-white/4 border border-white/8"
     >
       <span className="pl-1.5 pr-1 text-white/20 hidden sm:flex">
         <CalendarIcon />
@@ -51,8 +51,8 @@ export function PeriodSelector({
               transition-all duration-150
               ${
                 isActive
-                  ? "bg-gold/[0.12] text-gold ring-1 ring-inset ring-gold/25 shadow-[0_1px_4px_rgba(212,168,83,0.08)]"
-                  : "text-white/30 hover:text-white/60 hover:bg-white/[0.05]"
+                  ? "bg-gold/12 text-gold ring-1 ring-inset ring-gold/25 shadow-[0_1px_4px_rgba(212,168,83,0.08)]"
+                  : "text-white/30 hover:text-white/60 hover:bg-white/5"
               }
             `}
           >

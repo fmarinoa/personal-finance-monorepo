@@ -30,8 +30,8 @@ export interface CreateExpensePayload {
 }
 
 export interface FiltersForList {
-  limit?: number;
-  nextToken?: string;
+  limit: number;
+  page: number;
   startDate?: number;
   endDate?: number;
 }

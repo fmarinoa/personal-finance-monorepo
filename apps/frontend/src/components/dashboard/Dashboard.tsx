@@ -3,7 +3,6 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { CreateExpenseDrawer } from "./CreateExpenseDrawer";
 import { MobileFAB } from "./MobileFAB";
 import { MonthExpenses } from "./MonthExpenses";
-import { PeriodSelector } from "./PeriodSelector";
 import { useExpenses } from "@/hooks/useMonthExpenses";
 import { usePeriod } from "@/hooks/usePeriod";
 import type { Expense } from "@packages/core";
@@ -39,16 +38,37 @@ function StatCard({
   );
 }
 
-function MonthTotal({ data, loading }: { data: Expense[]; loading: boolean }) {
-  const total = data.reduce((s, e) => s + e.amount, 0);
+// NOTE: `total` is computed from the loaded page only.
+// If `totalCount > data.length`, the API is paginating and this sum is partial.
+// Fix: add a `totalAmount` field to the API's pagination metadata.
+function MonthTotal({
+  data,
+  loading,
+  totalCount,
+  totalAmount,
+}: {
+  data: Expense[];
+  loading: boolean;
+  totalCount: number;
+  totalAmount: number;
+}) {
+  const isPartial = !loading && totalCount > data.length;
+
   if (loading)
     return (
       <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
     );
   return (
-    <span className="text-3xl font-bold tracking-tight font-mono text-gold">
-      S/ {total.toFixed(2)}
-    </span>
+    <div className="flex flex-col gap-0.5">
+      <span className="text-3xl font-bold tracking-tight font-mono text-gold">
+        {isPartial ? "~" : ""}S/ {totalAmount.toFixed(2)}
+      </span>
+      {isPartial && (
+        <span className="text-[10px] font-mono text-white/25">
+          {data.length} de {totalCount} gastos cargados
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -65,6 +85,8 @@ export function Dashboard({ username, onSignOut }: DashboardProps) {
 
   const {
     data: monthData,
+    totalCount,
+    totalAmount,
     loading: monthLoading,
     error: monthError,
     refresh: refreshMonth,
@@ -82,25 +104,29 @@ export function Dashboard({ username, onSignOut }: DashboardProps) {
       onSignOut={onSignOut}
       title="Dashboard"
       headerActions={
-        <div className="flex items-center gap-2.5">
-          <PeriodSelector period={period} onPeriodChange={setPeriod} />
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light active:scale-[.98] text-canvas text-sm font-bold tracking-wide transition cursor-pointer"
-          >
-            <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
-              <path d="M8 1.5a.75.75 0 01.75.75V7.5h5.25a.75.75 0 010 1.5H8.75v5.25a.75.75 0 01-1.5 0V9H2a.75.75 0 010-1.5h5.25V2.25A.75.75 0 018 1.5z" />
-            </svg>
-            Nuevo gasto
-          </button>
-        </div>
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light active:scale-[.98] text-canvas text-sm font-bold tracking-wide transition cursor-pointer"
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
+            <path d="M8 1.5a.75.75 0 01.75.75V7.5h5.25a.75.75 0 010 1.5H8.75v5.25a.75.75 0 01-1.5 0V9H2a.75.75 0 010-1.5h5.25V2.25A.75.75 0 018 1.5z" />
+          </svg>
+          Nuevo gasto
+        </button>
       }
     >
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           label={periodLabel}
-          valueNode={<MonthTotal data={monthData} loading={monthLoading} />}
+          valueNode={
+            <MonthTotal
+              data={monthData}
+              loading={monthLoading}
+              totalCount={totalCount}
+              totalAmount={totalAmount}
+            />
+          }
           accent
         />
         <StatCard label="Promedio diario" value="—" mono />
@@ -112,6 +138,10 @@ export function Dashboard({ username, onSignOut }: DashboardProps) {
         data={monthData}
         loading={monthLoading}
         error={monthError}
+        periodLabel={periodLabel}
+        totalCount={totalCount}
+        period={period}
+        setPeriod={setPeriod}
       />
 
       {/* Mobile FAB */}

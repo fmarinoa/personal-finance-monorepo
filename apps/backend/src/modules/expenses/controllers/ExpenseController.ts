@@ -40,16 +40,16 @@ export class ExpenseController extends BaseController {
 
   async list(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
     const { context, queryParams } = this.retrieveRequestContext(event);
-    const [limit, nextToken, startDate, endDate] = this.retrieveFromQueryParams(
+    const [limit, page, startDate, endDate] = this.retrieveFromQueryParams(
       queryParams!,
-      ["limit", "nextToken", "startDate", "endDate"],
+      ["limit", "page", "startDate", "endDate"],
     );
 
     const user = new User({ id: context.authorizer?.claims["sub"] });
 
     const { filters } = Expense.validateFilters({
       limit,
-      nextToken,
+      page,
       startDate,
       endDate,
     });

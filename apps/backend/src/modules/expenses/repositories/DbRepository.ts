@@ -7,7 +7,11 @@ export interface DbRepository {
   list(
     userId: string,
     filters: FiltersForList,
-  ): Promise<{ data: Expense[]; nextToken?: string }>;
+  ): Promise<{
+    data: Expense[];
+    total: number;
+    totalAmount: number;
+  }>;
   update(expense: Expense): Promise<Expense>;
   delete(expense: Expense): Promise<void>;
 }

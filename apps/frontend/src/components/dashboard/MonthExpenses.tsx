@@ -5,35 +5,43 @@ import {
   PAYMENT_METHOD_LABELS,
 } from "@/types/expense";
 import { DateTime } from "luxon";
+import { PeriodSelector } from "./PeriodSelector";
+import type { Period } from "@/hooks/usePeriod";
 
 interface MonthExpensesProps {
+  totalCount: number;
   data: Expense[];
   loading: boolean;
   error: string | null;
+  periodLabel: string;
+  period: Period;
+  setPeriod: (period: Period) => void;
 }
 
-export function MonthExpenses({ data, loading, error }: MonthExpensesProps) {
-  const total = data.reduce((sum, e) => sum + e.amount, 0);
-
+export function MonthExpenses({
+  totalCount,
+  data,
+  loading,
+  error,
+  periodLabel,
+  period,
+  setPeriod,
+}: MonthExpensesProps) {
   return (
     <section className="flex flex-col gap-4">
       {/* Section header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <span className="text-[10px] font-mono tracking-[0.2em] text-white/30 uppercase">
-            Este mes
+            {periodLabel}
           </span>
-          {!loading && data.length > 0 && (
+          {!loading && (
             <span className="px-1.5 py-0.5 rounded-md bg-white/6 text-[10px] font-mono text-white/40">
-              {data.length}
+              {totalCount}
             </span>
           )}
         </div>
-        {!loading && data.length > 0 && (
-          <span className="font-mono text-sm font-semibold text-gold">
-            S/ {total.toFixed(2)}
-          </span>
-        )}
+        <PeriodSelector period={period} onPeriodChange={setPeriod} />
       </div>
 
       {/* Loading skeletons */}
@@ -83,7 +91,7 @@ export function MonthExpenses({ data, loading, error }: MonthExpensesProps) {
             </svg>
           </div>
           <p className="text-white/25 text-xs">
-            Sin gastos registrados este mes
+            Sin gastos registrados en este período
           </p>
         </div>
       )}
