@@ -1,11 +1,12 @@
 import { useState } from "react";
+
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useExpenses } from "@/hooks/useMonthExpenses";
+import { usePeriod } from "@/hooks/usePeriod";
+
 import { CreateExpenseDrawer } from "./CreateExpenseDrawer";
 import { MobileFAB } from "./MobileFAB";
 import { MonthExpenses } from "./MonthExpenses";
-import { useExpenses } from "@/hooks/useMonthExpenses";
-import { usePeriod } from "@/hooks/usePeriod";
-import type { Expense } from "@packages/core";
 
 /* ── Sub-components ── */
 
@@ -38,22 +39,13 @@ function StatCard({
   );
 }
 
-// NOTE: `total` is computed from the loaded page only.
-// If `totalCount > data.length`, the API is paginating and this sum is partial.
-// Fix: add a `totalAmount` field to the API's pagination metadata.
 function MonthTotal({
-  data,
   loading,
-  totalCount,
   totalAmount,
 }: {
-  data: Expense[];
   loading: boolean;
-  totalCount: number;
   totalAmount: number;
 }) {
-  const isPartial = !loading && totalCount > data.length;
-
   if (loading)
     return (
       <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
@@ -61,13 +53,8 @@ function MonthTotal({
   return (
     <div className="flex flex-col gap-0.5">
       <span className="text-3xl font-bold tracking-tight font-mono text-gold">
-        {isPartial ? "~" : ""}S/ {totalAmount.toFixed(2)}
+        S/ {totalAmount.toFixed(2)}
       </span>
-      {isPartial && (
-        <span className="text-[10px] font-mono text-white/25">
-          {data.length} de {totalCount} gastos cargados
-        </span>
-      )}
     </div>
   );
 }
@@ -120,12 +107,7 @@ export function Dashboard({ username, onSignOut }: DashboardProps) {
         <StatCard
           label={periodLabel}
           valueNode={
-            <MonthTotal
-              data={monthData}
-              loading={monthLoading}
-              totalCount={totalCount}
-              totalAmount={totalAmount}
-            />
+            <MonthTotal loading={monthLoading} totalAmount={totalAmount} />
           }
           accent
         />
