@@ -2,223 +2,193 @@
 
 ## Project Overview
 
-This is a **pnpm monorepo** for a personal finance application using AWS infrastructure. The architecture follows a clean layered pattern with Lambda functions, RDS PostgreSQL, and React frontend.
+pnpm monorepo for a personal finance application on AWS. Backend uses Lambda + DynamoDB + Cognito. Frontend uses Vite + React + AWS Amplify. Infrastructure managed with AWS CDK.
 
-## Build & Run Commands
+## Commands
 
-### Root commands
-
-- `pnpm prettier` - Format all code with Prettier
-- No tests configured yet
-
-### Per-workspace commands
-
-Navigate to specific workspace (`apps/backend`, `apps/infra`, `packages/core`) and run:
-
-- `pnpm prettier` - Format code in that workspace
-
-### Deployment (from `apps/infra`)
-
-**Prerequisites:**
-
-- AWS CLI configured with valid credentials
-- CDK CLI installed globally: `npm install -g aws-cdk`
-
-**Commands:**
+### Root
 
 ```bash
-# Bootstrap CDK (first time only per account/region)
-cdk bootstrap
-
-# Preview changes before deploying
-cdk diff -c stage=dev
-
-# Deploy to dev environment
-cdk deploy -c stage=dev
-
-# Deploy to prod environment
-cdk deploy -c stage=prod
-
-# Auto-approve deployment (skip confirmation)
-cdk deploy -c stage=dev --require-approval never
+pnpm lint        # ESLint across all workspaces
+pnpm prettier    # Prettier across all workspaces
 ```
 
-**Stage behavior:**
+### apps/frontend
 
-- Stage defaults to `dev` if not specified
-- Stack name format: `FinanceBackendStack{stage}`
-- Prod environment has increased resources (storage, multi-AZ options)
+```bash
+pnpm dev         # Vite dev server
+pnpm build       # tsc -b && vite build
+pnpm lint        # ESLint
+```
+
+### apps/infra
+
+```bash
+pnpm diff:dev    # cdk diff -c stage=dev
+pnpm diff:prod   # cdk diff -c stage=prod
+pnpm deploy:dev  # cdk deploy -c stage=dev
+pnpm deploy:prod # cdk deploy -c stage=prod
+```
+
+### Deployment prerequisites
+
+- AWS CLI configured with valid credentials
+- `npm install -g aws-cdk`
+- First time: `cdk bootstrap`
 
 ## Architecture
 
 ### Monorepo Structure
 
 ```
-/apps
-  /backend      → Lambda functions (Node.js 20)
-  /frontend     → Vite + React (planned)
-  /infra        → AWS CDK infrastructure
-/packages
-  /core         → Shared TypeScript types/interfaces
-  /db           → SQL migrations and schemas
+apps/
+  backend/    → Lambda functions (Node.js 20), DynamoDB
+  frontend/   → Vite + React 19 + Tailwind + AWS Amplify
+  infra/      → AWS CDK (Cognito, DynamoDB, API Gateway)
+packages/
+  core/       → Shared TypeScript types (src/types/modules/)
+  lambda/     → Dispatcher class for Lambda auto-discovery
+  db/         → SQL migrations (prepared for future RDS migration)
 ```
 
 ### Backend Layer Architecture
 
-The backend follows a **strict layered architecture** with dependency flow in one direction:
+Strict one-way dependency flow:
 
 ```
 Handler → Controller → Service → Repository → Database
 ```
 
-**Key principles:**
+1. **Handler** (`handler/index.ts`): registers routes via `Dispatcher` with Middy middleware
+2. **Controller**: HTTP parsing, Zod validation, response formatting
+3. **Service**: business logic, calls repository
+4. **Repository**: DynamoDB access only
+5. **Domain**: entity models with Zod static factory methods
 
-1. **Handler** (`/handler/index.ts`): Defines Lambda configurations with Middy middlewares
-2. **Controller** (`/controllers`): HTTP concerns (validation, status codes, request/response mapping)
-3. **Service** (`/services`): Business logic orchestration
-4. **Repository** (`/repositories`): Database access only
-5. **Domain** (`/domains`): Entity models with validation (uses Zod)
+All backend layers live under `apps/backend/src/modules/{feature}/`.
 
 ### Infrastructure Auto-Discovery
 
-The CDK stack in `apps/infra/lib/BackendStack.ts` **automatically discovers and deploys lambdas** by:
-
-- Reading `apps/backend/src/handler/index.ts`
-- Creating a Lambda + API Gateway route for each exported `LambdaConfig`
-- Auto-wiring VPC, RDS credentials, and permissions
-
-**To add a new endpoint:**
+`apps/infra/lib/BackendStack.ts` reads `handler/index.ts` and creates a Lambda + API Gateway route for each registered entry. To add a new endpoint:
 
 1. Create controller method
-2. Add entry to `lambdas` object in `handler/index.ts` with `method`, `path`, and `handler`
-3. CDK will auto-deploy on next `cdk deploy`
+2. Register in `handler/index.ts` via `dispatcher.{method}(path, handler)`
+3. CDK auto-deploys on next `cdk deploy`
 
-### Database Access Pattern
+### packages/lambda Dispatcher
 
-**Always use PostgreSQL stored functions**, not direct SQL queries in repositories:
+`@packages/lambda` provides the `Dispatcher` class used in `handler/index.ts`:
 
-- Functions are defined in `packages/db/migrations/001_initial_schema.sql`
-- Repositories call functions with parameterized queries: `SELECT * FROM function_name($1, $2)`
-- Function signature convention: **userId is always the first parameter**
-- Example: `create_expense(p_user_id UUID, p_amount NUMERIC, ...)`
-
-### Database Connection
-
-Repositories use:
-
-- **pg** connection pool (singleton pattern, reused across Lambda invocations)
-- **AWS Secrets Manager** to fetch RDS credentials from `DB_SECRET_ARN` env var
-- Lazy initialization of pool in `getPool()` method
+```typescript
+const dispatcher = new Dispatcher();
+dispatcher.post("/expenses", expenseController.create);
+dispatcher.get("/expenses", expenseController.list);
+dispatcher.get("/expenses/{id}", expenseController.getById);
+dispatcher.put("/expenses/{id}", expenseController.update);
+dispatcher.delete("/expenses/{id}", expenseController.delete);
+export default dispatcher.export();
+```
 
 ## Key Conventions
 
-### TypeScript Path Aliases
+### userId — Always First Parameter
 
-All backend code uses `@/` for imports:
-
-```typescript
-import { Expense } from "@/domains";
-import { RdsRepository } from "@/repositories/RdsRepository";
-```
-
-Configured in `apps/backend/tsconfig.json`
-
-### Workspace Dependencies
-
-Use `workspace:*` protocol for internal packages:
-
-```json
-"@packages/core": "workspace:*"
-```
-
-### Database Naming Convention
-
-- **Database:** snake_case (e.g., `category_code`, `user_id`)
-- **TypeScript:** camelCase (e.g., `categoryCode`, `userId`)
-- **Repositories must map** between conventions when reading/writing
-
-### Domain Model Validation
-
-Domain entities use **static factory methods** with Zod validation:
+userId is extracted from Cognito authorizer claims and passed down every layer first:
 
 ```typescript
-// For CREATE
+// Controller
+const userId = context.authorizer?.claims["sub"];
+
+// Service interface
+create(userId: string, expense: Expense): Promise<Expense>
+
+// Repository interface — same order
+create(userId: string, expense: Expense): Promise<Expense>
+
+// SQL functions (packages/db) — same order
+create_expense(p_user_id UUID, p_amount NUMERIC, ...)
+```
+
+### Domain Validation — Static Factory Methods
+
+Domains return `Entity | ZodError` instead of throwing:
+
+```typescript
 const expense = Expense.instanceForCreate({ amount, description, category });
 if (expense instanceof ZodError) {
-  // Handle validation error
+  return this.badRequest(expense.message);
 }
-
-// For UPDATE
-const expense = Expense.instanceForUpdate({ id, amount, description });
 ```
 
-Returns `Entity | ZodError` instead of throwing exceptions.
+### Controller Helpers (BaseController)
 
-### Controller Helpers
-
-`BaseController` provides utility methods:
-
-- `getContext(event)` - Extract userId, body, pathParams, queryParams
-- `retriveFromBody(body, keys)` - Extract multiple fields from parsed body
-- `retriveFromPathParameters(pathParams, keys)` - Extract path params
-- `retriveFromQueryParams(queryParams, keys)` - Extract query params
+- `getContext(event)` → `{ userId, body, pathParams, queryParams }`
+- `retriveFromBody(body, keys)` / `retriveFromPathParameters(pathParams, keys)` / `retriveFromQueryParams(queryParams, keys)`
 - Response methods: `ok()`, `created()`, `noContent()`, `badRequest()`, `unauthorized()`, `notFound()`, `internalError()`
 
-### Parameter Order Convention
+### Soft Delete
 
-**Across all layers, userId comes first:**
+Expenses are never hard-deleted. The repository sets `status: "DELETED"` and records `deletionDate` + `reason` in the `onDelete` field.
 
-```typescript
-// Service
-create(userId: string, expense: Expense)
-update(userId: string, expense: Expense)
-delete(userId: string, expenseId: string)
+### DynamoDB Pagination
 
-// Repository - same order
-create(userId: string, expense: Expense)
-
-// SQL functions - same order
-create_expense(p_user_id UUID, p_amount NUMERIC, ...)
-update_expense(p_user_id UUID, p_id UUID, ...)
-delete_expense(p_user_id UUID, p_id UUID)
-```
+`nextToken` is a base64-encoded `ExclusiveStartKey`. Repositories encode/decode it transparently — controllers and services never handle raw DynamoDB keys.
 
 ### Dependency Injection
 
-- Services injected into controllers via constructor
-- Repositories injected into services via constructor
-- Singletons exported from `index.ts` files (e.g., `expenseController`, `expenseService`, `dbRepository`)
+Constructor injection throughout. Singletons exported from each module's `index.ts`:
 
-### Middy Middleware Stack
+```typescript
+// modules/expenses/index.ts
+export const dbRepository = new DynamoDbRepositoryImp();
+export const expenseService = new ExpenseServiceImp(dbRepository);
+export const expenseController = new ExpenseController(expenseService);
+```
 
-Lambda handlers use Middy with specific middleware order:
+### Middy Middleware Order
 
 ```typescript
 middy(handler)
-  .use(requireBody()) // First: validate body exists
-  .use(jsonBodyParser()) // Second: parse JSON
-  .use(httpErrorHandler()); // Last: catch and format errors
+  .use(requireBody()) // validate body exists
+  .use(jsonBodyParser()) // parse JSON
+  .use(httpErrorHandler()); // catch and format errors
 ```
 
-## AWS Infrastructure Details
+Only endpoints that require a body use `requireBody()`.
 
-### Lambda Configuration
+### TypeScript Path Aliases
 
-- **Runtime:** Node.js 20
-- **VPC:** Private subnets with egress (no NAT Gateway in dev)
-- **Environment variables:**
-  - `DB_SECRET_ARN` - RDS credentials secret ARN
-  - `STAGE` - Deployment stage (dev/prod)
+Backend uses `@/` mapped to `src/`:
 
-### RDS Setup
+```typescript
+import { Expense } from "@/domains";
+import { expenseController } from "@/modules/expenses";
+```
 
-- **Engine:** PostgreSQL 15
-- **Subnet:** Private isolated (no internet access)
-- **Credentials:** Auto-generated and stored in Secrets Manager
-- Database name: `financedb_${stage}`
+### Shared Types (packages/core)
 
-### API Gateway
+Types are organized by module under `src/types/modules/`:
 
-- Auto-generated from `handler/index.ts` lambda configs
-- REST API with stage-based deployments
-- Supports path parameters (e.g., `/expenses/{id}`)
+```
+core/src/types/
+  modules/expenses/
+    subtypes.ts   → ExpenseCategory, PaymentMethod, ExpenseStatus (const objects)
+    expense.ts    → Expense, CreateExpensePayload, FiltersForList
+  common.ts       → PaginatedResponse<T>
+  metrics.ts      → MonthlyMetric
+```
+
+Import via the package name: `import type { Expense } from "@packages/core"`.
+
+### Database Naming
+
+- DB columns: `snake_case` (`user_id`, `payment_date`)
+- TypeScript: `camelCase` (`userId`, `paymentDate`)
+- Repositories handle the mapping.
+
+## AWS Infrastructure
+
+- **Auth:** Cognito User Pool — userId = `context.authorizer?.claims["sub"]`
+- **Database:** DynamoDB (current); `packages/db/migrations/` has PL/pgSQL ready for a future RDS migration
+- **Stage:** `dev` or `prod` via `-c stage=dev`. Stack name: `FinanceBackendStack{stage}`
+- **Lambda env vars:** `STAGE`, `TABLE_NAME`, `DB_SECRET_ARN` (future RDS)

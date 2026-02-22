@@ -142,4 +142,3 @@ export function Dashboard({ username, onSignOut }: DashboardProps) {
     </AppLayout>
   );
 }
-

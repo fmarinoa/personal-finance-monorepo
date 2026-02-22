@@ -81,7 +81,7 @@ export class Expense implements ExpenseInterface {
   ): Expense {
     return new Expense({
       id: item.id,
-      user: new User({ id: item.userId }),
+      user: new User({ id: item.userId! }),
       amount: item.amount,
       description: item.description,
       paymentMethod: item.paymentMethod,
@@ -92,8 +92,8 @@ export class Expense implements ExpenseInterface {
       status: item.status,
       ...(options?.includeDeleted && {
         onDelete: {
-          deletionDate: item.deletionDate,
-          reason: item.deletionReason,
+          deletionDate: item.onDelete?.deletionDate,
+          reason: item.onDelete?.reason,
         },
       }),
     });

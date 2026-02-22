@@ -101,7 +101,7 @@ export class DynamoDbRepositoryImp
           Buffer.from(filters.nextToken, "base64").toString("utf-8"),
         );
       } catch (error) {
-        throw new BadRequestError({ details: "Invalid nextToken" });
+        throw new BadRequestError({ details: `Invalid nextToken: ${error}` });
       }
     }
 

@@ -2,6 +2,8 @@
 build
 coverage
 .serverless
+.cdk.out
+pnpm-lock.yaml
 
 # Ignore all Skills
 .agents/skills/*

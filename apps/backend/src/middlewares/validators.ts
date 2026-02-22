@@ -19,7 +19,7 @@ export const requirePathParameters = (paramName: string[]) => ({
     event: APIGatewayProxyEvent;
     response?: APIGatewayProxyResult;
   }) => {
-    let missingParams: string[] = [];
+    const missingParams: string[] = [];
     for (const name of paramName) {
       const paramValue = request.event.pathParameters?.[name];
       if (!paramValue) {

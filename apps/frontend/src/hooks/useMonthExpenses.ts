@@ -27,29 +27,33 @@ export function useMonthExpenses() {
     error: null,
   });
 
-  const fetch = useCallback(async (signal?: AbortSignal) => {
-    setState((s) => ({ ...s, loading: true, error: null }));
-    try {
-      const res = await listExpenses({ ...monthRange() });
-      if (signal?.aborted) return;
-      setState({ data: res.data, loading: false, error: null });
-    } catch (err) {
-      if (signal?.aborted) return;
-      setState({
-        data: [],
-        loading: false,
-        error: err instanceof Error ? err.message : "Error al cargar gastos",
-      });
-    }
-  }, []);
+  const [trigger, setTrigger] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(controller.signal);
+    listExpenses({ ...monthRange() })
+      .then((res) => {
+        if (!controller.signal.aborted) {
+          setState({ data: res.data, loading: false, error: null });
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          setState({
+            data: [],
+            loading: false,
+            error:
+              err instanceof Error ? err.message : "Error al cargar gastos",
+          });
+        }
+      });
     return () => controller.abort();
-  }, [fetch]);
+  }, [trigger]);
 
-  const refresh = useCallback(() => fetch(), [fetch]);
+  const refresh = useCallback(() => {
+    setState((s) => ({ ...s, loading: true, error: null }));
+    setTrigger((t) => t + 1);
+  }, []);
 
   return { ...state, refresh };
 }

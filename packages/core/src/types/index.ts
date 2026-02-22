@@ -1,3 +1,3 @@
-export * from "./expense.enums.ts";
+export * from "./modules";
 export * from "./common";
 export * from "./metrics";

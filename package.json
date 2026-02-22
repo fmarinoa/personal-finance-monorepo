@@ -2,7 +2,9 @@
   "name": "personal-finance-monorepo",
   "version": "1.0.0",
   "scripts": {
+    "prepare": "husky || true",
     "prettier": "prettier --write .",
+    "lint": "eslint .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,14 +23,28 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@eslint/js": "9.39.1",
     "@tsconfig/node22": "22.0.5",
     "@types/luxon": "^3.7.1",
     "@types/node": "25.2.3",
+    "eslint": "9.39.1",
+    "globals": "16.5.0",
+    "husky": "9.1.7",
+    "lint-staged": "16.2.7",
     "prettier": "3.8.1",
-    "tsconfig-paths": "4.2.0"
+    "tsconfig-paths": "4.2.0",
+    "typescript-eslint": "8.48.0"
   },
   "dependencies": {
     "luxon": "3.7.2",
     "typescript": "5.9.3"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --max-warnings 0 --fix"
+    ],
+    "*.{json,md,yml}": [
+      "prettier --write"
+    ]
   }
 }

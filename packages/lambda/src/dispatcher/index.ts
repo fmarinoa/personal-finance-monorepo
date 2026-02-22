@@ -1,6 +1,5 @@
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyHandler = (...args: any[]) => any;
 
 export interface RouteOptions {
