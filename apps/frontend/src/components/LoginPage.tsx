@@ -98,12 +98,6 @@ function Spinner() {
   );
 }
 
-type Step = "login" | "new-password";
-
-interface LoginPageProps {
-  onSignIn: (username: string | null) => void;
-}
-
 /* ── Password requirement helpers (matches Cognito policy) ── */
 const REQUIREMENTS = [
   {
@@ -115,6 +109,12 @@ const REQUIREMENTS = [
   { id: "lower", label: "Una minúscula", test: (v: string) => /[a-z]/.test(v) },
   { id: "digit", label: "Un número", test: (v: string) => /[0-9]/.test(v) },
 ];
+
+type Step = "login" | "new-password";
+
+interface LoginPageProps {
+  onSignIn: (username: string | null) => void;
+}
 
 export function LoginPage({ onSignIn }: LoginPageProps) {
   const [step, setStep] = useState<Step>("login");
@@ -255,6 +255,17 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
             <Stat value="AWS" label="Infraestructura" />
             <Stat value="24/7" label="Disponible" />
           </div>
+          <p className="mt-6 text-[10px] font-mono text-white/20 tracking-wide">
+            Powered by{" "}
+            <a
+              href={APP_CONFIG.AUTHOR.WEBSITE}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/35 hover:text-white/60 transition-colors underline"
+            >
+              {APP_CONFIG.AUTHOR.NAME}
+            </a>
+          </p>
         </div>
       </aside>
 
@@ -332,7 +343,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
               </form>
 
               <p className="mt-7 text-center text-xs text-slate-600">
-                ¿No tienes cuenta? Contacta a tu administrador.
+                ¿No tienes cuenta? Contacta al administrador.
               </p>
             </div>
           )}

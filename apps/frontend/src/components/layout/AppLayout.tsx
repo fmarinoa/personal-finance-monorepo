@@ -80,6 +80,7 @@ export function AppLayout({
         <div className="flex-1" />
 
         <SignOutButton onClick={handleSignOut} loading={signingOut} />
+        <PoweredBy />
       </nav>
 
       {/* ── Main content ── */}
@@ -98,7 +99,12 @@ export function AppLayout({
               aria-label="Abrir menú"
               className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-white/8 text-white/40 hover:text-white/80 hover:border-white/20 hover:bg-white/5 transition cursor-pointer"
             >
-              <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15">
+              <svg
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                width="15"
+                height="15"
+              >
                 <path d="M1 2.75A.75.75 0 011.75 2h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 2.75zm0 5A.75.75 0 011.75 7h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 7.75zM1.75 12a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75z" />
               </svg>
             </button>
@@ -116,7 +122,9 @@ export function AppLayout({
       <div
         onClick={() => setMobileNavOpen(false)}
         className={`fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
-          mobileNavOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          mobileNavOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
         }`}
       />
       {/* Panel */}
@@ -143,7 +151,9 @@ export function AppLayout({
         </div>
 
         <div className="px-5 pt-5 pb-2">
-          <span className="text-[9px] font-mono tracking-[0.2em] text-white/25 uppercase">Menú</span>
+          <span className="text-[9px] font-mono tracking-[0.2em] text-white/25 uppercase">
+            Menú
+          </span>
         </div>
 
         <nav className="flex flex-col gap-1 px-3">
@@ -152,12 +162,18 @@ export function AppLayout({
               key={item.label}
               onClick={() => setMobileNavOpen(false)}
               className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition cursor-pointer w-full text-left ${
-                item.active ? "bg-white/8 text-white" : "text-white/35 hover:text-white/70 hover:bg-white/5"
+                item.active
+                  ? "bg-white/8 text-white"
+                  : "text-white/35 hover:text-white/70 hover:bg-white/5"
               }`}
             >
-              <span className={item.active ? "text-gold" : ""}>{item.icon}</span>
+              <span className={item.active ? "text-gold" : ""}>
+                {item.icon}
+              </span>
               {item.label}
-              {item.active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-gold" />}
+              {item.active && (
+                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-gold" />
+              )}
             </button>
           ))}
         </nav>
@@ -166,7 +182,10 @@ export function AppLayout({
 
         <div className="px-3 pb-8 pt-4 border-t border-white/6">
           <SignOutButton
-            onClick={() => { setMobileNavOpen(false); handleSignOut(); }}
+            onClick={() => {
+              setMobileNavOpen(false);
+              handleSignOut();
+            }}
             loading={signingOut}
           />
         </div>
@@ -177,21 +196,59 @@ export function AppLayout({
 
 /* ── Shared sub-components ── */
 
+function PoweredBy() {
+  return (
+    <p className="px-3 pt-4 text-[10px] font-mono text-white/20 tracking-wide">
+      Powered by{" "}
+      <a
+        href={APP_CONFIG.AUTHOR.WEBSITE}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-white/35 hover:text-white/60 transition-colors underline"
+      >
+        {APP_CONFIG.AUTHOR.NAME}
+      </a>
+    </p>
+  );
+}
+
 function AppLogo({ size = 32 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" className="shrink-0">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      className="shrink-0"
+    >
       <rect width="40" height="40" rx="10" fill="#d4a853" />
-      <path d="M10 28l6-8 5 4 5-7 4 6" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M10 28l6-8 5 4 5-7 4 6"
+        stroke="#0a0a0a"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <circle cx="28" cy="13" r="3" fill="#0a0a0a" />
     </svg>
   );
 }
 
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode; label: string; active?: boolean }) {
+function NavItem({
+  icon,
+  label,
+  active = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+}) {
   return (
     <button
       className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer w-full text-left ${
-        active ? "bg-white/8 text-white" : "text-white/30 hover:text-white/70 hover:bg-white/5"
+        active
+          ? "bg-white/8 text-white"
+          : "text-white/30 hover:text-white/70 hover:bg-white/5"
       }`}
     >
       {icon}
@@ -200,14 +257,28 @@ function NavItem({ icon, label, active = false }: { icon: React.ReactNode; label
   );
 }
 
-function SignOutButton({ onClick, loading }: { onClick: () => void; loading: boolean }) {
+function SignOutButton({
+  onClick,
+  loading,
+}: {
+  onClick: () => void;
+  loading: boolean;
+}) {
   return (
     <button
       onClick={onClick}
       disabled={loading}
       className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 text-sm font-medium transition cursor-pointer disabled:opacity-40 w-full"
     >
-      <svg viewBox="0 0 16 16" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <svg
+        viewBox="0 0 16 16"
+        fill="none"
+        width="16"
+        height="16"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      >
         <path d="M10 3h3a1 1 0 011 1v8a1 1 0 01-1 1h-3M7 11l3-3-3-3M10 8H2" />
       </svg>
       {loading ? "Saliendo…" : "Cerrar sesión"}
