@@ -1,8 +1,8 @@
 import { DbRepository } from "@/modules/expenses/repositories/DbRepository";
 import { BadRequestError, InternalError } from "@packages/lambda";
-import { PaginatedResponse } from "@packages/core";
+import { FiltersForList, PaginatedResponse } from "@packages/core";
 import { User } from "@/modules/shared/domains";
-import { Expense, FiltersForList } from "../domains";
+import { Expense } from "../domains";
 import { ExpenseService } from "./ExpenseService";
 
 interface ExpenseServiceProps {

@@ -1,4 +1,5 @@
-import { Expense, FiltersForList } from "../domains/Expense";
+import { FiltersForList } from "@packages/core";
+import { Expense } from "../domains";
 
 export interface DbRepository {
   create(expense: Expense): Promise<Expense>;

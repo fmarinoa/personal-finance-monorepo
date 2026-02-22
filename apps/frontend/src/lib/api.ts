@@ -1,6 +1,11 @@
 import axios from "axios";
 import { fetchAuthSession } from "aws-amplify/auth";
-import type { CreateExpensePayload } from "@packages/core";
+import type {
+  Expense,
+  CreateExpensePayload,
+  FiltersForList,
+  PaginatedResponse,
+} from "@packages/core";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL as string,
@@ -17,4 +22,11 @@ export async function createExpense(
   payload: CreateExpensePayload,
 ): Promise<void> {
   await api.post("/expenses", payload);
+}
+
+export async function listExpenses(
+  filters: FiltersForList,
+): Promise<PaginatedResponse<Expense>> {
+  const response = await api.get("/expenses", { params: filters });
+  return response.data;
 }

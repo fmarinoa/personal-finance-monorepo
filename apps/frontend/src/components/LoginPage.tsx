@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { signIn, confirmSignIn } from "aws-amplify/auth";
-import { APP_CONFIG } from "../config/app";
+import { APP_CONFIG } from "@/config/app";
 
 type Step = "login" | "new-password";
 

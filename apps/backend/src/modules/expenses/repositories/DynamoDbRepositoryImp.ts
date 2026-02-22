@@ -1,4 +1,4 @@
-import { Expense, FiltersForList } from "../domains/Expense";
+import { Expense } from "../domains/Expense";
 import { DbRepository } from "./DbRepository";
 import {
   DynamoDBDocumentClient,
@@ -14,7 +14,7 @@ import {
   NotFoundError,
   InternalError,
 } from "@packages/lambda";
-import { ExpenseStatus } from "@packages/core";
+import { ExpenseStatus, FiltersForList } from "@packages/core";
 
 export interface DynamoDbRepositoryImpProps {
   dbClient: DynamoDBDocumentClient;
@@ -68,20 +68,20 @@ export class DynamoDbRepositoryImp
 
     if (filters.startDate && filters.endDate) {
       keyConditionExpression +=
-        " AND creationDate BETWEEN :startDate AND :endDate";
+        " AND paymentDate BETWEEN :startDate AND :endDate";
       expressionAttributeValues[":startDate"] = filters.startDate;
       expressionAttributeValues[":endDate"] = filters.endDate;
     } else if (filters.startDate) {
-      keyConditionExpression += " AND creationDate >= :startDate";
+      keyConditionExpression += " AND paymentDate >= :startDate";
       expressionAttributeValues[":startDate"] = filters.startDate;
     } else if (filters.endDate) {
-      keyConditionExpression += " AND creationDate <= :endDate";
+      keyConditionExpression += " AND paymentDate <= :endDate";
       expressionAttributeValues[":endDate"] = filters.endDate;
     }
 
     const queryInput: QueryCommandInput = {
       TableName: this.props.expensesTableName,
-      IndexName: "userIdCreationDateIndex",
+      IndexName: "userIdPaymentDateIndex",
       KeyConditionExpression: keyConditionExpression,
       Limit: filters.limit,
       FilterExpression: "#status <> :activeStatus",
@@ -113,9 +113,9 @@ export class DynamoDbRepositoryImp
       return { data: [], nextToken: undefined };
     }
 
-    const data = Items.map((item: Record<string, any>) =>
-      Expense.buildFromDbItem(item),
-    );
+    const data = Items.sort(
+      (a: any, b: any) => b.paymentDate - a.paymentDate,
+    ).map((item: Record<string, any>) => Expense.buildFromDbItem(item));
 
     const nextToken = LastEvaluatedKey
       ? Buffer.from(JSON.stringify(LastEvaluatedKey)).toString("base64")

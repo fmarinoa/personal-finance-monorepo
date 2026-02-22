@@ -3,6 +3,9 @@ import { signOut } from "aws-amplify/auth";
 import { CreateExpenseDrawer } from "./CreateExpenseDrawer";
 import { MobileNav } from "./MobileNav";
 import { MobileFAB } from "./MobileFAB";
+import { MonthExpenses } from "./MonthExpenses";
+import { useMonthExpenses } from "@/hooks/useMonthExpenses";
+import type { Expense } from "@packages/core";
 import { APP_CONFIG } from "@/config/app";
 
 interface DashboardProps {
@@ -12,12 +15,18 @@ interface DashboardProps {
 export function Dashboard({ onSignOut }: DashboardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [successCount, setSuccessCount] = useState(0);
   const [toastVisible, setToastVisible] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
+  const {
+    data: monthData,
+    loading: monthLoading,
+    error: monthError,
+    refresh: refreshMonth,
+  } = useMonthExpenses();
+
   function handleCreated() {
-    setSuccessCount((n) => n + 1);
+    refreshMonth();
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 3000);
   }
@@ -132,43 +141,24 @@ export function Dashboard({ onSignOut }: DashboardProps) {
         </header>
 
         {/* Body */}
-        <main className="flex-1 px-8 md:px-10 py-10">
+        <main className="flex-1 px-6 md:px-10 py-8 flex flex-col gap-8">
           {/* Stats row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
-              label="Gastos registrados"
-              value={successCount.toString()}
-              mono
+              label="Este mes"
+              valueNode={<TodayTotal data={monthData} loading={monthLoading} />}
               accent
             />
             <StatCard label="Este mes" value="—" mono />
             <StatCard label="Categorías" value="—" mono />
           </div>
 
-          {/* Empty state */}
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white/4 border border-white/8 flex items-center justify-center mb-5">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                width="28"
-                height="28"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                className="text-white/20"
-              >
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <p className="text-white/40 text-sm font-medium mb-1">
-              Sin gastos registrados
-            </p>
-            <p className="text-white/20 text-xs max-w-xs">
-              Registra tu primer gasto usando el botón{" "}
-              <span className="text-gold/60">Nuevo gasto</span>
-            </p>
-          </div>
+          {/* Today's expenses quick view */}
+          <MonthExpenses
+            data={monthData}
+            loading={monthLoading}
+            error={monthError}
+          />
         </main>
       </div>
 
@@ -244,11 +234,13 @@ function NavItem({
 function StatCard({
   label,
   value,
+  valueNode,
   mono = false,
   accent = false,
 }: {
   label: string;
-  value: string;
+  value?: string;
+  valueNode?: React.ReactNode;
   mono?: boolean;
   accent?: boolean;
 }) {
@@ -257,14 +249,28 @@ function StatCard({
       <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase">
         {label}
       </span>
-      <span
-        className={`text-3xl font-bold tracking-tight ${
-          accent ? "text-gold" : "text-white"
-        } ${mono ? "font-mono" : ""}`}
-      >
-        {value}
-      </span>
+      {valueNode ?? (
+        <span
+          className={`text-3xl font-bold tracking-tight ${accent ? "text-gold" : "text-white"} ${mono ? "font-mono" : ""}`}
+        >
+          {value}
+        </span>
+      )}
     </div>
+  );
+}
+
+/** Live total of today's expenses */
+function TodayTotal({ data, loading }: { data: Expense[]; loading: boolean }) {
+  const total = data.reduce((s, e) => s + e.amount, 0);
+  if (loading)
+    return (
+      <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
+    );
+  return (
+    <span className="text-3xl font-bold tracking-tight font-mono text-gold">
+      S/ {total.toFixed(2)}
+    </span>
   );
 }
 

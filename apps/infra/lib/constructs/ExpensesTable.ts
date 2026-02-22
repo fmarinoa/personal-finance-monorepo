@@ -27,9 +27,9 @@ export class ExpensesTable extends Construct {
     });
 
     this.table.addGlobalSecondaryIndex({
-      indexName: "userIdCreationDateIndex",
+      indexName: "userIdPaymentDateIndex",
       partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
-      sortKey: { name: "creationDate", type: dynamodb.AttributeType.NUMBER },
+      sortKey: { name: "paymentDate", type: dynamodb.AttributeType.NUMBER },
       projectionType: dynamodb.ProjectionType.ALL,
     });
   }

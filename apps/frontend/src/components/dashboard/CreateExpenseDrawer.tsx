@@ -1,5 +1,6 @@
 import { ExpenseCategory, PaymentMethod } from "@packages/core";
 import { useState } from "react";
+import { DateTime } from "luxon";
 import { createExpense } from "@/lib/api";
 import {
   CATEGORY_LABELS,
@@ -18,7 +19,7 @@ const EMPTY = {
   description: "",
   category: "" as ExpenseCategory | "",
   paymentMethod: "" as PaymentMethod | "",
-  paymentDate: new Date().toISOString().slice(0, 10),
+  paymentDate: DateTime.local().toISODate()!, // Fecha local del usuario
 };
 
 export function CreateExpenseDrawer({
@@ -59,7 +60,11 @@ export function CreateExpenseDrawer({
         description: form.description.trim(),
         category: form.category as ExpenseCategory,
         paymentMethod: form.paymentMethod as PaymentMethod,
-        paymentDate: new Date(form.paymentDate).getTime(),
+        // Fecha en zona local del usuario → inicio del día en su zona → UTC timestamp
+        paymentDate: DateTime.fromISO(form.paymentDate, { zone: "local" })
+          .startOf("day")
+          .toUTC()
+          .toMillis(),
       });
       setForm({ ...EMPTY });
       onCreated();

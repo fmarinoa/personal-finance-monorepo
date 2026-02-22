@@ -1,5 +1,11 @@
 import z from "zod";
-import { ExpenseCategory, ExpenseStatus, PaymentMethod } from "@packages/core";
+import {
+  ExpenseCategory,
+  ExpenseStatus,
+  FiltersForList,
+  PaymentMethod,
+  Expense as ExpenseInterface,
+} from "@packages/core";
 import { BadRequestError } from "@packages/lambda";
 import { User } from "@/modules/shared/domains";
 import { CreateExpensePayload } from "@packages/core";
@@ -49,14 +55,7 @@ const schemaForList = z.object({
     .transform((val) => (val ? new Date(val).getTime() : undefined)),
 });
 
-export interface FiltersForList {
-  limit?: number;
-  nextToken?: string;
-  startDate?: number;
-  endDate?: number;
-}
-
-export class Expense {
+export class Expense implements ExpenseInterface {
   user!: User;
   id!: string;
   amount!: number;
@@ -76,7 +75,10 @@ export class Expense {
     Object.assign(this, data);
   }
 
-  static buildFromDbItem(item: Record<string, any>): Expense {
+  static buildFromDbItem(
+    item: Record<string, any>,
+    options?: { includeDeleted?: boolean },
+  ): Expense {
     return new Expense({
       id: item.id,
       user: new User({ id: item.userId }),
@@ -84,14 +86,16 @@ export class Expense {
       description: item.description,
       paymentMethod: item.paymentMethod,
       paymentDate: item.paymentDate,
-      category: item.categoryCode,
+      category: item.category,
       creationDate: item.creationDate,
       lastUpdatedDate: item?.lastUpdatedDate,
       status: item.status,
-      onDelete: {
-        deletionDate: item?.onDelete?.deletionDate,
-        reason: item?.onDelete?.reason,
-      },
+      ...(options?.includeDeleted && {
+        onDelete: {
+          deletionDate: item.deletionDate,
+          reason: item.deletionReason,
+        },
+      }),
     });
   }
 

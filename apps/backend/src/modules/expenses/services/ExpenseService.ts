@@ -1,6 +1,6 @@
-import { PaginatedResponse } from "@packages/core";
+import { FiltersForList, PaginatedResponse } from "@packages/core";
 import { User } from "@/modules/shared/domains";
-import { Expense, FiltersForList } from "../domains";
+import { Expense } from "../domains";
 
 export interface ExpenseService {
   create(expense: Expense): Promise<{ id: string }>;
