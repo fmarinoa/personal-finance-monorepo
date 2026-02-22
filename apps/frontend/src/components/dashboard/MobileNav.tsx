@@ -7,23 +7,30 @@ interface MobileNavProps {
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: <DashboardIcon />, active: true },
-  { label: "Gastos",    icon: <ExpensesIcon />,  active: false },
+  { label: "Gastos", icon: <ExpensesIcon />, active: false },
 ];
 
-export function MobileNav({ open, onClose, onSignOut, signingOut }: MobileNavProps) {
+export function MobileNav({
+  open,
+  onClose,
+  onSignOut,
+  signingOut,
+}: MobileNavProps) {
   return (
     <>
       {/* Backdrop */}
       <div
         onClick={onClose}
         className={`fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          open
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
         }`}
       />
 
       {/* Panel */}
       <div
-        className={`fixed left-0 top-0 h-full z-50 w-72 flex flex-col bg-[#0e0e0e] border-r border-white/6 transition-transform duration-300 ease-[cubic-bezier(.32,.72,0,1)] md:hidden ${
+        className={`fixed left-0 top-0 h-full z-50 w-72 flex flex-col bg-surface border-r border-white/6 transition-transform duration-300 ease-[cubic-bezier(.32,.72,0,1)] md:hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -31,11 +38,19 @@ export function MobileNav({ open, onClose, onSignOut, signingOut }: MobileNavPro
         <div className="flex items-center justify-between px-5 pt-7 pb-6 border-b border-white/6">
           <div className="flex items-center gap-2.5">
             <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
-              <rect width="40" height="40" rx="10" fill="#d4a853" />
-              <path d="M10 28l6-8 5 4 5-7 4 6" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="28" cy="13" r="3" fill="#0a0a0a" />
+              <rect width="40" height="40" rx="10" fill="gold" />
+              <path
+                d="M10 28l6-8 5 4 5-7 4 6"
+                stroke="canvas"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="28" cy="13" r="3" fill="canvas" />
             </svg>
-            <span className="font-bold text-sm tracking-tight text-white">FinanceOS</span>
+            <span className="font-bold text-sm tracking-tight text-white">
+              FinanceOS
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -49,7 +64,9 @@ export function MobileNav({ open, onClose, onSignOut, signingOut }: MobileNavPro
 
         {/* Section label */}
         <div className="px-5 pt-5 pb-2">
-          <span className="text-[9px] font-mono tracking-[0.2em] text-white/25 uppercase">Menú</span>
+          <span className="text-[9px] font-mono tracking-[0.2em] text-white/25 uppercase">
+            Menú
+          </span>
         </div>
 
         {/* Nav items */}
@@ -64,10 +81,12 @@ export function MobileNav({ open, onClose, onSignOut, signingOut }: MobileNavPro
                   : "text-white/35 hover:text-white/70 hover:bg-white/5"
               }`}
             >
-              <span className={item.active ? "text-[#d4a853]" : ""}>{item.icon}</span>
+              <span className={item.active ? "text-gold" : ""}>
+                {item.icon}
+              </span>
               {item.label}
               {item.active && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#d4a853]" />
+                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-gold" />
               )}
             </button>
           ))}
@@ -79,11 +98,22 @@ export function MobileNav({ open, onClose, onSignOut, signingOut }: MobileNavPro
         {/* Footer */}
         <div className="px-3 pb-8 pt-4 border-t border-white/6">
           <button
-            onClick={() => { onClose(); onSignOut(); }}
+            onClick={() => {
+              onClose();
+              onSignOut();
+            }}
             disabled={signingOut}
             className="flex items-center gap-3 w-full px-3.5 py-3 rounded-xl text-sm font-medium text-white/35 hover:text-red-400/80 hover:bg-red-500/6 transition cursor-pointer disabled:opacity-40"
           >
-            <svg viewBox="0 0 16 16" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            >
               <path d="M10 3h3a1 1 0 011 1v8a1 1 0 01-1 1h-3M7 11l3-3-3-3M10 8H2" />
             </svg>
             {signingOut ? "Saliendo…" : "Cerrar sesión"}

@@ -3,7 +3,7 @@ import { signOut } from "aws-amplify/auth";
 import { CreateExpenseDrawer } from "./CreateExpenseDrawer";
 import { MobileNav } from "./MobileNav";
 import { MobileFAB } from "./MobileFAB";
-import { APP_CONFIG } from "../../config/app";
+import { APP_CONFIG } from "@/config/app";
 
 interface DashboardProps {
   onSignOut: () => void;
@@ -34,23 +34,23 @@ export function Dashboard({ onSignOut }: DashboardProps) {
 
   return (
     <div
-      className="flex min-h-screen bg-[#0a0a0a] text-white"
+      className="flex min-h-screen bg-canvas text-white"
       style={{ fontFamily: "'Plus Jakarta Sans Variable', sans-serif" }}
     >
       {/* ── Sidebar ── */}
-      <nav className="hidden md:flex flex-col w-[220px] shrink-0 border-r border-white/6 px-4 py-8">
+      <nav className="hidden md:flex flex-col w-55 shrink-0 border-r border-white/6 px-4 py-8">
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-2 mb-10">
           <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
-            <rect width="40" height="40" rx="10" fill="#d4a853" />
+            <rect width="40" height="40" rx="10" fill="gold" />
             <path
               d="M10 28l6-8 5 4 5-7 4 6"
-              stroke="#0a0a0a"
+              stroke="canvas"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            <circle cx="28" cy="13" r="3" fill="#0a0a0a" />
+            <circle cx="28" cy="13" r="3" fill="canvas" />
           </svg>
           <span className="font-bold text-base tracking-tight">
             {APP_CONFIG.NAME}
@@ -92,7 +92,7 @@ export function Dashboard({ onSignOut }: DashboardProps) {
         {/* Top bar */}
         <header className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-white/6">
           <div>
-            <p className="text-[10px] font-mono tracking-[0.2em] text-[#d4a853] uppercase mb-0.5">
+            <p className="text-[10px] font-mono tracking-[0.2em] text-gold uppercase mb-0.5">
               Portal de finanzas
             </p>
             <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
@@ -104,16 +104,26 @@ export function Dashboard({ onSignOut }: DashboardProps) {
               aria-label="Abrir menú"
               className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-white/8 text-white/40 hover:text-white/80 hover:border-white/20 hover:bg-white/5 transition cursor-pointer"
             >
-              <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15">
+              <svg
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                width="15"
+                height="15"
+              >
                 <path d="M1 2.75A.75.75 0 011.75 2h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 2.75zm0 5A.75.75 0 011.75 7h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 7.75zM1.75 12a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75z" />
               </svg>
             </button>
             {/* Nuevo gasto — desktop only */}
             <button
               onClick={() => setDrawerOpen(true)}
-              className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#d4a853] hover:bg-[#e2b96a] active:scale-[.98] text-[#0a0a0a] text-sm font-bold tracking-wide transition cursor-pointer"
+              className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light active:scale-[.98] text-canvas text-sm font-bold tracking-wide transition cursor-pointer"
             >
-              <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
+              <svg
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                width="14"
+                height="14"
+              >
                 <path d="M8 1.5a.75.75 0 01.75.75V7.5h5.25a.75.75 0 010 1.5H8.75v5.25a.75.75 0 01-1.5 0V9H2a.75.75 0 010-1.5h5.25V2.25A.75.75 0 018 1.5z" />
               </svg>
               Nuevo gasto
@@ -156,7 +166,7 @@ export function Dashboard({ onSignOut }: DashboardProps) {
             </p>
             <p className="text-white/20 text-xs max-w-xs">
               Registra tu primer gasto usando el botón{" "}
-              <span className="text-[#d4a853]/60">Nuevo gasto</span>
+              <span className="text-gold/60">Nuevo gasto</span>
             </p>
           </div>
         </main>
@@ -183,7 +193,7 @@ export function Dashboard({ onSignOut }: DashboardProps) {
       {/* ── Success toast ── */}
       <div
         role="status"
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-xl bg-[#141414] border border-[#d4a853]/30 text-sm font-medium text-white shadow-2xl transition-all duration-300 ${
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-60 flex items-center gap-2.5 px-5 py-3 rounded-xl bg-surface-2 border border-gold/30 text-sm font-medium text-white shadow-2xl transition-all duration-300 ${
           toastVisible
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-2 pointer-events-none"
@@ -249,7 +259,7 @@ function StatCard({
       </span>
       <span
         className={`text-3xl font-bold tracking-tight ${
-          accent ? "text-[#d4a853]" : "text-white"
+          accent ? "text-gold" : "text-white"
         } ${mono ? "font-mono" : ""}`}
       >
         {value}

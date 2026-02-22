@@ -105,15 +105,15 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
   }`;
 
   return (
-    <div className="flex min-h-screen bg-[#0b0f1a] text-slate-200 font-sans">
+    <div className="flex min-h-screen bg-canvas text-slate-200 font-sans">
       {/* ── Brand panel ── */}
-      <aside className="relative hidden md:flex flex-col w-[44%] overflow-hidden p-12 bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900">
+      <aside className="relative hidden md:flex flex-col w-[44%] overflow-hidden p-12 bg-canvas border-r border-white/6">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "radial-gradient(rgba(99,102,241,.18) 1px, transparent 1px)",
+              "radial-gradient(rgba(212,168,83,.14) 1px, transparent 1px)",
             backgroundSize: "28px 28px",
             maskImage:
               "radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent)",
@@ -123,15 +123,15 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
         <div className="relative z-10 flex flex-col h-full">
           <div className="flex items-center gap-3">
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <rect width="40" height="40" rx="12" fill="#3b82f6" />
+              <rect width="40" height="40" rx="12" fill="gold" />
               <path
                 d="M10 28l6-8 5 4 5-7 4 6"
-                stroke="#fff"
+                stroke="canvas"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <circle cx="28" cy="13" r="3" fill="#fbbf24" />
+              <circle cx="28" cy="13" r="3" fill="canvas" />
             </svg>
             <span className="text-xl font-bold tracking-tight text-slate-100">
               {APP_CONFIG.NAME}
@@ -150,7 +150,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
             </p>
           </div>
 
-          <div className="flex gap-8 pt-6 border-t border-white/8">
+          <div className="flex gap-8 pt-6 border-t border-white/6">
             <Stat value="100%" label="Privado" />
             <Stat value="AWS" label="Infraestructura" />
             <Stat value="24/7" label="Disponible" />
@@ -164,7 +164,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
           {/* Step dots */}
           <div className="flex items-center gap-2 mb-8">
             <StepDot active={step === "login"} done={step === "new-password"} />
-            <div className="flex-1 h-px bg-slate-800" />
+            <div className="flex-1 h-px bg-white/8" />
             <StepDot active={step === "new-password"} done={false} />
           </div>
 
@@ -172,10 +172,10 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
           {step === "login" && (
             <div className={panelCls}>
               <div className="mb-8">
-                <h2 className="text-3xl font-extrabold tracking-tight text-slate-100 mb-1">
+                <h2 className="text-3xl font-extrabold tracking-tight text-white mb-1">
                   Bienvenido
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-white/35">
                   Ingresa tus credenciales para acceder al portal
                 </p>
               </div>
@@ -381,7 +381,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
 
 /* ── Design tokens ── */
 const inputCls =
-  "w-full py-3 pl-10 pr-4 bg-gray-900 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-700 text-sm outline-none transition focus:border-blue-500 focus:ring-3 focus:ring-blue-500/20";
+  "w-full py-3 pl-10 pr-4 bg-white/4 border border-white/8 rounded-xl text-white placeholder-white/20 text-sm outline-none transition focus:border-gold/60 focus:ring-3 focus:ring-gold/12";
 
 /* ── Shared sub-components ── */
 
@@ -394,7 +394,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+      <span className="text-xs font-semibold tracking-wide text-white/40 uppercase">
         {label}
       </span>
       {children}
@@ -414,9 +414,9 @@ function SubmitButton({
   amber?: boolean;
 }) {
   const color = amber
-    ? "bg-amber-500 hover:bg-amber-400 focus-visible:ring-amber-500/40"
-    : "bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500/40";
-  const textColor = amber ? "text-slate-900" : "text-white";
+    ? "bg-gold hover:bg-gold-light focus-visible:ring-gold/30"
+    : "bg-gold hover:bg-gold-light focus-visible:ring-gold/30";
+  const textColor = "text-canvas";
 
   return (
     <button
@@ -462,7 +462,7 @@ function EyeToggle({
       type="button"
       onClick={onToggle}
       aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
-      className="absolute right-3 text-slate-500 hover:text-slate-300 transition cursor-pointer"
+      className="absolute right-3 text-white/30 hover:text-white/70 transition cursor-pointer"
     >
       {show ? <EyeOffIcon /> : <EyeIcon />}
     </button>
@@ -486,13 +486,13 @@ function StepDot({ active, done }: { active: boolean; done: boolean }) {
     );
   if (active)
     return (
-      <div className="w-7 h-7 rounded-full bg-blue-600/20 border-2 border-blue-500 flex items-center justify-center shrink-0">
-        <div className="w-2 h-2 rounded-full bg-blue-400" />
+      <div className="w-7 h-7 rounded-full bg-gold/15 border-2 border-gold flex items-center justify-center shrink-0">
+        <div className="w-2 h-2 rounded-full bg-gold" />
       </div>
     );
   return (
-    <div className="w-7 h-7 rounded-full border border-slate-800 flex items-center justify-center shrink-0">
-      <div className="w-2 h-2 rounded-full bg-slate-700" />
+    <div className="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center shrink-0">
+      <div className="w-2 h-2 rounded-full bg-white/15" />
     </div>
   );
 }
@@ -500,8 +500,8 @@ function StepDot({ active, done }: { active: boolean; done: boolean }) {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-base font-bold text-blue-400">{value}</span>
-      <span className="text-xs text-slate-600 uppercase tracking-widest">
+      <span className="text-base font-bold text-gold">{value}</span>
+      <span className="text-xs text-white/25 uppercase tracking-widest">
         {label}
       </span>
     </div>
@@ -512,7 +512,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 function EmailIcon() {
   return (
     <svg
-      className="absolute left-3 w-4 h-4 text-slate-600 pointer-events-none"
+      className="absolute left-3 w-4 h-4 text-white/25 pointer-events-none"
       viewBox="0 0 20 20"
       fill="currentColor"
     >
@@ -524,7 +524,7 @@ function EmailIcon() {
 function LockIcon() {
   return (
     <svg
-      className="absolute left-3 w-4 h-4 text-slate-600 pointer-events-none"
+      className="absolute left-3 w-4 h-4 text-white/25 pointer-events-none"
       viewBox="0 0 20 20"
       fill="currentColor"
     >

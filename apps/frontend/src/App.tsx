@@ -17,7 +17,7 @@ function App() {
 
   if (authState === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
+      <div className="flex items-center justify-center min-h-screen bg-canvas">
         <svg
           className="animate-spin"
           viewBox="0 0 24 24"
@@ -28,7 +28,7 @@ function App() {
           <circle cx="12" cy="12" r="10" stroke="#1a1a1a" strokeWidth="3" />
           <path
             d="M12 2a10 10 0 0110 10"
-            stroke="#d4a853"
+            stroke="gold"
             strokeWidth="3"
             strokeLinecap="round"
           />

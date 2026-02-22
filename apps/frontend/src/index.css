@@ -3,5 +3,12 @@
 @import "@fontsource/space-mono";
 
 @theme {
-  --color-brand: #d4a853;
+  /* Brand gold */
+  --color-gold: #d4a853;
+  --color-gold-light: #e2b96a;
+
+  /* Canvas / surfaces */
+  --color-canvas: #0a0a0a;
+  --color-surface: #0e0e0e;
+  --color-surface-2: #141414;
 }

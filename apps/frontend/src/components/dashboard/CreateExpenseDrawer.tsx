@@ -1,11 +1,11 @@
 import { ExpenseCategory, PaymentMethod } from "@packages/core";
 import { useState } from "react";
-import { createExpense } from "../../lib/api";
+import { createExpense } from "@/lib/api";
 import {
   CATEGORY_LABELS,
   CATEGORY_ICONS,
   PAYMENT_METHOD_LABELS,
-} from "../../types/expense";
+} from "@/types/expense";
 
 interface CreateExpenseDrawerProps {
   open: boolean;
@@ -92,14 +92,14 @@ export function CreateExpenseDrawer({
 
       {/* Drawer */}
       <aside
-        className={`fixed right-0 top-0 h-full z-50 w-full max-w-[480px] flex flex-col bg-[#0e0e0e] border-l border-white/6 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(.32,.72,0,1)] ${
+        className={`fixed right-0 top-0 h-full z-50 w-full max-w-120 flex flex-col bg-surface border-l border-white/6 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(.32,.72,0,1)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header */}
         <div className="flex items-start justify-between px-8 pt-8 pb-6 border-b border-white/6">
           <div>
-            <p className="text-[10px] font-mono tracking-[0.2em] text-[#d4a853] uppercase mb-1">
+            <p className="text-[10px] font-mono tracking-[0.2em] text-gold uppercase mb-1">
               Nuevo registro
             </p>
             <h2 className="text-2xl font-bold tracking-tight text-white">
@@ -126,7 +126,7 @@ export function CreateExpenseDrawer({
           <div className="flex flex-col gap-2">
             <Label>Monto</Label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-[#d4a853] text-lg font-semibold pointer-events-none">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-gold text-lg font-semibold pointer-events-none">
                 S/
               </span>
               <input
@@ -137,7 +137,7 @@ export function CreateExpenseDrawer({
                 required
                 value={form.amount}
                 onChange={(e) => set("amount", e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-white/4 border border-white/8 rounded-xl text-white text-xl font-mono font-semibold placeholder-white/20 outline-none transition focus:border-[#d4a853]/60 focus:ring-2 focus:ring-[#d4a853]/12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full pl-12 pr-4 py-3.5 bg-white/4 border border-white/8 rounded-xl text-white text-xl font-mono font-semibold placeholder-white/20 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
           </div>
@@ -169,7 +169,7 @@ export function CreateExpenseDrawer({
                     onClick={() => set("category", cat)}
                     className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border text-xs font-medium transition cursor-pointer ${
                       active
-                        ? "border-[#d4a853]/60 bg-[#d4a853]/10 text-[#d4a853]"
+                        ? "border-gold/60 bg-gold/10 text-gold"
                         : "border-white/8 bg-white/3 text-white/50 hover:border-white/20 hover:text-white/80"
                     }`}
                   >
@@ -196,12 +196,12 @@ export function CreateExpenseDrawer({
                     onClick={() => set("paymentMethod", pm)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition cursor-pointer ${
                       active
-                        ? "border-[#d4a853]/60 bg-[#d4a853]/10 text-[#d4a853]"
+                        ? "border-gold/60 bg-gold/10 text-gold"
                         : "border-white/8 bg-white/3 text-white/50 hover:border-white/20 hover:text-white/80"
                     }`}
                   >
                     <span
-                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? "bg-[#d4a853]" : "bg-white/20"}`}
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? "bg-gold" : "bg-white/20"}`}
                     />
                     {PAYMENT_METHOD_LABELS[pm]}
                   </button>
@@ -218,7 +218,7 @@ export function CreateExpenseDrawer({
               required
               value={form.paymentDate}
               onChange={(e) => set("paymentDate", e.target.value)}
-              className={`${inputCls} [color-scheme:dark]`}
+              className={`${inputCls} scheme-dark`}
             />
           </div>
 
@@ -254,7 +254,7 @@ export function CreateExpenseDrawer({
             type="submit"
             disabled={loading || !canSubmit}
             onClick={handleSubmit}
-            className="flex-[2] flex items-center justify-center gap-2 py-3 rounded-xl bg-[#d4a853] hover:bg-[#e2b96a] active:scale-[.99] text-[#0a0a0a] text-sm font-bold tracking-wide transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            className="flex-2 flex items-center justify-center gap-2 py-3 rounded-xl bg-gold hover:bg-gold-light active:scale-[.99] text-canvas text-sm font-bold tracking-wide transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             {loading ? (
               <>
@@ -294,7 +294,7 @@ export function CreateExpenseDrawer({
 
 /* ── Shared helpers ── */
 const inputCls =
-  "w-full px-4 py-3 bg-white/4 border border-white/8 rounded-xl text-white placeholder-white/20 text-sm outline-none transition focus:border-[#d4a853]/60 focus:ring-2 focus:ring-[#d4a853]/12";
+  "w-full px-4 py-3 bg-white/4 border border-white/8 rounded-xl text-white placeholder-white/20 text-sm outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/12";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
