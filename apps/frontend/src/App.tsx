@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "aws-amplify/auth";
+import { getCurrentUser, fetchUserAttributes } from "aws-amplify/auth";
 import { LoginPage } from "./components/LoginPage";
 import { Dashboard } from "./components/dashboard/Dashboard";
 import "./lib/amplify-config";
@@ -8,10 +8,15 @@ type AuthState = "loading" | "unauthenticated" | "authenticated";
 
 function App() {
   const [authState, setAuthState] = useState<AuthState>("loading");
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     getCurrentUser()
-      .then(() => setAuthState("authenticated"))
+      .then(() => fetchUserAttributes())
+      .then((attrs) => {
+        setUsername(attrs.given_name ?? attrs.email ?? null);
+        setAuthState("authenticated");
+      })
       .catch(() => setAuthState("unauthenticated"));
   }, []);
 
@@ -38,10 +43,25 @@ function App() {
   }
 
   if (authState === "unauthenticated") {
-    return <LoginPage onSignIn={() => setAuthState("authenticated")} />;
+    return (
+      <LoginPage
+        onSignIn={(name) => {
+          setUsername(name);
+          setAuthState("authenticated");
+        }}
+      />
+    );
   }
 
-  return <Dashboard onSignOut={() => setAuthState("unauthenticated")} />;
+  return (
+    <Dashboard
+      username={username}
+      onSignOut={() => {
+        setUsername(null);
+        setAuthState("unauthenticated");
+      }}
+    />
+  );
 }
 
 export default App;
