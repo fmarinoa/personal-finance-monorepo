@@ -2,6 +2,7 @@ import type {
   ExpenseCategory,
   PaymentMethod,
   ExpenseStatus,
+  DeleteReason,
 } from "./subtypes.ts";
 
 export interface Expense {
@@ -17,7 +18,7 @@ export interface Expense {
   status: ExpenseStatus;
   onDelete: {
     deletionDate?: number;
-    reason?: string;
+    reason?: DeleteReason;
   };
 }
 

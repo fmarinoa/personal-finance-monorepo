@@ -161,7 +161,7 @@ export class DynamoDbRepositoryImp
     } = this.buildUpdateExpression(request, fieldsToUpdate);
 
     try {
-      const result = await this.props.dbClient.send(
+      await this.props.dbClient.send(
         new UpdateCommand({
           TableName: this.props.expensesTableName,
           Key: { userId: expense.user.id, id: expense.id },
@@ -169,14 +169,11 @@ export class DynamoDbRepositoryImp
           ExpressionAttributeNames,
           ExpressionAttributeValues,
           ConditionExpression: "attribute_exists(userId)",
+          ReturnValues: "ALL_NEW",
         }),
       );
 
-      if (!result.Attributes) {
-        throw new NotFoundError({ details: "Expense not found" });
-      }
-
-      return Expense.buildFromDbItem(result.Attributes);
+      return request;
     } catch (error: any) {
       if (error.name === "ConditionalCheckFailedException") {
         throw new NotFoundError({ details: "Expense not found" });

@@ -4,7 +4,9 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { EXPENSES_TABLE_NAME } from "..";
 
 const client = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(client);
+const docClient = DynamoDBDocumentClient.from(client, {
+  marshallOptions: { removeUndefinedValues: true },
+});
 
 export const dbRepository = new DynamoDbRepositoryImp({
   dbClient: docClient,

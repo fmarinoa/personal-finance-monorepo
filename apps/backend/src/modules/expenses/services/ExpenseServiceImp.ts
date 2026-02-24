@@ -1,5 +1,9 @@
 import { DbRepository } from "@/modules/expenses/repositories/DbRepository";
-import { BadRequestError, InternalError } from "@packages/lambda";
+import {
+  BadRequestError,
+  InternalError,
+  NotFoundError,
+} from "@packages/lambda";
 import { FiltersForList, PaginatedResponse } from "@packages/core";
 import { User } from "@/modules/shared/domains";
 import { Expense } from "../domains";
@@ -65,7 +69,7 @@ export class ExpenseServiceImp implements ExpenseService {
 
       return response;
     } catch (error) {
-      if (error instanceof BadRequestError) {
+      if (error instanceof BadRequestError || error instanceof NotFoundError) {
         throw error;
       }
       throw new InternalError({ details: error });

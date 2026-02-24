@@ -101,14 +101,15 @@ export class ExpenseController extends BaseController {
   }
 
   async delete(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
-    const { context, pathParams, body } = this.retrieveRequestContext(event);
+    const { context, pathParams, queryParams } =
+      this.retrieveRequestContext(event);
     const [expenseId] = this.retrieveFromPathParameters(pathParams!, ["id"]);
-    const [reason] = this.retrieveFromBody(body!, ["reason"]);
+    const [reason] = this.retrieveFromQueryParams(queryParams!, ["reason"]);
 
-    const expense = new Expense({
+    const expense = Expense.instanceForDelete({
       user: new User({ id: context.authorizer?.claims["sub"] }),
       id: expenseId,
-      onDelete: { reason },
+      reason,
     });
 
     const deleted = await this.props.expenseService.delete(expense);

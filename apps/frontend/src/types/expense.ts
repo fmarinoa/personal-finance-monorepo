@@ -1,4 +1,4 @@
-import { ExpenseCategory, PaymentMethod } from "@packages/core";
+import { DeleteReason, ExpenseCategory, PaymentMethod } from "@packages/core";
 
 export const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   [ExpenseCategory.FOOD]: "Comida",
@@ -30,4 +30,12 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   [PaymentMethod.DEBIT_CARD]: "Tarjeta de débito",
   [PaymentMethod.BANK_TRANSFER]: "Transferencia",
   [PaymentMethod.YAPE]: "Yape",
+};
+
+export const DELETE_REASON_LABELS: Record<DeleteReason, string> = {
+  [DeleteReason.DUPLICATE]: "Registro duplicado",
+  [DeleteReason.WRONG_AMOUNT]: "Monto incorrecto",
+  [DeleteReason.WRONG_CATEGORY]: "Categoría incorrecta",
+  [DeleteReason.CANCELLED]: "Operación cancelada",
+  [DeleteReason.OTHER]: "Otro",
 };

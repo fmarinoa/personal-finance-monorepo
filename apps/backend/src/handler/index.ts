@@ -43,7 +43,7 @@ export const dispatcher = new Dispatcher(middyAdapter)
     timeout: 5,
     description: "Get expense by ID",
   })
-  .put("/expenses/{id}", (e) => expenseController.update(e), {
+  .patch("/expenses/{id}", (e) => expenseController.update(e), {
     timeout: 10,
     description: "Update an existing expense by ID",
   })

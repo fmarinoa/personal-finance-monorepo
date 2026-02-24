@@ -5,6 +5,7 @@ import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
 import { useExpenses } from "@/hooks/useExpenses";
 import { usePeriod, type Period } from "@/hooks/usePeriod";
+import type { Expense } from "@packages/core";
 
 import { Table } from "./Table";
 
@@ -22,6 +23,7 @@ export function ExpensesPage({
   onNavigate,
 }: ExpensesPageProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>();
   const [page, setPage] = useState(1);
 
   const {
@@ -75,14 +77,27 @@ export function ExpensesPage({
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
+        onEditExpense={(expense) => {
+          setSelectedExpense(expense);
+          setDrawerOpen(true);
+        }}
       />
 
-      <MobileFAB onNewExpense={() => setDrawerOpen(true)} />
+      <MobileFAB
+        onNewExpense={() => {
+          setSelectedExpense(undefined);
+          setDrawerOpen(true);
+        }}
+      />
 
       <CreateExpenseDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => {
+          setDrawerOpen(false);
+          setSelectedExpense(undefined);
+        }}
         onCreated={refresh}
+        expense={selectedExpense}
       />
     </AppLayout>
   );

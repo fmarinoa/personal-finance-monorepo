@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DateTime } from "luxon";
-import { ExpenseCategory, PaymentMethod } from "@packages/core";
+import {
+  DeleteReason,
+  ExpenseCategory,
+  PaymentMethod,
+  type Expense,
+} from "@packages/core";
 
-import { createExpense } from "@/lib/api";
+import { createExpense, updateExpense, deleteExpense } from "@/lib/api";
 import {
   CATEGORY_LABELS,
   CATEGORY_ICONS,
+  DELETE_REASON_LABELS,
   PAYMENT_METHOD_LABELS,
 } from "@/types/expense";
 
@@ -13,6 +19,8 @@ interface CreateExpenseDrawerProps {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
+  /** When provided, the drawer operates in edit mode */
+  expense?: Expense;
 }
 
 const EMPTY = {
@@ -20,17 +28,40 @@ const EMPTY = {
   description: "",
   category: "" as ExpenseCategory | "",
   paymentMethod: "" as PaymentMethod | "",
-  paymentDate: DateTime.local().toISODate()!, // Fecha local del usuario
+  paymentDate: DateTime.local().toISODate()!,
 };
 
 export function CreateExpenseDrawer({
   open,
   onClose,
   onCreated,
+  expense,
 }: CreateExpenseDrawerProps) {
+  const isEdit = !!expense;
+
   const [form, setForm] = useState({ ...EMPTY });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteReason, setDeleteReason] = useState<DeleteReason | "">("");
+
+  // Sync form when expense changes (edit mode)
+  useEffect(() => {
+    if (expense) {
+      setForm({
+        amount: expense.amount.toString(),
+        description: expense.description,
+        category: expense.category,
+        paymentMethod: expense.paymentMethod,
+        paymentDate: DateTime.fromMillis(expense.paymentDate).toISODate()!,
+      });
+    } else {
+      setForm({ ...EMPTY });
+    }
+    setError(null);
+    setConfirmDelete(false);
+    setDeleteReason("");
+  }, [expense, open]);
 
   function set<K extends keyof typeof EMPTY>(key: K, value: (typeof EMPTY)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -39,7 +70,8 @@ export function CreateExpenseDrawer({
 
   function handleClose() {
     if (loading) return;
-    setForm({ ...EMPTY });
+    setConfirmDelete(false);
+    setDeleteReason("");
     setError(null);
     onClose();
   }
@@ -55,23 +87,59 @@ export function CreateExpenseDrawer({
     }
     setError(null);
     setLoading(true);
+    const paymentDate = DateTime.fromISO(form.paymentDate, { zone: "local" })
+      .startOf("day")
+      .toUTC()
+      .toMillis();
     try {
-      await createExpense({
-        amount,
-        description: form.description.trim(),
-        category: form.category as ExpenseCategory,
-        paymentMethod: form.paymentMethod as PaymentMethod,
-        // Fecha en zona local del usuario → inicio del día en su zona → UTC timestamp
-        paymentDate: DateTime.fromISO(form.paymentDate, { zone: "local" })
-          .startOf("day")
-          .toUTC()
-          .toMillis(),
-      });
-      setForm({ ...EMPTY });
+      if (isEdit) {
+        await updateExpense(expense.id, {
+          amount,
+          description: form.description.trim(),
+          category: form.category as ExpenseCategory,
+          paymentMethod: form.paymentMethod as PaymentMethod,
+          paymentDate,
+        });
+      } else {
+        await createExpense({
+          amount,
+          description: form.description.trim(),
+          category: form.category as ExpenseCategory,
+          paymentMethod: form.paymentMethod as PaymentMethod,
+          paymentDate,
+        });
+      }
       onCreated();
-      onClose();
+      handleClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al crear el gasto");
+      setError(
+        err instanceof Error
+          ? err.message
+          : isEdit
+            ? "Error al actualizar el gasto"
+            : "Error al crear el gasto",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!expense) return;
+    if (!deleteReason) {
+      setError("Selecciona una razón para eliminar el gasto.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await deleteExpense(expense.id, deleteReason);
+      onCreated();
+      handleClose();
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Error al eliminar el gasto",
+      );
+      setConfirmDelete(false);
     } finally {
       setLoading(false);
     }
@@ -106,10 +174,10 @@ export function CreateExpenseDrawer({
         <div className="flex items-start justify-between px-8 pt-8 pb-6 border-b border-white/6">
           <div>
             <p className="text-[10px] font-mono tracking-[0.2em] text-gold uppercase mb-1">
-              Nuevo registro
+              {isEdit ? "Editar registro" : "Nuevo registro"}
             </p>
             <h2 className="text-2xl font-bold tracking-tight text-white">
-              Agregar gasto
+              {isEdit ? "Editar gasto" : "Agregar gasto"}
             </h2>
           </div>
           <button
@@ -123,175 +191,278 @@ export function CreateExpenseDrawer({
           </button>
         </div>
 
-        {/* Form body */}
-        <form
-          onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-6"
-        >
-          {/* Amount */}
-          <div className="flex flex-col gap-2">
-            <Label>Monto</Label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-gold text-lg font-semibold pointer-events-none">
-                S/
-              </span>
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="0.00"
-                required
-                value={form.amount}
-                onChange={(e) => set("amount", e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-white/4 border border-white/8 rounded-xl text-white text-xl font-mono font-semibold placeholder-white/20 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
+        {/* Body: form OR delete confirmation */}
+        {confirmDelete ? (
+          <div className="flex-1 flex flex-col px-8 py-6 gap-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  width="18"
+                  height="18"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-red-400"
+                >
+                  <path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-semibold">
+                  ¿Por qué eliminas este gasto?
+                </p>
+                <p className="text-white/40 text-xs mt-0.5">
+                  Esta acción no se puede deshacer.
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Description */}
-          <div className="flex flex-col gap-2">
-            <Label>Descripción</Label>
-            <input
-              type="text"
-              placeholder="ej. Almuerzo en el centro"
-              maxLength={120}
-              required
-              value={form.description}
-              onChange={(e) => set("description", e.target.value)}
-              className={inputCls}
-            />
-          </div>
-
-          {/* Category grid */}
-          <div className="flex flex-col gap-2">
-            <Label>Categoría</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {Object.values(ExpenseCategory).map((cat) => {
-                const active = form.category === cat;
+            <div className="flex flex-col gap-2">
+              {(
+                Object.keys(DeleteReason) as Array<keyof typeof DeleteReason>
+              ).map((key) => {
+                const value = DeleteReason[key];
+                const active = deleteReason === value;
                 return (
                   <button
-                    key={cat}
+                    key={value}
                     type="button"
-                    onClick={() => set("category", cat)}
-                    className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border text-xs font-medium transition cursor-pointer ${
+                    onClick={() => {
+                      setDeleteReason(value);
+                      setError(null);
+                    }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition cursor-pointer text-left ${
                       active
-                        ? "border-gold/60 bg-gold/10 text-gold"
-                        : "border-white/8 bg-white/3 text-white/50 hover:border-white/20 hover:text-white/80"
-                    }`}
-                  >
-                    <span className="text-lg leading-none">
-                      {CATEGORY_ICONS[cat]}
-                    </span>
-                    <span>{CATEGORY_LABELS[cat]}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Payment method */}
-          <div className="flex flex-col gap-2">
-            <Label>Método de pago</Label>
-            <div className="flex flex-col gap-1.5">
-              {Object.values(PaymentMethod).map((pm) => {
-                const active = form.paymentMethod === pm;
-                return (
-                  <button
-                    key={pm}
-                    type="button"
-                    onClick={() => set("paymentMethod", pm)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition cursor-pointer ${
-                      active
-                        ? "border-gold/60 bg-gold/10 text-gold"
+                        ? "border-red-500/40 bg-red-500/10 text-red-300"
                         : "border-white/8 bg-white/3 text-white/50 hover:border-white/20 hover:text-white/80"
                     }`}
                   >
                     <span
-                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? "bg-gold" : "bg-white/20"}`}
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? "bg-red-400" : "bg-white/20"}`}
                     />
-                    {PAYMENT_METHOD_LABELS[pm]}
+                    {DELETE_REASON_LABELS[value]}
                   </button>
                 );
               })}
             </div>
-          </div>
 
-          {/* Date */}
-          <div className="flex flex-col gap-2">
-            <Label>Fecha del gasto</Label>
-            <input
-              type="date"
-              required
-              value={form.paymentDate}
-              onChange={(e) => set("paymentDate", e.target.value)}
-              className={`${inputCls} scheme-dark`}
-            />
+            {error && <p className="text-red-400 text-sm">{error}</p>}
           </div>
-
-          {/* Error */}
-          {error && (
-            <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-red-500/8 border border-red-500/20 text-red-400 text-sm">
-              <svg
-                viewBox="0 0 16 16"
-                fill="currentColor"
-                width="14"
-                height="14"
-                className="shrink-0 mt-0.5"
-              >
-                <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 3.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 6.5a.875.875 0 110-1.75.875.875 0 010 1.75z" />
-              </svg>
-              {error}
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-6"
+          >
+            {/* Amount */}
+            <div className="flex flex-col gap-2">
+              <Label>Monto</Label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-gold text-lg font-semibold pointer-events-none">
+                  S/
+                </span>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="0.00"
+                  required
+                  value={form.amount}
+                  onChange={(e) => set("amount", e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 bg-white/4 border border-white/8 rounded-xl text-white text-xl font-mono font-semibold placeholder-white/20 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </div>
             </div>
-          )}
-        </form>
+
+            {/* Description */}
+            <div className="flex flex-col gap-2">
+              <Label>Descripción</Label>
+              <input
+                type="text"
+                placeholder="ej. Almuerzo en el centro"
+                maxLength={120}
+                required
+                value={form.description}
+                onChange={(e) => set("description", e.target.value)}
+                className={inputCls}
+              />
+            </div>
+
+            {/* Category grid */}
+            <div className="flex flex-col gap-2">
+              <Label>Categoría</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.values(ExpenseCategory).map((cat) => {
+                  const active = form.category === cat;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => set("category", cat)}
+                      className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border text-xs font-medium transition cursor-pointer ${
+                        active
+                          ? "border-gold/60 bg-gold/10 text-gold"
+                          : "border-white/8 bg-white/3 text-white/50 hover:border-white/20 hover:text-white/80"
+                      }`}
+                    >
+                      <span className="text-lg leading-none">
+                        {CATEGORY_ICONS[cat]}
+                      </span>
+                      <span>{CATEGORY_LABELS[cat]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Payment method */}
+            <div className="flex flex-col gap-2">
+              <Label>Método de pago</Label>
+              <div className="flex flex-col gap-1.5">
+                {Object.values(PaymentMethod).map((pm) => {
+                  const active = form.paymentMethod === pm;
+                  return (
+                    <button
+                      key={pm}
+                      type="button"
+                      onClick={() => set("paymentMethod", pm)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition cursor-pointer ${
+                        active
+                          ? "border-gold/60 bg-gold/10 text-gold"
+                          : "border-white/8 bg-white/3 text-white/50 hover:border-white/20 hover:text-white/80"
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? "bg-gold" : "bg-white/20"}`}
+                      />
+                      {PAYMENT_METHOD_LABELS[pm]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Date */}
+            <div className="flex flex-col gap-2">
+              <Label>Fecha del gasto</Label>
+              <input
+                type="date"
+                required
+                value={form.paymentDate}
+                onChange={(e) => set("paymentDate", e.target.value)}
+                className={`${inputCls} scheme-dark`}
+              />
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-red-500/8 border border-red-500/20 text-red-400 text-sm">
+                <svg
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  width="14"
+                  height="14"
+                  className="shrink-0 mt-0.5"
+                >
+                  <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 3.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 6.5a.875.875 0 110-1.75.875.875 0 010 1.75z" />
+                </svg>
+                {error}
+              </div>
+            )}
+          </form>
+        )}
 
         {/* Footer */}
         <div className="px-8 py-6 border-t border-white/6 flex gap-3">
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={loading}
-            className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:border-white/20 hover:text-white/80 transition cursor-pointer disabled:opacity-40"
-          >
-            Cancelar
-          </button>
-          <button
-            form="create-expense-form"
-            type="submit"
-            disabled={loading || !canSubmit}
-            onClick={handleSubmit}
-            className="flex-2 flex items-center justify-center gap-2 py-3 rounded-xl bg-gold hover:bg-gold-light active:scale-[.99] text-canvas text-sm font-bold tracking-wide transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            {loading ? (
-              <>
-                <svg
-                  className="animate-spin"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  width="15"
-                  height="15"
+          {confirmDelete ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                disabled={loading}
+                className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:border-white/20 hover:text-white/80 transition cursor-pointer disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading || !deleteReason}
+                className="flex-2 flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/90 hover:bg-red-500 active:scale-[.99] text-white text-sm font-bold tracking-wide transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {loading ? "Eliminando…" : "Confirmar eliminación"}
+              </button>
+            </>
+          ) : (
+            <>
+              {isEdit && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={loading}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl border border-red-500/20 text-red-400/60 hover:border-red-500/40 hover:text-red-400 transition cursor-pointer disabled:opacity-40 shrink-0"
+                  title="Eliminar gasto"
                 >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeOpacity="0.3"
-                  />
-                  <path
-                    d="M12 2a10 10 0 0110 10"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                Guardando…
-              </>
-            ) : (
-              "Registrar gasto"
-            )}
-          </button>
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    width="14"
+                    height="14"
+                  >
+                    <path d="M6.5 1.75a.25.25 0 01.25-.25h2.5a.25.25 0 01.25.25V3h-3V1.75zm4.5 0V3h2.25a.75.75 0 010 1.5H2.75a.75.75 0 010-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75zM4.496 6.675a.75.75 0 10-1.492.15l.66 6.6A1.75 1.75 0 005.41 15h5.178a1.75 1.75 0 001.746-1.575l.66-6.6a.75.75 0 00-1.492-.15l-.66 6.6a.25.25 0 01-.249.225H5.41a.25.25 0 01-.249-.225l-.66-6.6z" />
+                  </svg>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleClose}
+                disabled={loading}
+                className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:border-white/20 hover:text-white/80 transition cursor-pointer disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={loading || !canSubmit}
+                onClick={handleSubmit}
+                className="flex-2 flex items-center justify-center gap-2 py-3 rounded-xl bg-gold hover:bg-gold-light active:scale-[.99] text-canvas text-sm font-bold tracking-wide transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <svg
+                      className="animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      width="15"
+                      height="15"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeOpacity="0.3"
+                      />
+                      <path
+                        d="M12 2a10 10 0 0110 10"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    Guardando…
+                  </>
+                ) : isEdit ? (
+                  "Guardar cambios"
+                ) : (
+                  "Registrar gasto"
+                )}
+              </button>
+            </>
+          )}
         </div>
       </aside>
     </>

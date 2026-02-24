@@ -6,3 +6,12 @@ export interface PaginatedResponse<T> {
     totalAmount: number;
   };
 }
+
+export const DeleteReason = {
+  DUPLICATE: "DUPLICATE",
+  WRONG_AMOUNT: "WRONG_AMOUNT",
+  WRONG_CATEGORY: "WRONG_CATEGORY",
+  CANCELLED: "CANCELLED",
+  OTHER: "OTHER",
+} as const;
+export type DeleteReason = (typeof DeleteReason)[keyof typeof DeleteReason];

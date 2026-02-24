@@ -4,6 +4,7 @@ import { fetchAuthSession } from "aws-amplify/auth";
 import type {
   CreateExpensePayload,
   DashboardSummary,
+  DeleteReason,
   Expense,
   FiltersForList,
   PaginatedResponse,
@@ -24,6 +25,20 @@ export async function createExpense(
   payload: CreateExpensePayload,
 ): Promise<void> {
   await api.post("/expenses", payload);
+}
+
+export async function updateExpense(
+  id: string,
+  payload: Partial<CreateExpensePayload>,
+): Promise<void> {
+  await api.patch(`/expenses/${id}`, payload);
+}
+
+export async function deleteExpense(
+  id: string,
+  reason: DeleteReason,
+): Promise<void> {
+  await api.delete(`/expenses/${id}`, { params: { reason } });
 }
 
 export async function listExpenses(
