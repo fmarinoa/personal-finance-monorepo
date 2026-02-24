@@ -59,9 +59,13 @@ export class ExpenseServiceImp implements ExpenseService {
         throw new BadRequestError({ details: "Expense not found" });
       }
 
+      const patch = Object.fromEntries(
+        Object.entries(expense).filter(([, v]) => v !== undefined),
+      );
+
       const validated = Expense.instanceForUpdate({
         ...existing,
-        ...expense,
+        ...patch,
         user: expense.user,
       });
 

@@ -4,15 +4,16 @@
   "scripts": {
     "prettier": "prettier --write .",
     "lint": "eslint .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "Franco Mariño <franco.marino.aquise@gmail.com>",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.712.0",
-    "@aws-sdk/lib-dynamodb": "^3.712.0",
+    "@aws-sdk/client-dynamodb": "3.996.0",
+    "@aws-sdk/lib-dynamodb": "3.996.0",
     "@middy/core": "7.0.2",
     "@middy/http-error-handler": "7.0.2",
     "@middy/http-json-body-parser": "7.0.2",

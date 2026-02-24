@@ -1,8 +1,8 @@
+import { DeleteReason } from "@/types/common.js";
 import type {
   ExpenseCategory,
   PaymentMethod,
   ExpenseStatus,
-  DeleteReason,
 } from "./subtypes.ts";
 
 export interface Expense {
@@ -14,9 +14,9 @@ export interface Expense {
   description: string;
   creationDate: number;
   category: ExpenseCategory;
-  lastUpdatedDate: number;
+  lastUpdatedDate?: number;
   status: ExpenseStatus;
-  onDelete: {
+  onDelete?: {
     deletionDate?: number;
     reason?: DeleteReason;
   };

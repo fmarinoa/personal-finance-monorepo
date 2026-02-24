@@ -13,6 +13,14 @@ pnpm lint        # ESLint across all workspaces
 pnpm prettier    # Prettier across all workspaces
 ```
 
+### apps/backend
+
+```bash
+pnpm test                                              # run all tests (vitest)
+pnpm test:coverage                                     # run with coverage report (60% threshold)
+pnpm vitest run test/modules/expenses/domains/Expense.test.ts  # run a single test file
+```
+
 ### apps/frontend
 
 ```bash
@@ -42,7 +50,7 @@ pnpm deploy:prod # cdk deploy -c stage=prod
 
 ```
 apps/
-  backend/    → Lambda functions (Node.js 20), DynamoDB
+  backend/    → Lambda functions (Node.js 22), DynamoDB
   frontend/   → Vite + React 19 + Tailwind + AWS Amplify
   infra/      → AWS CDK (Cognito, DynamoDB, API Gateway)
 packages/
@@ -77,54 +85,91 @@ All backend layers live under `apps/backend/src/modules/{feature}/`.
 
 ### packages/lambda Dispatcher
 
-`@packages/lambda` provides the `Dispatcher` class used in `handler/index.ts`:
+`@packages/lambda` provides the `Dispatcher` class. `handler/index.ts` uses method chaining with a Middy adapter:
 
 ```typescript
-const dispatcher = new Dispatcher();
-dispatcher.post("/expenses", expenseController.create);
-dispatcher.get("/expenses", expenseController.list);
-dispatcher.get("/expenses/{id}", expenseController.getById);
-dispatcher.put("/expenses/{id}", expenseController.update);
-dispatcher.delete("/expenses/{id}", expenseController.delete);
-export default dispatcher.export();
+export const dispatcher = new Dispatcher(middyAdapter)
+  .post("/expenses", (e) => expenseController.create(e))
+  .get("/expenses", (e) => expenseController.list(e))
+  .get("/expenses/{id}", (e) => expenseController.getById(e))
+  .patch("/expenses/{id}", (e) => expenseController.update(e))
+  .delete("/expenses/{id}", (e) => expenseController.delete(e));
+
+export const handler: APIGatewayProxyHandler = (...args) =>
+  dispatcher.getHandler()(...args);
 ```
 
 ## Key Conventions
 
-### userId — Always First Parameter
+### userId — Wrapped in User Object
 
-userId is extracted from Cognito authorizer claims and passed down every layer first:
+`userId` is extracted from Cognito claims (`context.authorizer?.claims["sub"]`) and immediately wrapped in a `User` domain object. The `User` is passed through every layer:
 
 ```typescript
 // Controller
-const userId = context.authorizer?.claims["sub"];
+const user = new User({ id: context.authorizer?.claims["sub"] });
 
 // Service interface
-create(userId: string, expense: Expense): Promise<Expense>
+list(user: User, filters: FiltersForList): Promise<PaginatedResponse<Expense>>
 
-// Repository interface — same order
-create(userId: string, expense: Expense): Promise<Expense>
-
-// SQL functions (packages/db) — same order
-create_expense(p_user_id UUID, p_amount NUMERIC, ...)
+// Repository
+list(userId: string, filters: FiltersForList): Promise<...>
+// (repositories receive user.id, not the User object)
 ```
 
-### Domain Validation — Static Factory Methods
+### Domain Validation — Static Factory Methods That Throw
 
-Domains return `Entity | ZodError` instead of throwing:
+Domain factory methods validate with Zod and **throw** `BadRequestError` on failure. Never return a ZodError:
 
 ```typescript
-const expense = Expense.instanceForCreate({ amount, description, category });
-if (expense instanceof ZodError) {
-  return this.badRequest(expense.message);
+// instanceForCreate uses the parsed Zod output (transforms applied)
+static instanceForCreate(data: CreateExpensePayload & { user: User }): Expense {
+  const { error, data: newData } = schemaForCreate.safeParse(data);
+  if (error) throw new BadRequestError({ details: error.message });
+  return new Expense({ ...newData, user: new User({ id: data.user.id }) });
 }
+
+// instanceForUpdate / instanceForDelete follow the same throw pattern
+```
+
+### Expense Class Fields and Partial Spreading
+
+The Expense class uses `useDefineForClassFields: true` (inherited from Node22 target). All declared fields initialize to `undefined` as own enumerable properties, even when not passed to the constructor. **Never spread an Expense instance directly over another** when patching — all undefined fields will override existing values:
+
+```typescript
+// ❌ Wrong — overrides existing.category with undefined
+const merged = { ...existing, ...partialExpense };
+
+// ✅ Correct — strip undefined fields first
+const patch = Object.fromEntries(
+  Object.entries(partialExpense).filter(([, v]) => v !== undefined),
+);
+const merged = { ...existing, ...patch, user: partialExpense.user };
 ```
 
 ### Controller Helpers (BaseController)
 
-- `getContext(event)` → `{ userId, body, pathParams, queryParams }`
-- `retriveFromBody(body, keys)` / `retriveFromPathParameters(pathParams, keys)` / `retriveFromQueryParams(queryParams, keys)`
-- Response methods: `ok()`, `created()`, `noContent()`, `badRequest()`, `unauthorized()`, `notFound()`, `internalError()`
+```typescript
+const { context, body, pathParams, queryParams } =
+  this.retrieveRequestContext(event);
+
+this.retrieveFromBody(body!, ["amount", "description"]);
+this.retrieveFromPathParameters(pathParams!, ["id"]);
+this.retrieveFromQueryParams(queryParams!, ["limit", "page"]);
+```
+
+Response methods: `ok()`, `created()`, `noContent()`. Errors are thrown as `BadRequestError`, `NotFoundError`, `InternalError` from `@packages/lambda` and caught by Middy's `httpErrorHandler`.
+
+### DELETE uses Query Params for Reason
+
+The DELETE endpoint receives `reason` as a **query param**, not in the body (DELETE requests have no body middleware):
+
+```typescript
+const [reason] = this.retrieveFromQueryParams(queryParams!, ["reason"]);
+const expense = Expense.instanceForDelete({ user, id: expenseId, reason });
+```
+
+`reason` must be a valid `DeleteReason` enum value (`DUPLICATE`, `WRONG_AMOUNT`, `WRONG_CATEGORY`, `CANCELLED`, `OTHER`).
 
 ### Soft Delete
 
@@ -141,29 +186,32 @@ Constructor injection throughout. Singletons exported from each module's `index.
 ```typescript
 // modules/expenses/index.ts
 export const dbRepository = new DynamoDbRepositoryImp();
-export const expenseService = new ExpenseServiceImp(dbRepository);
-export const expenseController = new ExpenseController(expenseService);
+export const expenseService = new ExpenseServiceImp({ dbRepository });
+export const expenseController = new ExpenseController({ expenseService });
 ```
 
 ### Middy Middleware Order
 
-```typescript
-middy(handler)
-  .use(requireBody()) // validate body exists
-  .use(jsonBodyParser()) // parse JSON
-  .use(httpErrorHandler()); // catch and format errors
-```
+Path param endpoints get `requirePathParameters` before `httpErrorHandler`. Body endpoints additionally get `requireBody` + `jsonBodyParser`. This is wired automatically in `handler/index.ts` based on the route path and method — controllers receive already-parsed body and validated path params.
 
-Only endpoints that require a body use `requireBody()`.
+```typescript
+// Auto-applied in handler/index.ts middyAdapter:
+if (pathParams.length) handler.use(requirePathParameters(pathParams));
+if (BODY_METHODS.includes(method))
+  handler.use(requireBody()).use(jsonBodyParser());
+handler.use(httpErrorHandler());
+```
 
 ### TypeScript Path Aliases
 
 Backend uses `@/` mapped to `src/`:
 
 ```typescript
-import { Expense } from "@/domains";
-import { expenseController } from "@/modules/expenses";
+import { Expense } from "@/modules/expenses/domains";
+import { expenseController } from "@/modules/expenses/controllers";
 ```
+
+Tests in `apps/backend/test/` use the same alias (configured in `vitest.config.ts`).
 
 ### Shared Types (packages/core)
 
@@ -172,19 +220,28 @@ Types are organized by module under `src/types/modules/`:
 ```
 core/src/types/
   modules/expenses/
-    subtypes.ts   → ExpenseCategory, PaymentMethod, ExpenseStatus (const objects)
-    expense.ts    → Expense, CreateExpensePayload, FiltersForList
-  common.ts       → PaginatedResponse<T>
-  metrics.ts      → MonthlyMetric
+    subtypes.ts.ts  → ExpenseCategory, PaymentMethod, ExpenseStatus, DeleteReason (const objects + types)
+    expense.ts      → Expense, CreateExpensePayload, FiltersForList
+  common.ts         → PaginatedResponse<T>, DeleteReason
+  metrics.ts        → MonthlyMetric
 ```
 
 Import via the package name: `import type { Expense } from "@packages/core"`.
 
-### Database Naming
+### Test Structure
 
-- DB columns: `snake_case` (`user_id`, `payment_date`)
-- TypeScript: `camelCase` (`userId`, `paymentDate`)
-- Repositories handle the mapping.
+Backend tests live in `apps/backend/test/` mirroring the source structure:
+
+```
+test/
+  eventFactory.ts                          → buildEvent() helper for APIGatewayProxyEvent mocks
+  modules/expenses/
+    controllers/ExpenseController.test.ts
+    domains/Expense.test.ts
+    services/ExpenseServiceImp.test.ts
+```
+
+Services and repositories are mocked with `vi.fn()`. Never mock the domain classes — test them directly.
 
 ## AWS Infrastructure
 
@@ -192,3 +249,15 @@ Import via the package name: `import type { Expense } from "@packages/core"`.
 - **Database:** DynamoDB (current); `packages/db/migrations/` has PL/pgSQL ready for a future RDS migration
 - **Stage:** `dev` or `prod` via `-c stage=dev`. Stack name: `FinanceBackendStack{stage}`
 - **Lambda env vars:** `STAGE`, `TABLE_NAME`, `DB_SECRET_ARN` (future RDS)
+
+## Commits
+
+Conventional Commits format, English only, no emojis, lowercase type, no scope, max 100 chars:
+
+```
+feat: add new feature
+fix: bug fix
+refactor: code change that neither fixes a bug nor adds a feature
+test: adding missing tests or correcting existing tests
+chore: changes to the build process or auxiliary tools
+```

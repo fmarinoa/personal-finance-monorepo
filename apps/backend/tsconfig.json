@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
-  "include": ["src", "tests"],
+  "include": ["src", "test", "vitest.config.ts"],
   "exclude": ["dist"],
   "compilerOptions": {
     "baseUrl": "./",
@@ -12,6 +12,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "strictPropertyInitialization": false
   }
 }

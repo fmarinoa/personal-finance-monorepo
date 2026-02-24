@@ -64,17 +64,17 @@ const schemaForDelete = z.object({
 });
 
 export class Expense implements ExpenseInterface {
-  user!: User;
-  id!: string;
-  amount!: number;
-  paymentMethod!: PaymentMethod;
-  paymentDate!: number;
-  description!: string;
-  creationDate!: number;
-  category!: ExpenseCategory;
-  lastUpdatedDate!: number;
-  status!: ExpenseStatus;
-  onDelete!: {
+  user: User;
+  id: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paymentDate: number;
+  description: string;
+  creationDate: number;
+  category: ExpenseCategory;
+  lastUpdatedDate?: number;
+  status: ExpenseStatus;
+  onDelete?: {
     deletionDate?: number;
     reason?: DeleteReason;
   };
