@@ -1,4 +1,4 @@
-import { Expense, ExpenseCategory } from "..";
+import { type Expense, ExpenseCategory } from "..";
 
 export interface DashboardSummary {
   currentMonthTotal: number;
