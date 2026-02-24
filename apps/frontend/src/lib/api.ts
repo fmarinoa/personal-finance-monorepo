@@ -1,8 +1,10 @@
 import axios from "axios";
 import { fetchAuthSession } from "aws-amplify/auth";
+
 import type {
-  Expense,
   CreateExpensePayload,
+  DashboardSummary,
+  Expense,
   FiltersForList,
   PaginatedResponse,
 } from "@packages/core";
@@ -28,5 +30,10 @@ export async function listExpenses(
   filters: FiltersForList,
 ): Promise<PaginatedResponse<Expense>> {
   const response = await api.get("/expenses", { params: filters });
+  return response.data;
+}
+
+export async function fetchDashboardSummary(): Promise<DashboardSummary> {
+  const response = await api.get("/metrics/dashboard-summary");
   return response.data;
 }

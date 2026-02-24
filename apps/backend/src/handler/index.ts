@@ -4,6 +4,7 @@ import jsonBodyParser from "@middy/http-json-body-parser";
 import httpErrorHandler from "@middy/http-error-handler";
 import { requireBody, requirePathParameters } from "@/middlewares";
 import { expenseController } from "@/modules/expenses/controllers";
+import { metricsController } from "@/modules/metrics/controllers";
 import { Dispatcher, HttpMethod } from "@packages/lambda";
 
 const BODY_METHODS: HttpMethod[] = ["POST", "PUT", "PATCH"];
@@ -49,7 +50,15 @@ export const dispatcher = new Dispatcher(middyAdapter)
   .delete("/expenses/{id}", (e) => expenseController.delete(e), {
     timeout: 5,
     description: "Delete an expense by ID",
-  });
+  })
+  .get(
+    "/metrics/dashboard-summary",
+    (e) => metricsController.getDashboardSummary(e),
+    {
+      timeout: 10,
+      description: "Get dashboard summary metrics for a given month period",
+    },
+  );
 
 export const handler: APIGatewayProxyHandler = (...args) =>
   dispatcher.getHandler()(...args);

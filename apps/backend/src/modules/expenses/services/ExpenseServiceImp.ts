@@ -32,7 +32,7 @@ export class ExpenseServiceImp implements ExpenseService {
     return {
       data,
       pagination: {
-        totalPages: Math.ceil(total / filters.limit),
+        totalPages: Math.ceil(total / (filters.limit || total)),
         total,
         totalAmount,
       },

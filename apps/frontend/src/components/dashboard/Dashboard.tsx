@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
-import { useExpenses } from "@/hooks/useExpenses";
-import { getDateRange } from "@/hooks/usePeriod";
+import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
+import { CATEGORY_ICONS, CATEGORY_LABELS } from "@/types/expense";
 
 import { MobileFAB } from "./MobileFAB";
 
@@ -23,17 +23,19 @@ function StatCard({
   accent?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 px-5 py-5 rounded-2xl bg-white/3 border border-white/6">
-      <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase">
+    <div className="flex flex-col gap-1.5 px-5 py-5 rounded-2xl bg-white/3 border border-white/6 min-h-27.5">
+      <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase shrink-0">
         {label}
       </span>
-      {valueNode ?? (
-        <span
-          className={`text-3xl font-bold tracking-tight ${accent ? "text-gold" : "text-white"} ${mono ? "font-mono" : ""}`}
-        >
-          {value}
-        </span>
-      )}
+      <div className="flex-1 flex items-center justify-center">
+        {valueNode ?? (
+          <span
+            className={`text-3xl font-bold tracking-tight ${accent ? "text-gold" : "text-white"} ${mono ? "font-mono" : ""}`}
+          >
+            {value}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -58,6 +60,52 @@ function MonthTotal({
   );
 }
 
+function MonthlyVariationIndicator({
+  loading,
+  previousMonthVariationPercentage,
+}: {
+  loading: boolean;
+  previousMonthVariationPercentage: number;
+}) {
+  if (loading)
+    return (
+      <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
+    );
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-3xl font-bold tracking-tight font-mono text-gold">
+        {previousMonthVariationPercentage.toFixed(0)} %
+      </span>
+    </div>
+  );
+}
+
+function TopCategory({
+  loading,
+  topCategory,
+  totalAmount,
+}: {
+  loading: boolean;
+  topCategory: string;
+  totalAmount: number;
+}) {
+  if (loading)
+    return (
+      <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
+    );
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-3xl font-bold tracking-tight font-mono text-gold">
+        {CATEGORY_ICONS[topCategory as keyof typeof CATEGORY_ICONS]}
+        {CATEGORY_LABELS[topCategory as keyof typeof CATEGORY_LABELS]}
+      </span>
+      <span className="text-sm font-mono text-gold">
+        S/ {totalAmount.toFixed(0)}
+      </span>
+    </div>
+  );
+}
+
 interface DashboardProps {
   username: string | null;
   onSignOut: () => void;
@@ -74,15 +122,10 @@ export function Dashboard({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
 
-  const dateRange = useMemo(() => getDateRange("this-month"), []);
-  const {
-    totalAmount,
-    loading: monthLoading,
-    refresh: refreshMonth,
-  } = useExpenses({ ...dateRange, limit: 5 });
+  const { data, loading, refreshing, error, refresh } = useDashboardMetrics();
 
   function handleCreated() {
-    refreshMonth();
+    refresh();
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 3000);
   }
@@ -107,16 +150,56 @@ export function Dashboard({
       }
     >
       {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {error && !loading && (
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+          <svg
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            width="14"
+            height="14"
+            className="shrink-0"
+          >
+            <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 4.25a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 7a.875.875 0 110-1.75.875.875 0 010 1.75z" />
+          </svg>
+          {error}
+        </div>
+      )}
+      <div
+        className={`grid grid-cols-1 sm:grid-cols-3 gap-4 transition-opacity duration-500 ${refreshing ? "opacity-40" : "opacity-100"}`}
+      >
         <StatCard
-          label="Mes anterior"
+          label="Gasto del mes"
           valueNode={
-            <MonthTotal loading={monthLoading} totalAmount={totalAmount} />
+            <MonthTotal
+              loading={loading}
+              totalAmount={data.currentMonthTotal}
+            />
           }
           accent
         />
-        <StatCard label="Promedio diario" value="—" mono />
-        <StatCard label="Categorías" value="—" mono />
+        <StatCard
+          label="Variación de gasto vs mes anterior"
+          valueNode={
+            <MonthlyVariationIndicator
+              loading={loading}
+              previousMonthVariationPercentage={
+                data.previousMonthVariationPercentage
+              }
+            />
+          }
+          accent
+        />
+        <StatCard
+          label="Categoría más gastada"
+          valueNode={
+            <TopCategory
+              loading={loading}
+              topCategory={data.topCategory.code}
+              totalAmount={data.topCategory.total}
+            />
+          }
+          accent
+        />
       </div>
 
       {/* Mobile FAB */}
