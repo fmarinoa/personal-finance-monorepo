@@ -1,4 +1,4 @@
-import { DeleteReason } from "@/types/common.js";
+import { DeleteReason } from "../..";
 import type {
   ExpenseCategory,
   PaymentMethod,

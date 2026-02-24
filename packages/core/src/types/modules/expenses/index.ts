@@ -1,2 +1,2 @@
-export * from "./subtypes.ts";
+export * from "./subtypes";
 export * from "./expense";

@@ -11,6 +11,7 @@
     "baseUrl": "../backend",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "strictPropertyInitialization": false
   }
 }

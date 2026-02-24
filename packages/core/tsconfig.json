@@ -3,10 +3,6 @@
   "include": ["src", "index.ts"],
   "exclude": ["dist"],
   "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
     "composite": true,
     "declaration": true,
     "declarationMap": true,
