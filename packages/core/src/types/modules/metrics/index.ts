@@ -1,4 +1,4 @@
-import { ExpenseCategory } from "..";
+import { Expense, ExpenseCategory } from "..";
 
 export interface DashboardSummary {
   currentMonthTotal: number;
@@ -7,6 +7,8 @@ export interface DashboardSummary {
     code: ExpenseCategory;
     total: number;
   };
+  lastExpenses: Expense[];
+  // lastIncomes?: Income[];
 }
 
 export interface MonthlyMetric {

@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { DateTime } from "luxon";
 
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "@/types/expense";
+import type { Expense } from "@packages/core";
 
 import { MobileFAB } from "./MobileFAB";
 
@@ -106,6 +108,66 @@ function TopCategory({
   );
 }
 
+function LastExpensesTable({
+  loading,
+  expenses,
+  onViewMore,
+}: {
+  loading: boolean;
+  expenses: Expense[];
+  onViewMore: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 px-5 py-5 rounded-2xl bg-white/3 border border-white/6">
+      <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase shrink-0">
+        Últimos gastos
+      </span>
+      {loading ? (
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-8 rounded-lg bg-white/6 animate-pulse" />
+          ))}
+        </div>
+      ) : expenses.length === 0 ? (
+        <p className="text-sm text-white/30 py-4 text-center">
+          Sin gastos este mes
+        </p>
+      ) : (
+        <table className="w-full text-sm">
+          <tbody className="divide-y divide-white/5">
+            {expenses.map((e) => (
+              <tr key={e.id} className="group">
+                <td className="py-2.5 pr-3 w-8 text-base leading-none">
+                  {CATEGORY_ICONS[e.category as keyof typeof CATEGORY_ICONS]}
+                </td>
+                <td className="py-2.5 pr-3 text-white/80 max-w-40 truncate">
+                  {e.description}
+                </td>
+                <td className="py-2.5 pr-3 text-white/35 hidden sm:table-cell whitespace-nowrap">
+                  {CATEGORY_LABELS[e.category as keyof typeof CATEGORY_LABELS]}
+                </td>
+                <td className="py-2.5 pr-3 text-white/35 whitespace-nowrap">
+                  {DateTime.fromMillis(e.paymentDate).toFormat("dd MMM", {
+                    locale: "es",
+                  })}
+                </td>
+                <td className="py-2.5 text-right font-mono text-gold font-semibold whitespace-nowrap">
+                  S/ {e.amount.toFixed(2)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <button
+        onClick={onViewMore}
+        className="mt-1 self-end text-xs font-mono text-white/30 hover:text-gold transition-colors cursor-pointer"
+      >
+        Ver más →
+      </button>
+    </div>
+  );
+}
 interface DashboardProps {
   username: string | null;
   onSignOut: () => void;
@@ -199,6 +261,15 @@ export function Dashboard({
             />
           }
           accent
+        />
+      </div>
+
+      {/* Bottom row: last expenses (50%) + future incomes (50%) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <LastExpensesTable
+          loading={loading}
+          expenses={data.lastExpenses}
+          onViewMore={() => onNavigate("expenses")}
         />
       </div>
 

@@ -6,6 +6,7 @@ const DEFAULT_DATA: DashboardSummary = {
   currentMonthTotal: 0,
   previousMonthVariationPercentage: 0,
   topCategory: { code: ExpenseCategory.OTHER, total: 0 },
+  lastExpenses: [],
 };
 
 export function useDashboardMetrics() {
