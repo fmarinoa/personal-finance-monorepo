@@ -10,7 +10,10 @@ import type { Dispatcher, RouteDefinition } from "@packages/lambda";
 interface FinanceApiProps {
   stage: string;
   isProd: boolean;
-  expensesTable: dynamodb.Table;
+  tables: {
+    expenses: dynamodb.Table;
+    incomes: dynamodb.Table;
+  };
   authorizer: apigateway.CognitoUserPoolsAuthorizer;
 }
 
@@ -61,7 +64,8 @@ export class FinanceApi extends Construct {
 
     for (const route of dispatcher.routes) {
       const fn = this.createLambdaFunction(route, props);
-      props.expensesTable.grantReadWriteData(fn);
+      props.tables.expenses.grantReadWriteData(fn);
+      props.tables.incomes.grantReadWriteData(fn);
 
       const resource = this.resolveApiResource(route.path, resourceCache);
       resource.addMethod(
@@ -93,7 +97,8 @@ export class FinanceApi extends Construct {
         handler: "handler",
         description: route.description,
         environment: {
-          EXPENSES_TABLE_NAME: props.expensesTable.tableName,
+          EXPENSES_TABLE_NAME: props.tables.expenses.tableName,
+          INCOMES_TABLE_NAME: props.tables.incomes.tableName,
           NODE_ENV: props.isProd ? "production" : "development",
           ROUTE_ID: route.id,
         },

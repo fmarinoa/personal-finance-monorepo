@@ -3,9 +3,11 @@ import { fetchAuthSession } from "aws-amplify/auth";
 
 import type {
   CreateExpensePayload,
+  CreateIncomePayload,
   DashboardSummary,
   DeleteReason,
   Expense,
+  Income,
   FiltersForList,
   PaginatedResponse,
 } from "@packages/core";
@@ -50,5 +52,19 @@ export async function listExpenses(
 
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const response = await api.get("/metrics/dashboard-summary");
+  return response.data;
+}
+
+export async function listIncomes(
+  filters: FiltersForList,
+): Promise<PaginatedResponse<Income>> {
+  const response = await api.get("/incomes", { params: filters });
+  return response.data;
+}
+
+export async function createIncome(
+  payload: CreateIncomePayload,
+): Promise<Expense> {
+  const response = await api.post(`/incomes`, payload);
   return response.data;
 }

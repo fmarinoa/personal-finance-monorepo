@@ -3,7 +3,7 @@ import { signOut } from "aws-amplify/auth";
 
 import { APP_CONFIG } from "@/config/app";
 
-export type AppPage = "dashboard" | "expenses";
+export type AppPage = "dashboard" | "expenses" | "incomes";
 
 function PoweredBy() {
   return (
@@ -114,10 +114,20 @@ function ExpensesIcon() {
   );
 }
 
+function IncomesIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16">
+      <path d="M8 1a7 7 0 100 14A7 7 0 008 1zM0 8a8 8 0 1116 0A8 8 0 010 8zm9 .5V5.75a.75.75 0 00-1.5 0V9c0 .199.079.39.22.53l1.75 1.75a.75.75 0 101.06-1.06L9 9.5z" />
+      <path d="M8 4.5a.75.75 0 01.75.75v3.44l1.28 1.28a.75.75 0 11-1.06 1.06l-1.5-1.5A.75.75 0 017.25 9V5.25A.75.75 0 018 4.5z" />
+    </svg>
+  );
+}
+
 /* ── Nav items shared between sidebar and mobile panel ── */
 const NAV_ITEMS: { label: string; icon: React.ReactNode; page: AppPage }[] = [
   { label: "Dashboard", icon: <DashboardIcon />, page: "dashboard" },
   { label: "Gastos", icon: <ExpensesIcon />, page: "expenses" },
+  { label: "Ingresos", icon: <IncomesIcon />, page: "incomes" },
 ];
 
 interface AppLayoutProps {

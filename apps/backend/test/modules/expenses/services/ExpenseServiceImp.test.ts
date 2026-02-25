@@ -3,7 +3,7 @@ import { ExpenseServiceImp } from "@/modules/expenses/services/ExpenseServiceImp
 import type { DbRepository } from "@/modules/expenses/repositories/DbRepository";
 import { Expense } from "@/modules/expenses/domains/Expense";
 import { User } from "@/modules/shared/domains/User";
-import { InternalError, BadRequestError } from "@packages/lambda";
+import { InternalError, NotFoundError } from "@packages/lambda";
 
 const user = new User({ id: "user-123" });
 
@@ -117,12 +117,10 @@ describe("ExpenseServiceImp", () => {
       expect(result.pagination.totalAmount).toBe(0);
     });
 
-    it("throws BadRequestError when getById is called with a missing expense", async () => {
+    it("throws NotFoundError when getById is called with a missing expense", async () => {
       vi.mocked(repository.getById).mockResolvedValue(undefined as any);
 
-      await expect(service.getById(mockExpense)).rejects.toThrow(
-        BadRequestError,
-      );
+      await expect(service.getById(mockExpense)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -176,12 +174,12 @@ describe("ExpenseServiceImp", () => {
       expect(result.description).toBe("Dinner");
     });
 
-    it("throws BadRequestError when the expense does not exist", async () => {
+    it("throws NotFoundError when the expense does not exist", async () => {
       vi.mocked(repository.getById).mockResolvedValue(undefined as any);
 
       await expect(
         service.update(new Expense({ user, id: "not-found" })),
-      ).rejects.toThrow(BadRequestError);
+      ).rejects.toThrow(NotFoundError);
     });
 
     it("wraps unexpected repository errors in InternalError", async () => {

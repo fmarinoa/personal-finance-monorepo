@@ -2,22 +2,34 @@ import { useState } from "react";
 
 interface MobileFABProps {
   onNewExpense: () => void;
+  onNewIncome?: () => void;
 }
 
-export function MobileFAB({ onNewExpense }: MobileFABProps) {
+export function MobileFAB({ onNewExpense, onNewIncome }: MobileFABProps) {
   return (
     <div className="fixed bottom-6 right-5 z-30 md:hidden flex flex-col items-end gap-3">
-      <FABActions onNewExpense={onNewExpense} />
+      <FABActions onNewExpense={onNewExpense} onNewIncome={onNewIncome} />
     </div>
   );
 }
 
-function FABActions({ onNewExpense }: { onNewExpense: () => void }) {
+function FABActions({
+  onNewExpense,
+  onNewIncome,
+}: {
+  onNewExpense: () => void;
+  onNewIncome?: () => void;
+}) {
   const [open, setOpen] = useState(false);
 
   function handleEgreso() {
     setOpen(false);
     onNewExpense();
+  }
+
+  function handleIngreso() {
+    setOpen(false);
+    onNewIncome?.();
   }
 
   return (
@@ -41,7 +53,7 @@ function FABActions({ onNewExpense }: { onNewExpense: () => void }) {
           delay="delay-[40ms]"
           open={open}
           color="bg-emerald-500 hover:bg-emerald-400"
-          onClick={() => setOpen(false)}
+          onClick={handleIngreso}
           icon={
             <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15">
               <path d="M8 1.5a.75.75 0 01.75.75v9.19l2.72-2.72a.75.75 0 111.06 1.06l-4 4a.75.75 0 01-1.06 0l-4-4a.75.75 0 111.06-1.06l2.72 2.72V2.25A.75.75 0 018 1.5z" />

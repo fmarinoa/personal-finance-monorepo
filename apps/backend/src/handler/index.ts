@@ -6,6 +6,7 @@ import { requireBody, requirePathParameters } from "@/middlewares";
 import { expenseController } from "@/modules/expenses/controllers";
 import { metricsController } from "@/modules/metrics/controllers";
 import { Dispatcher, HttpMethod } from "@packages/lambda";
+import { incomeController } from "@/modules/incomes/controllers";
 
 const BODY_METHODS: HttpMethod[] = ["POST", "PUT", "PATCH"];
 const PATH_PARAM_PATTERN = /\{(\w+)\}/g;
@@ -58,7 +59,11 @@ export const dispatcher = new Dispatcher(middyAdapter)
       timeout: 10,
       description: "Get dashboard summary metrics for a given month period",
     },
-  );
+  )
+  .post("/incomes", (e) => incomeController.create(e), {
+    timeout: 10,
+    description: "Create a new income",
+  });
 
 export const handler: APIGatewayProxyHandler = (...args) =>
   dispatcher.getHandler()(...args);

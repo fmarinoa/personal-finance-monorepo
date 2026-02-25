@@ -3,6 +3,7 @@ import { Construct } from "constructs";
 import { ExpensesTable } from "./constructs/ExpensesTable";
 import { FinanceApi } from "./constructs/FinanceApi";
 import { CognitoAuth } from "./constructs/CognitoAuth";
+import { IncomesTable } from "./constructs/IncomesTable";
 
 interface BackendStackProps extends cdk.StackProps {
   stage: string;
@@ -27,10 +28,18 @@ export class BackendStack extends cdk.Stack {
       isProd,
     });
 
+    const incomesTable = new IncomesTable(this, "IncomesTable", {
+      stage,
+      isProd,
+    });
+
     const api = new FinanceApi(this, "FinanceApi", {
       stage,
       isProd,
-      expensesTable: expensesTable.table,
+      tables: {
+        expenses: expensesTable.table,
+        incomes: incomesTable.table,
+      },
       authorizer: cognitoAuth.authorizer,
     });
 
@@ -52,6 +61,12 @@ export class BackendStack extends cdk.Stack {
       description: "DynamoDB table name for expenses",
       exportName: `ExpensesTableName-${stage}`,
       value: expensesTable.table.tableName,
+    });
+
+    new cdk.CfnOutput(this, "IncomesTableName", {
+      description: "DynamoDB table name for incomes",
+      exportName: `IncomesTableName-${stage}`,
+      value: incomesTable.table.tableName,
     });
 
     new cdk.CfnOutput(this, "Region", {
