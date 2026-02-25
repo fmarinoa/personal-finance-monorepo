@@ -161,4 +161,15 @@ export class Expense implements ExpenseInterface {
       onDelete: { reason: data.reason },
     });
   }
+
+  updateFromExisting(existing: Expense): void {
+    const patch = Object.fromEntries(
+      Object.entries(this).filter(([, v]) => v !== undefined),
+    );
+    Object.assign(this, {
+      ...existing,
+      ...patch,
+      user: new User({ id: this.user.id }),
+    });
+  }
 }

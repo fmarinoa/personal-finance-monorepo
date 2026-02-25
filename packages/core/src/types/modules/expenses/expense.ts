@@ -6,7 +6,7 @@ import type {
 } from "./subtypes.ts";
 
 export interface Expense {
-  user: unknown;
+  user: { id: string };
   id: string;
   amount: number;
   paymentMethod: PaymentMethod;

@@ -1,9 +1,5 @@
 import { DbRepository } from "@/modules/expenses/repositories/DbRepository";
-import {
-  BadRequestError,
-  InternalError,
-  NotFoundError,
-} from "@packages/lambda";
+import { BaseError, InternalError, NotFoundError } from "@packages/lambda";
 import { FiltersForList, PaginatedResponse } from "@packages/core";
 import { User } from "@/modules/shared/domains";
 import { Expense } from "../domains";
@@ -46,7 +42,7 @@ export class ExpenseServiceImp implements ExpenseService {
   async getById(expense: Expense): Promise<Expense> {
     const result = await this.props.dbRepository.getById(expense);
     if (!result) {
-      throw new BadRequestError({ details: "Expense not found" });
+      throw new NotFoundError({ details: "Expense not found" });
     }
     return result;
   }
@@ -56,24 +52,16 @@ export class ExpenseServiceImp implements ExpenseService {
       const existing = await this.props.dbRepository.getById(expense);
 
       if (!existing) {
-        throw new BadRequestError({ details: "Expense not found" });
+        throw new NotFoundError({ details: "Expense not found" });
       }
 
-      const patch = Object.fromEntries(
-        Object.entries(expense).filter(([, v]) => v !== undefined),
-      );
+      expense.updateFromExisting(existing);
 
-      const validated = Expense.instanceForUpdate({
-        ...existing,
-        ...patch,
-        user: expense.user,
-      });
-
-      const response = await this.props.dbRepository.update(validated);
+      const response = await this.props.dbRepository.update(expense);
 
       return response;
     } catch (error) {
-      if (error instanceof BadRequestError || error instanceof NotFoundError) {
+      if (error instanceof BaseError) {
         throw error;
       }
       throw new InternalError({ details: error });

@@ -24,5 +24,6 @@ export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
 export const ExpenseStatus = {
   ACTIVE: "ACTIVE",
   DELETED: "DELETED",
+  // TODO: add PENDING for expenses that are planned but not yet paid
 } as const;
 export type ExpenseStatus = (typeof ExpenseStatus)[keyof typeof ExpenseStatus];
