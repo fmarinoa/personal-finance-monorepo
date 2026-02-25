@@ -303,6 +303,7 @@ export function AppLayout({
             }}
             loading={signingOut}
           />
+          <PoweredBy />
         </div>
       </div>
     </div>
