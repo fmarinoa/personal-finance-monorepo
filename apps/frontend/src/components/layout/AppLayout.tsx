@@ -218,7 +218,7 @@ export function AppLayout({
           </div>
         </header>
 
-        <main className="flex-1 px-6 md:px-10 py-8 flex flex-col gap-8">
+        <main className="flex-1 px-6 md:px-10 pt-8 pb-24 md:pb-8 flex flex-col gap-8">
           {children}
         </main>
       </div>
