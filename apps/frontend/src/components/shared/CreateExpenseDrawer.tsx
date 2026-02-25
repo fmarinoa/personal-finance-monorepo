@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DateTime } from "luxon";
 import {
   DeleteReason,
@@ -7,7 +7,9 @@ import {
   type Expense,
 } from "@packages/core";
 
-import { createExpense, updateExpense, deleteExpense } from "@/lib/api";
+import { useCreateExpense } from "@/hooks/expenses/useCreateExpense";
+import { useUpdateExpense } from "@/hooks/expenses/useUpdateExpense";
+import { useDeleteExpense } from "@/hooks/expenses/useDeleteExpense";
 import {
   CATEGORY_LABELS,
   CATEGORY_ICONS,
@@ -40,109 +42,103 @@ export function CreateExpenseDrawer({
   const isEdit = !!expense;
 
   const [form, setForm] = useState({ ...EMPTY });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteReason, setDeleteReason] = useState<DeleteReason | "">("");
 
-  // Sync form when expense changes (edit mode)
-  useEffect(() => {
-    if (expense) {
-      setForm({
-        amount: expense.amount.toString(),
-        description: expense.description,
-        category: expense.category,
-        paymentMethod: expense.paymentMethod,
-        paymentDate: DateTime.fromMillis(expense.paymentDate).toISODate()!,
-      });
-    } else {
-      setForm({ ...EMPTY });
-    }
-    setError(null);
+  const handleSuccess = () => {
+    onCreated();
+    onClose();
+  };
+  const {
+    submit: submitCreate,
+    loading: creating,
+    error: createError,
+  } = useCreateExpense(handleSuccess);
+  const {
+    submit: submitUpdate,
+    loading: updating,
+    error: updateError,
+  } = useUpdateExpense(handleSuccess);
+  const {
+    submit: submitDelete,
+    loading: deleting,
+    error: deleteError,
+  } = useDeleteExpense(handleSuccess);
+
+  const loading = creating || updating || deleting;
+  const submitError = createError ?? updateError ?? deleteError;
+  const error = formError ?? submitError;
+
+  // Reset form when drawer opens or expense changes (setState during render — avoids useEffect lint)
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevExpenseId, setPrevExpenseId] = useState(expense?.id);
+  if (open !== prevOpen || expense?.id !== prevExpenseId) {
+    setPrevOpen(open);
+    setPrevExpenseId(expense?.id);
+    setFormError(null);
     setConfirmDelete(false);
     setDeleteReason("");
-  }, [expense, open]);
+    setForm(
+      expense
+        ? {
+            amount: expense.amount.toString(),
+            description: expense.description,
+            category: expense.category,
+            paymentMethod: expense.paymentMethod,
+            paymentDate: DateTime.fromMillis(expense.paymentDate).toISODate()!,
+          }
+        : { ...EMPTY },
+    );
+  }
 
   function set<K extends keyof typeof EMPTY>(key: K, value: (typeof EMPTY)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
-    setError(null);
+    setFormError(null);
   }
 
   function handleClose() {
     if (loading) return;
     setConfirmDelete(false);
     setDeleteReason("");
-    setError(null);
+    setFormError(null);
     onClose();
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.category || !form.paymentMethod) {
-      return setError("Selecciona categoría y método de pago.");
+      return setFormError("Selecciona categoría y método de pago.");
     }
     const amount = parseFloat(form.amount);
     if (isNaN(amount) || amount <= 0) {
-      return setError("Ingresa un monto válido mayor a 0.");
+      return setFormError("Ingresa un monto válido mayor a 0.");
     }
-    setError(null);
-    setLoading(true);
     const paymentDate = DateTime.fromISO(form.paymentDate, { zone: "local" })
       .startOf("day")
       .toUTC()
       .toMillis();
-    try {
-      if (isEdit) {
-        await updateExpense(expense.id, {
-          amount,
-          description: form.description.trim(),
-          category: form.category as ExpenseCategory,
-          paymentMethod: form.paymentMethod as PaymentMethod,
-          paymentDate,
-        });
-      } else {
-        await createExpense({
-          amount,
-          description: form.description.trim(),
-          category: form.category as ExpenseCategory,
-          paymentMethod: form.paymentMethod as PaymentMethod,
-          paymentDate,
-        });
-      }
-      onCreated();
-      handleClose();
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : isEdit
-            ? "Error al actualizar el gasto"
-            : "Error al crear el gasto",
-      );
-    } finally {
-      setLoading(false);
+    const payload = {
+      amount,
+      description: form.description.trim(),
+      category: form.category as ExpenseCategory,
+      paymentMethod: form.paymentMethod as PaymentMethod,
+      paymentDate,
+    };
+    if (isEdit) {
+      await submitUpdate(expense.id, payload);
+    } else {
+      await submitCreate(payload);
     }
   }
 
   async function handleDelete() {
-    if (!expense) return;
-    if (!deleteReason) {
-      setError("Selecciona una razón para eliminar el gasto.");
+    if (!expense || !deleteReason) {
+      setFormError("Selecciona una razón para eliminar el gasto.");
       return;
     }
-    setLoading(true);
-    try {
-      await deleteExpense(expense.id, deleteReason);
-      onCreated();
-      handleClose();
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Error al eliminar el gasto",
-      );
-      setConfirmDelete(false);
-    } finally {
-      setLoading(false);
-    }
+    await submitDelete(expense.id, deleteReason);
+    setConfirmDelete(false);
   }
 
   const canSubmit =
@@ -232,7 +228,7 @@ export function CreateExpenseDrawer({
                     type="button"
                     onClick={() => {
                       setDeleteReason(value);
-                      setError(null);
+                      setFormError(null);
                     }}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition cursor-pointer text-left ${
                       active

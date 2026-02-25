@@ -3,7 +3,7 @@ import { useState } from "react";
 import { MobileFAB } from "@/components/dashboard/MobileFAB";
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
-import { useExpenses } from "@/hooks/useExpenses";
+import { useExpenses } from "@/hooks/expenses/useExpenses";
 import { usePeriod, type Period } from "@/hooks/usePeriod";
 import type { Expense } from "@packages/core";
 

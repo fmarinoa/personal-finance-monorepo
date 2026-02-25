@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { DateTime } from "luxon";
 import { IncomeCategory, IncomeStatus, type Income } from "@packages/core";
 
-import { useCreateIncome } from "@/hooks/useCreateIncome";
+import { useCreateIncome } from "@/hooks/incomes/useCreateIncome";
 import {
   INCOME_CATEGORY_LABELS,
   INCOME_CATEGORY_ICONS,

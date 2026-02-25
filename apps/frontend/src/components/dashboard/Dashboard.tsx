@@ -3,7 +3,7 @@ import { DateTime } from "luxon";
 
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
-import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
+import { useDashboardMetrics } from "@/hooks/metrics/useDashboardMetrics";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "@/types/expense";
 import type { Expense } from "@packages/core";
 
