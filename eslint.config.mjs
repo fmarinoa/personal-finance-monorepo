@@ -7,7 +7,13 @@ import { defineConfig } from "eslint/config";
 
 export default defineConfig(
   {
-    ignores: ["**/node_modules", "**/build", "**/dist", "**/coverage", "cdk.out"],
+    ignores: [
+      "**/node_modules",
+      "**/build",
+      "**/dist",
+      "**/coverage",
+      "cdk.out",
+    ],
   },
   {
     files: ["apps/backend/**/*.ts", "packages/**/*.ts", "apps/infra/**/*.ts"],
@@ -35,7 +41,6 @@ export default defineConfig(
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
-      parserOptions: { projectService: true },
     },
   },
 );
