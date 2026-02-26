@@ -25,5 +25,12 @@ export class IncomesTable extends Construct {
         pointInTimeRecoveryEnabled: props.isProd,
       },
     });
+
+    this.table.addGlobalSecondaryIndex({
+      indexName: "userIdEffectiveDateIndex",
+      partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "effectiveDate", type: dynamodb.AttributeType.NUMBER },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
   }
 }

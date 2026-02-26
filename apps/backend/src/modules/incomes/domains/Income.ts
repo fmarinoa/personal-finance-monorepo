@@ -2,6 +2,7 @@ import { DateTime } from "luxon";
 import {
   CreateIncomePayload,
   DeleteReason,
+  FiltersForList,
   IncomeCategory,
   Income as IncomeInterface,
   IncomeStatus,
@@ -10,6 +11,7 @@ import { BadRequestError } from "@packages/lambda";
 import z from "zod";
 
 import { User } from "@/modules/shared/domains";
+import { schemaForList } from "@/modules/shared/schemas";
 
 const baseFields = {
   user: z.object({ id: z.string() }),
@@ -47,6 +49,7 @@ export class Income implements IncomeInterface {
   user: User;
   id: string;
   amount: number;
+  effectiveDate: number;
   projectedDate?: number;
   receivedDate?: number;
   description: string;
@@ -71,6 +74,7 @@ export class Income implements IncomeInterface {
       id: item.id,
       user: new User({ id: item.userId! }),
       amount: item.amount,
+      effectiveDate: item.effectiveDate,
       projectedDate: item?.projectedDate,
       receivedDate: item?.receivedDate,
       description: item.description,
@@ -98,5 +102,11 @@ export class Income implements IncomeInterface {
       ...newData,
       user: new User({ id: data.user.id }),
     });
+  }
+
+  static validateFilters(filters: FiltersForList): { filters: FiltersForList } {
+    const { error, data } = schemaForList.safeParse(filters);
+    if (error) throw new BadRequestError({ details: error.message });
+    return { filters: data };
   }
 }

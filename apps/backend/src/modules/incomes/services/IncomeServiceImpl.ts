@@ -1,4 +1,6 @@
 import { InternalError } from "@packages/lambda";
+import { FiltersForList, PaginatedResponse } from "@packages/core";
+import { User } from "@/modules/shared/domains";
 import { Income } from "../domains";
 import { DbRepository } from "../repositories/DbRepository";
 import { IncomeService } from "./IncomeService";
@@ -17,5 +19,24 @@ export class IncomeServiceImpl implements IncomeService {
     } catch (error) {
       throw new InternalError({ details: "Failed to create income: " + error });
     }
+  }
+
+  async list(
+    user: User,
+    filters: FiltersForList,
+  ): Promise<PaginatedResponse<Income>> {
+    const { data, total, totalAmount } = await this.props.dbRepository.list(
+      user.id,
+      filters,
+    );
+
+    return {
+      data,
+      pagination: {
+        totalPages: Math.ceil(total / (filters.limit || total)),
+        total,
+        totalAmount,
+      },
+    };
   }
 }

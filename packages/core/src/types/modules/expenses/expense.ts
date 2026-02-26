@@ -29,10 +29,3 @@ export interface CreateExpensePayload {
   paymentMethod: PaymentMethod;
   paymentDate: number;
 }
-
-export interface FiltersForList {
-  limit?: number;
-  page?: number;
-  startDate?: number;
-  endDate?: number;
-}

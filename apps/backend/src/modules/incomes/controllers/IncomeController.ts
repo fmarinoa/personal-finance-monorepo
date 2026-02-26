@@ -38,4 +38,25 @@ export class IncomeController extends BaseController {
     const response = await this.props.incomeService.create(incomeToCreate);
     return this.created(response);
   }
+
+  async list(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+    const { context, queryParams } = this.retrieveRequestContext(event);
+    const [limit, page, startDate, endDate] = this.retrieveFromQueryParams(
+      queryParams!,
+      ["limit", "page", "startDate", "endDate"],
+    );
+
+    const user = new User({ id: context.authorizer?.claims["sub"] });
+
+    const { filters } = Income.validateFilters({
+      limit,
+      page,
+      startDate,
+      endDate,
+    });
+
+    const result = await this.props.incomeService.list(user, filters);
+
+    return this.ok(result);
+  }
 }

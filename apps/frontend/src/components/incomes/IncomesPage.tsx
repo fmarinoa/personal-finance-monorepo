@@ -1,47 +1,13 @@
+import type { Income } from "@packages/core";
 import { useState } from "react";
-import { DateTime } from "luxon";
-import { IncomeCategory, IncomeStatus, type Income } from "@packages/core";
 
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { MobileFAB } from "@/components/dashboard/MobileFAB";
 import { CreateIncomeDrawer } from "@/components/shared/CreateIncomeDrawer";
 import { usePeriod, type Period } from "@/hooks/usePeriod";
+import { useIncomes } from "@/hooks/incomes/useIncomes";
 
 import { IncomesTable } from "./IncomesTable";
-
-/* ── Mock data — replace with useIncomes once API is ready ── */
-const MOCK_INCOMES: Income[] = [
-  {
-    id: "1",
-    user: { id: "mock" },
-    amount: 3200,
-    description: "Salario quincenal",
-    category: IncomeCategory.SALARY,
-    status: IncomeStatus.RECEIVED,
-    receivedDate: DateTime.local().minus({ days: 2 }).toMillis(),
-    creationDate: DateTime.local().minus({ days: 2 }).toMillis(),
-  },
-  {
-    id: "2",
-    user: { id: "mock" },
-    amount: 800,
-    description: "Freelance diseño web",
-    category: IncomeCategory.BUSINESS,
-    status: IncomeStatus.RECEIVED,
-    receivedDate: DateTime.local().minus({ days: 5 }).toMillis(),
-    creationDate: DateTime.local().minus({ days: 5 }).toMillis(),
-  },
-  {
-    id: "3",
-    user: { id: "mock" },
-    amount: 1500,
-    description: "Dividendos fondo mutuo",
-    category: IncomeCategory.INVESTMENT,
-    status: IncomeStatus.PROJECTED,
-    projectedDate: DateTime.local().plus({ days: 10 }).toMillis(),
-    creationDate: DateTime.local().minus({ days: 1 }).toMillis(),
-  },
-];
 
 interface IncomesPageProps {
   username: string | null;
@@ -72,15 +38,8 @@ export function IncomesPage({
     setRawPeriod(p);
   };
 
-  // TODO: replace with useIncomes once API list endpoint is connected
-  const data = MOCK_INCOMES;
-  const loading = false;
-  const error = null;
-  const totalCount = data.length;
-  const totalPages = 1;
-  const refresh = () => {};
-
-  void dateRange; // will be used when replacing mock with useIncomes
+  const { data, loading, error, totalCount, totalAmount, totalPages, refresh } =
+    useIncomes({ ...dateRange, limit: 10, page });
 
   return (
     <AppLayout
@@ -107,7 +66,7 @@ export function IncomesPage({
         error={error}
         periodLabel={periodLabel}
         totalCount={totalCount}
-        totalAmount={0}
+        totalAmount={totalAmount}
         period={period}
         setPeriod={setPeriod}
         page={page}

@@ -3,11 +3,30 @@ import { IncomeController } from "@/modules/incomes/controllers/IncomeController
 import type { IncomeService } from "@/modules/incomes/services/IncomeService";
 import { BadRequestError } from "@packages/lambda";
 import { buildEvent, TEST_USER_ID } from "../../../eventFactory";
+import { Income } from "@/modules/incomes/domains/Income";
+import { User } from "@/modules/shared/domains/User";
+
+const mockIncome = new Income({
+  id: "income-1",
+  user: new User({ id: TEST_USER_ID }),
+  amount: 1000,
+  description: "Monthly salary",
+  category: "SALARY",
+  status: "RECEIVED",
+  effectiveDate: 1700000000000,
+  creationDate: 1700000000000,
+  receivedDate: 1700000000000,
+});
 
 const validBody = {
   amount: 1000,
   description: "Monthly salary",
   category: "SALARY",
+};
+
+const paginatedResult = {
+  data: [mockIncome],
+  pagination: { totalPages: 1, total: 1, totalAmount: 1000 },
 };
 
 describe("IncomeController", () => {
@@ -17,6 +36,7 @@ describe("IncomeController", () => {
   beforeEach(() => {
     service = {
       create: vi.fn(),
+      list: vi.fn(),
     };
     controller = new IncomeController({ incomeService: service });
   });
@@ -95,6 +115,85 @@ describe("IncomeController", () => {
           buildEvent({ body: { ...validBody, category: "INVALID" } as any }),
         ),
       ).rejects.toThrow(BadRequestError);
+    });
+  });
+
+  // ── GET /incomes ──────────────────────────────────────────────────────────
+
+  describe("list", () => {
+    it("returns 200 with a paginated incomes list", async () => {
+      vi.mocked(service.list).mockResolvedValue(paginatedResult);
+
+      const result = await controller.list(
+        buildEvent({ queryStringParameters: {} }),
+      );
+
+      expect(result.statusCode).toBe(200);
+      const body = JSON.parse(result.body);
+      expect(body.data).toHaveLength(1);
+      expect(body.pagination.total).toBe(1);
+    });
+
+    it("parses limit and page from query string and passes them to service", async () => {
+      vi.mocked(service.list).mockResolvedValue(paginatedResult);
+
+      await controller.list(
+        buildEvent({ queryStringParameters: { limit: "5", page: "2" } }),
+      );
+
+      const [, filters] = vi.mocked(service.list).mock.calls[0];
+      expect(filters.limit).toBe(5);
+      expect(filters.page).toBe(2);
+    });
+
+    it("parses startDate and endDate from query string", async () => {
+      vi.mocked(service.list).mockResolvedValue(paginatedResult);
+
+      await controller.list(
+        buildEvent({
+          queryStringParameters: {
+            startDate: "1700000000000",
+            endDate: "1700086400000",
+          },
+        }),
+      );
+
+      const [, filters] = vi.mocked(service.list).mock.calls[0];
+      expect(filters.startDate).toBe(1700000000000);
+      expect(filters.endDate).toBe(1700086400000);
+    });
+
+    it("works when no query params are provided", async () => {
+      vi.mocked(service.list).mockResolvedValue(paginatedResult);
+
+      const result = await controller.list(
+        buildEvent({ queryStringParameters: null }),
+      );
+
+      expect(result.statusCode).toBe(200);
+    });
+
+    it("passes the userId extracted from Cognito claims to service", async () => {
+      vi.mocked(service.list).mockResolvedValue(paginatedResult);
+
+      await controller.list(buildEvent({ queryStringParameters: {} }));
+
+      const [calledUser] = vi.mocked(service.list).mock.calls[0];
+      expect(calledUser.id).toBe(TEST_USER_ID);
+    });
+
+    it("returns the totalAmount in the pagination metadata", async () => {
+      vi.mocked(service.list).mockResolvedValue({
+        data: [],
+        pagination: { totalPages: 1, total: 0, totalAmount: 5000 },
+      });
+
+      const result = await controller.list(
+        buildEvent({ queryStringParameters: {} }),
+      );
+
+      const body = JSON.parse(result.body);
+      expect(body.pagination.totalAmount).toBe(5000);
     });
   });
 });

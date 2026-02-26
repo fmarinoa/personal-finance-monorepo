@@ -5,6 +5,7 @@ export interface Income {
   user: { id: string };
   id: string;
   amount: number;
+  effectiveDate: number;
   projectedDate?: number;
   receivedDate?: number;
   description: string;

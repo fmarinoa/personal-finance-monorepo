@@ -10,6 +10,7 @@ import {
 import { BadRequestError } from "@packages/lambda";
 import { User } from "@/modules/shared/domains";
 import { CreateExpensePayload } from "@packages/core";
+import { schemaForList } from "@/modules/shared/schemas";
 import { DateTime } from "luxon";
 
 const schemaForCreate = z.object({
@@ -36,25 +37,6 @@ const schemaForUpdate = z.object({
   paymentMethod: z.enum(PaymentMethod).optional(),
   paymentDate: z.number().optional(),
   category: z.enum(ExpenseCategory).optional(),
-});
-
-const schemaForList = z.object({
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : undefined)),
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : undefined)),
-  startDate: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : undefined)),
-  endDate: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : undefined)),
 });
 
 const schemaForDelete = z.object({

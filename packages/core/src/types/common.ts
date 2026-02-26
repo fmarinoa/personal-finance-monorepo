@@ -7,6 +7,13 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface FiltersForList {
+  limit?: number;
+  page?: number;
+  startDate?: number;
+  endDate?: number;
+}
+
 export const DeleteReason = {
   DUPLICATE: "DUPLICATE",
   WRONG_AMOUNT: "WRONG_AMOUNT",

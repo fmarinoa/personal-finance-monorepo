@@ -1,8 +1,13 @@
 import { Income } from "../domains";
 import { DbRepository } from "./DbRepository";
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  PutCommand,
+  QueryCommand,
+  QueryCommandInput,
+} from "@aws-sdk/lib-dynamodb";
 import { BaseDbRepository } from "@/modules/shared/repositories";
-import { IncomeStatus } from "@packages/core";
+import { FiltersForList, IncomeStatus } from "@packages/core";
 
 export interface DynamoDbRepositoryImpProps {
   dbClient: DynamoDBDocumentClient;
@@ -28,6 +33,10 @@ export class DynamoDbRepositoryImp
       status: income.status || IncomeStatus.RECEIVED,
       projectedDate: income?.projectedDate,
       receivedDate: income?.receivedDate,
+      effectiveDate:
+        income.receivedDate ??
+        income.projectedDate ??
+        this.getCurrentTimestamp(),
     };
 
     await this.props.dbClient.send(
@@ -43,5 +52,74 @@ export class DynamoDbRepositoryImp
       creationDate: item.creationDate,
       status: item.status,
     });
+  }
+
+  async list(
+    userId: string,
+    filters: FiltersForList,
+  ): Promise<{ data: Income[]; total: number; totalAmount: number }> {
+    const expressionAttributeValues: Record<string, any> = {
+      ":userId": userId,
+    };
+
+    let keyConditionExpression = "userId = :userId";
+
+    if (filters.startDate && filters.endDate) {
+      keyConditionExpression +=
+        " AND effectiveDate BETWEEN :startDate AND :endDate";
+      expressionAttributeValues[":startDate"] = filters.startDate;
+      expressionAttributeValues[":endDate"] = filters.endDate;
+    } else if (filters.startDate) {
+      keyConditionExpression += " AND effectiveDate >= :startDate";
+      expressionAttributeValues[":startDate"] = filters.startDate;
+    } else if (filters.endDate) {
+      keyConditionExpression += " AND effectiveDate <= :endDate";
+      expressionAttributeValues[":endDate"] = filters.endDate;
+    }
+
+    const queryInput: QueryCommandInput = {
+      TableName: this.props.incomesTableName,
+      IndexName: "userIdEffectiveDateIndex",
+      KeyConditionExpression: keyConditionExpression,
+      FilterExpression: "#status <> :deletedStatus",
+      ExpressionAttributeNames: { "#status": "status" },
+      ExpressionAttributeValues: {
+        ...expressionAttributeValues,
+        ":deletedStatus": IncomeStatus.DELETED,
+      },
+      ScanIndexForward: false,
+    };
+
+    const allItems: Record<string, any>[] = [];
+    let lastKey: Record<string, any> | undefined;
+    do {
+      if (lastKey) queryInput.ExclusiveStartKey = lastKey;
+      const { Items, LastEvaluatedKey } = await this.props.dbClient.send(
+        new QueryCommand(queryInput),
+      );
+      if (Items?.length) allItems.push(...Items);
+      lastKey = LastEvaluatedKey;
+    } while (lastKey);
+
+    const allIncomes = allItems
+      .map((item) => Income.buildFromDbItem(item))
+      .sort((a, b) => {
+        const dateDiff = b.effectiveDate - a.effectiveDate;
+        return dateDiff !== 0 ? dateDiff : b.creationDate - a.creationDate;
+      });
+
+    const total = allIncomes.length;
+    const totalAmount = allIncomes.reduce((sum, i) => sum + i.amount, 0);
+
+    if (filters.limit === undefined || filters.page === undefined) {
+      return { data: allIncomes, total, totalAmount };
+    }
+
+    const start = (filters.page - 1) * filters.limit;
+    return {
+      data: allIncomes.slice(start, start + filters.limit),
+      total,
+      totalAmount,
+    };
   }
 }
