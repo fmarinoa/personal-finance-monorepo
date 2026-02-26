@@ -1,6 +1,7 @@
+import { type DashboardSummary, ExpenseCategory } from "@packages/core";
 import { useCallback, useEffect, useState } from "react";
+
 import { fetchDashboardSummary } from "@/lib/api";
-import { ExpenseCategory, type DashboardSummary } from "@packages/core";
 
 const DEFAULT_DATA: DashboardSummary = {
   currentMonthTotal: 0,

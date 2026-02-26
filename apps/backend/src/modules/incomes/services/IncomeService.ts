@@ -1,5 +1,7 @@
 import { FiltersForList, PaginatedResponse } from "@packages/core";
+
 import { User } from "@/modules/shared/domains";
+
 import { Income } from "../domains";
 
 export interface IncomeService {

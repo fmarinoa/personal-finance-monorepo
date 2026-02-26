@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { signOut } from "aws-amplify/auth";
+import { useState } from "react";
 
 import { APP_CONFIG } from "@/config/app";
 

@@ -1,13 +1,15 @@
-import { Income } from "../domains";
-import { DbRepository } from "./DbRepository";
 import {
   DynamoDBDocumentClient,
   PutCommand,
   QueryCommand,
   QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
-import { BaseDbRepository } from "@/modules/shared/repositories";
 import { FiltersForList, IncomeStatus } from "@packages/core";
+
+import { BaseDbRepository } from "@/modules/shared/repositories";
+
+import { Income } from "../domains";
+import { DbRepository } from "./DbRepository";
 
 export interface DynamoDbRepositoryImpProps {
   dbClient: DynamoDBDocumentClient;

@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { BadRequestError } from "@packages/lambda";
+import { describe, expect, it } from "vitest";
+
 import { Expense } from "@/modules/expenses/domains/Expense";
 import { User } from "@/modules/shared/domains/User";
-import { BadRequestError } from "@packages/lambda";
 
 const user = new User({ id: "user-123" });
 

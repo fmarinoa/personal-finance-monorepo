@@ -1,7 +1,7 @@
-import { Construct } from "constructs";
-import * as cognito from "aws-cdk-lib/aws-cognito";
-import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as cdk from "aws-cdk-lib";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
+import * as cognito from "aws-cdk-lib/aws-cognito";
+import { Construct } from "constructs";
 
 interface CognitoAuthProps {
   stage: string;

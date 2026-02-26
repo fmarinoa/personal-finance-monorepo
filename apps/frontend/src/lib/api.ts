@@ -1,16 +1,15 @@
-import axios from "axios";
-import { fetchAuthSession } from "aws-amplify/auth";
-
 import type {
   CreateExpensePayload,
   CreateIncomePayload,
   DashboardSummary,
   DeleteReason,
   Expense,
-  Income,
   FiltersForList,
+  Income,
   PaginatedResponse,
 } from "@packages/core";
+import { fetchAuthSession } from "aws-amplify/auth";
+import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL as string,

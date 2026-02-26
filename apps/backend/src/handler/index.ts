@@ -1,12 +1,13 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
 import middy from "@middy/core";
-import jsonBodyParser from "@middy/http-json-body-parser";
 import httpErrorHandler from "@middy/http-error-handler";
+import jsonBodyParser from "@middy/http-json-body-parser";
+import { Dispatcher, HttpMethod } from "@packages/lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
+
 import { requireBody, requirePathParameters } from "@/middlewares";
 import { expenseController } from "@/modules/expenses/controllers";
-import { metricsController } from "@/modules/metrics/controllers";
-import { Dispatcher, HttpMethod } from "@packages/lambda";
 import { incomeController } from "@/modules/incomes/controllers";
+import { metricsController } from "@/modules/metrics/controllers";
 
 const BODY_METHODS: HttpMethod[] = ["POST", "PUT", "PATCH"];
 const PATH_PARAM_PATTERN = /\{(\w+)\}/g;

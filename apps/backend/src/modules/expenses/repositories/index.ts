@@ -1,7 +1,8 @@
-import { DynamoDbRepositoryImp } from "./DynamoDbRepositoryImp";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { EXPENSES_TABLE_NAME } from "..";
+import { DynamoDbRepositoryImp } from "./DynamoDbRepositoryImp";
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client, {

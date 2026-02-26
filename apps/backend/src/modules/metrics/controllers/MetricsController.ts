@@ -1,8 +1,10 @@
+import { BadRequestError } from "@packages/lambda";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { DateTime } from "luxon";
 import z from "zod";
-import { BadRequestError } from "@packages/lambda";
+
 import { BaseController } from "@/modules/shared/controllers";
+
 import { MetricsService } from "../services/MetricsService";
 
 const dashboardSummaryQuerySchema = z.object({

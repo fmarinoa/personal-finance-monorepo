@@ -1,8 +1,8 @@
 import { DeleteReason } from "../..";
 import type {
   ExpenseCategory,
-  PaymentMethod,
   ExpenseStatus,
+  PaymentMethod,
 } from "./subtypes.ts";
 
 export interface Expense {

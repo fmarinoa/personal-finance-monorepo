@@ -1,6 +1,7 @@
-import { Expense } from "@/modules/expenses/domains";
 import { randomUUID } from "crypto";
 import { DateTime } from "luxon";
+
+import { Expense } from "@/modules/expenses/domains";
 
 export abstract class BaseDbRepository {
   protected generateId(): string {

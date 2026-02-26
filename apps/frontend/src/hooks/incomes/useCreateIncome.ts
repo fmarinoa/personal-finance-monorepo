@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react";
-import { createIncome } from "@/lib/api";
 import type { CreateIncomePayload } from "@packages/core";
+import { useCallback, useState } from "react";
+
+import { createIncome } from "@/lib/api";
 
 interface State {
   loading: boolean;

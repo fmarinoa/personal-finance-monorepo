@@ -1,9 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ExpenseController } from "@/modules/expenses/controllers/ExpenseController";
-import type { ExpenseService } from "@/modules/expenses/services/ExpenseService";
-import { Expense } from "@/modules/expenses/domains/Expense";
-import { User } from "@/modules/shared/domains/User";
 import { BadRequestError } from "@packages/lambda";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ExpenseController } from "@/modules/expenses/controllers/ExpenseController";
+import { Expense } from "@/modules/expenses/domains/Expense";
+import type { ExpenseService } from "@/modules/expenses/services/ExpenseService";
+import { User } from "@/modules/shared/domains/User";
+
 import { buildEvent, TEST_USER_ID } from "../../../eventFactory";
 
 const mockExpense = new Expense({

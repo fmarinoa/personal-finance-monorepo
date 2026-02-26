@@ -1,11 +1,11 @@
 import type { Income } from "@packages/core";
 import { useState } from "react";
 
-import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { MobileFAB } from "@/components/dashboard/MobileFAB";
+import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { CreateIncomeDrawer } from "@/components/shared/CreateIncomeDrawer";
-import { usePeriod, type Period } from "@/hooks/usePeriod";
 import { useIncomes } from "@/hooks/incomes/useIncomes";
+import { type Period, usePeriod } from "@/hooks/usePeriod";
 
 import { IncomesTable } from "./IncomesTable";
 

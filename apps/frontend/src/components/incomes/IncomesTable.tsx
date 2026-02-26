@@ -1,15 +1,14 @@
-import { DateTime } from "luxon";
 import type { Income } from "@packages/core";
 import { IncomeStatus } from "@packages/core";
+import { DateTime } from "luxon";
 
+import { PeriodSelector } from "@/components/expenses/PeriodSelector";
 import type { Period } from "@/hooks/usePeriod";
 import {
   INCOME_CATEGORY_ICONS,
   INCOME_CATEGORY_LABELS,
   INCOME_STATUS_LABELS,
 } from "@/types/income";
-
-import { PeriodSelector } from "@/components/expenses/PeriodSelector";
 
 interface IncomesTableProps {
   totalCount: number;

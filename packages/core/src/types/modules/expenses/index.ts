@@ -1,2 +1,2 @@
-export * from "./subtypes";
 export * from "./expense";
+export * from "./subtypes";

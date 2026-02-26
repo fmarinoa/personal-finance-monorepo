@@ -1,11 +1,12 @@
-import { Construct } from "constructs";
+import * as path from "node:path";
+
+import type { Dispatcher, RouteDefinition } from "@packages/lambda";
+import * as cdk from "aws-cdk-lib";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
-import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
-import * as cdk from "aws-cdk-lib";
-import * as path from "node:path";
-import type { Dispatcher, RouteDefinition } from "@packages/lambda";
+import { Construct } from "constructs";
 
 interface FinanceApiProps {
   stage: string;

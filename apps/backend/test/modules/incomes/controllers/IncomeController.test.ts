@@ -1,10 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { IncomeController } from "@/modules/incomes/controllers/IncomeController";
-import type { IncomeService } from "@/modules/incomes/services/IncomeService";
 import { BadRequestError } from "@packages/lambda";
-import { buildEvent, TEST_USER_ID } from "../../../eventFactory";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { IncomeController } from "@/modules/incomes/controllers/IncomeController";
 import { Income } from "@/modules/incomes/domains/Income";
+import type { IncomeService } from "@/modules/incomes/services/IncomeService";
 import { User } from "@/modules/shared/domains/User";
+
+import { buildEvent, TEST_USER_ID } from "../../../eventFactory";
 
 const mockIncome = new Income({
   id: "income-1",

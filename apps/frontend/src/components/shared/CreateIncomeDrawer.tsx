@@ -1,11 +1,11 @@
-import { useCallback, useState } from "react";
+import { type Income, IncomeCategory, IncomeStatus } from "@packages/core";
 import { DateTime } from "luxon";
-import { IncomeCategory, IncomeStatus, type Income } from "@packages/core";
+import { useCallback, useState } from "react";
 
 import { useCreateIncome } from "@/hooks/incomes/useCreateIncome";
 import {
-  INCOME_CATEGORY_LABELS,
   INCOME_CATEGORY_ICONS,
+  INCOME_CATEGORY_LABELS,
   INCOME_STATUS_LABELS,
 } from "@/types/income";
 

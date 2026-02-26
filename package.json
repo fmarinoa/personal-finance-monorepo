@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "prepare": "husky || true",
-    "prettier": "prettier --write .",
-    "lint": "eslint .",
-    "test": "pnpm --filter backend run test && pnpm --filter frontend run test"
+    "prettier": "pnpm --parallel run prettier",
+    "lint": "pnpm --parallel run lint",
+    "test": "pnpm --parallel run test"
   },
   "repository": {
     "type": "git",
@@ -28,6 +28,8 @@
     "@types/luxon": "^3.7.1",
     "@types/node": "25.2.3",
     "eslint": "9.39.1",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-simple-import-sort": "12.1.1",
     "globals": "16.5.0",
     "husky": "9.1.7",
     "lint-staged": "16.2.7",

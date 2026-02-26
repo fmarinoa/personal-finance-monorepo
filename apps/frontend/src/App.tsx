@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
-import { getCurrentUser, fetchUserAttributes } from "aws-amplify/auth";
+import "@/lib/amplify-config";
 
-import { LoginPage } from "@/components/LoginPage";
+import { fetchUserAttributes, getCurrentUser } from "aws-amplify/auth";
+import { useEffect, useState } from "react";
+
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { ExpensesPage } from "@/components/expenses/ExpensesPage";
 import { IncomesPage } from "@/components/incomes/IncomesPage";
 import type { AppPage } from "@/components/layout/AppLayout";
-import "@/lib/amplify-config";
+import { LoginPage } from "@/components/LoginPage";
 
 type AuthState = "loading" | "unauthenticated" | "authenticated";
 

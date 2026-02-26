@@ -1,8 +1,9 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+
+import { CognitoAuth } from "./constructs/CognitoAuth";
 import { ExpensesTable } from "./constructs/ExpensesTable";
 import { FinanceApi } from "./constructs/FinanceApi";
-import { CognitoAuth } from "./constructs/CognitoAuth";
 import { IncomesTable } from "./constructs/IncomesTable";
 
 interface BackendStackProps extends cdk.StackProps {

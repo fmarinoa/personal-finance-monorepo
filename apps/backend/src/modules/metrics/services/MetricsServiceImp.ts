@@ -1,7 +1,9 @@
 import { DashboardSummary, ExpenseCategory } from "@packages/core";
 import { DateTime } from "luxon";
-import { DbRepository } from "@/modules/expenses/repositories/DbRepository";
+
 import { Expense } from "@/modules/expenses/domains";
+import { DbRepository } from "@/modules/expenses/repositories/DbRepository";
+
 import { MetricsService } from "./MetricsService";
 
 interface MetricsServiceImpProps {

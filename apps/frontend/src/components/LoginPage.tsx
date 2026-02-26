@@ -1,5 +1,6 @@
+import { confirmSignIn, fetchUserAttributes, signIn } from "aws-amplify/auth";
 import { useState } from "react";
-import { signIn, confirmSignIn, fetchUserAttributes } from "aws-amplify/auth";
+
 import { APP_CONFIG } from "@/config/app";
 
 /* ── Icons ── */

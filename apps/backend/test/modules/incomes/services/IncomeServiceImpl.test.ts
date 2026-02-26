@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { IncomeServiceImpl } from "@/modules/incomes/services/IncomeServiceImpl";
-import type { DbRepository } from "@/modules/incomes/repositories/DbRepository";
-import { Income } from "@/modules/incomes/domains/Income";
-import { User } from "@/modules/shared/domains/User";
 import { InternalError } from "@packages/lambda";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { Income } from "@/modules/incomes/domains/Income";
+import type { DbRepository } from "@/modules/incomes/repositories/DbRepository";
+import { IncomeServiceImpl } from "@/modules/incomes/services/IncomeServiceImpl";
+import { User } from "@/modules/shared/domains/User";
 
 const user = new User({ id: "user-123" });
 
