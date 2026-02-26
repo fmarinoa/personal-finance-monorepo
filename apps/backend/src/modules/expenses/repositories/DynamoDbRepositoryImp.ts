@@ -105,7 +105,15 @@ export class DynamoDbRepositoryImp
       lastKey = LastEvaluatedKey;
     } while (lastKey);
 
-    const allExpenses = allItems.map((item) => Expense.buildFromDbItem(item));
+    const allExpenses = allItems
+      .map((item) => Expense.buildFromDbItem(item))
+      .sort((a, b) => {
+        const paymentDateDiff = b.paymentDate - a.paymentDate;
+        return paymentDateDiff !== 0
+          ? paymentDateDiff
+          : b.creationDate - a.creationDate;
+      });
+
     const total = allExpenses.length;
     const totalAmount = allExpenses.reduce((sum, e) => sum + e.amount, 0);
 

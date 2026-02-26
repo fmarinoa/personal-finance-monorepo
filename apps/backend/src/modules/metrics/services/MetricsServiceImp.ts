@@ -51,9 +51,7 @@ export class MetricsServiceImp implements MetricsService {
               1000,
           ) / 10;
 
-    const lastExpenses = currentExpenses
-      .sort((a, b) => b.paymentDate - a.paymentDate)
-      .slice(0, 5);
+    const lastExpenses = currentExpenses.slice(0, 5);
 
     return {
       currentMonthTotal,
