@@ -113,11 +113,11 @@ export class DynamoDbRepositoryImp
     const total = allIncomes.length;
     const totalAmount = allIncomes.reduce((sum, i) => sum + i.amount, 0);
 
-    if (filters.limit === undefined || filters.page === undefined) {
+    if (filters.limit === undefined) {
       return { data: allIncomes, total, totalAmount };
     }
 
-    const start = (filters.page - 1) * filters.limit;
+    const start = filters.page ? (filters.page - 1) * filters.limit : 0;
     return {
       data: allIncomes.slice(start, start + filters.limit),
       total,

@@ -43,4 +43,15 @@ export class MetricsController extends BaseController {
 
     return this.ok(summary);
   }
+
+  async getDashboardChart(
+    event: APIGatewayProxyEvent,
+  ): Promise<APIGatewayProxyResult> {
+    const { context } = this.retrieveRequestContext(event);
+
+    const userId = context.authorizer?.claims["sub"];
+    const chartData = await this.props.metricsService.getDashboardChart(userId);
+
+    return this.ok(chartData);
+  }
 }

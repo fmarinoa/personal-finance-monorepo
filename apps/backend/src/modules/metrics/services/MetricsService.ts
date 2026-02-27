@@ -1,4 +1,4 @@
-import { DashboardSummary } from "@packages/core";
+import { DashboardChartPoint, DashboardSummary } from "@packages/core";
 
 export interface MetricsService {
   getDashboardSummary(
@@ -7,4 +7,5 @@ export interface MetricsService {
       period: string;
     },
   ): Promise<DashboardSummary>;
+  getDashboardChart(userId: string): Promise<DashboardChartPoint[]>;
 }

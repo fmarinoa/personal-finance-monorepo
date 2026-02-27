@@ -1,14 +1,18 @@
-import { type Expense, ExpenseCategory } from "..";
+import type { Expense, Income } from "..";
 
-export interface DashboardSummary {
-  currentMonthTotal: number;
-  previousMonthVariationPercentage: number;
-  topCategory: {
-    code: ExpenseCategory;
-    total: number;
-  };
+export interface BaseDashboard {
+  totalAmountIncomes: number;
+  totalAmountExpenses: number;
+}
+
+export interface DashboardSummary extends BaseDashboard {
+  balance: number;
   lastExpenses: Expense[];
-  // lastIncomes?: Income[];
+  lastIncomes: Income[];
+}
+
+export interface DashboardChartPoint extends BaseDashboard {
+  month: string; // "YYYY-MM"
 }
 
 export interface MonthlyMetric {

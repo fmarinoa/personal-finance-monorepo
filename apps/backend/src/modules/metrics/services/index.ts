@@ -1,7 +1,12 @@
-import { dbRepository } from "@/modules/expenses/repositories";
+import { dbRepository as expensesRepository } from "@/modules/expenses/repositories";
+import { dbRepository as incomesRepository } from "@/modules/incomes/repositories";
 
 import { MetricsServiceImp } from "./MetricsServiceImp";
 
 export const metricsService = new MetricsServiceImp({
-  expensesRepository: dbRepository,
+  expensesRepository,
+  incomesRepository,
+  options: {
+    lastMonthsForChart: 6,
+  },
 });

@@ -1,6 +1,7 @@
 import type {
   CreateExpensePayload,
   CreateIncomePayload,
+  DashboardChartPoint,
   DashboardSummary,
   DeleteReason,
   Expense,
@@ -49,11 +50,6 @@ export async function listExpenses(
   return response.data;
 }
 
-export async function fetchDashboardSummary(): Promise<DashboardSummary> {
-  const response = await api.get("/metrics/dashboard-summary");
-  return response.data;
-}
-
 export async function listIncomes(
   filters: FiltersForList,
 ): Promise<PaginatedResponse<Income>> {
@@ -65,5 +61,15 @@ export async function createIncome(
   payload: CreateIncomePayload,
 ): Promise<Expense> {
   const response = await api.post(`/incomes`, payload);
+  return response.data;
+}
+
+export async function fetchDashboardSummary(): Promise<DashboardSummary> {
+  const response = await api.get("/metrics/dashboard-summary");
+  return response.data;
+}
+
+export async function fetchDashboardChart(): Promise<DashboardChartPoint[]> {
+  const response = await api.get("/metrics/dashboard-chart");
   return response.data;
 }

@@ -1,13 +1,14 @@
-import { type DashboardSummary, ExpenseCategory } from "@packages/core";
+import { type DashboardSummary } from "@packages/core";
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchDashboardSummary } from "@/lib/api";
 
 const DEFAULT_DATA: DashboardSummary = {
-  currentMonthTotal: 0,
-  previousMonthVariationPercentage: 0,
-  topCategory: { code: ExpenseCategory.OTHER, total: 0 },
+  totalAmountExpenses: 0,
+  totalAmountIncomes: 0,
+  balance: 0,
   lastExpenses: [],
+  lastIncomes: [],
 };
 
 export function useDashboardMetrics() {

@@ -1,14 +1,17 @@
-import type { Expense } from "@packages/core";
+import type { Expense, Income } from "@packages/core";
 import { DateTime } from "luxon";
 import { useState } from "react";
 
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
+import { useDashboardChart } from "@/hooks/metrics/useDashboardChart";
 import { useDashboardMetrics } from "@/hooks/metrics/useDashboardMetrics";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "@/types/expense";
+import { INCOME_CATEGORY_ICONS, INCOME_CATEGORY_LABELS } from "@/types/income";
 
 import { CreateIncomeDrawer } from "../shared/CreateIncomeDrawer";
 import { MobileFAB } from "./MobileFAB";
+import { MonthlyChart } from "./MonthlyChart";
 
 /* ── Sub-components ── */
 
@@ -43,69 +46,23 @@ function StatCard({
   );
 }
 
-function MonthTotal({
+function MonthAmount({
   loading,
-  totalAmount,
+  amount,
+  color = "text-gold",
 }: {
   loading: boolean;
-  totalAmount: number;
+  amount: number;
+  color?: string;
 }) {
   if (loading)
     return (
       <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
     );
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-3xl font-bold tracking-tight font-mono text-gold">
-        S/ {totalAmount.toFixed(2)}
-      </span>
-    </div>
-  );
-}
-
-function MonthlyVariationIndicator({
-  loading,
-  previousMonthVariationPercentage,
-}: {
-  loading: boolean;
-  previousMonthVariationPercentage: number;
-}) {
-  if (loading)
-    return (
-      <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
-    );
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-3xl font-bold tracking-tight font-mono text-gold">
-        {previousMonthVariationPercentage.toFixed(0)} %
-      </span>
-    </div>
-  );
-}
-
-function TopCategory({
-  loading,
-  topCategory,
-  totalAmount,
-}: {
-  loading: boolean;
-  topCategory: string;
-  totalAmount: number;
-}) {
-  if (loading)
-    return (
-      <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
-    );
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <span className="text-3xl font-bold tracking-tight font-mono text-gold">
-        {CATEGORY_ICONS[topCategory as keyof typeof CATEGORY_ICONS]}
-        {CATEGORY_LABELS[topCategory as keyof typeof CATEGORY_LABELS]}
-      </span>
-      <span className="text-sm font-mono text-gold">
-        S/ {totalAmount.toFixed(0)}
-      </span>
-    </div>
+    <span className={`text-3xl font-bold tracking-tight font-mono ${color}`}>
+      S/ {amount.toFixed(2)}
+    </span>
   );
 }
 
@@ -169,6 +126,75 @@ function LastExpensesTable({
     </div>
   );
 }
+
+function LastIncomesTable({
+  loading,
+  incomes,
+  onViewMore,
+}: {
+  loading: boolean;
+  incomes: Income[];
+  onViewMore: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 px-5 py-5 rounded-2xl bg-white/3 border border-white/6">
+      <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase shrink-0">
+        Últimos ingresos
+      </span>
+      {loading ? (
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-8 rounded-lg bg-white/6 animate-pulse" />
+          ))}
+        </div>
+      ) : incomes.length === 0 ? (
+        <p className="text-sm text-white/30 py-4 text-center">
+          Sin ingresos este mes
+        </p>
+      ) : (
+        <table className="w-full text-sm">
+          <tbody className="divide-y divide-white/5">
+            {incomes.map((i) => (
+              <tr key={i.id} className="group">
+                <td className="py-2.5 pr-3 w-8 text-base leading-none">
+                  {
+                    INCOME_CATEGORY_ICONS[
+                      i.category as keyof typeof INCOME_CATEGORY_ICONS
+                    ]
+                  }
+                </td>
+                <td className="py-2.5 pr-3 text-white/80 max-w-40 truncate">
+                  {i.description}
+                </td>
+                <td className="py-2.5 pr-3 text-white/35 hidden sm:table-cell whitespace-nowrap">
+                  {
+                    INCOME_CATEGORY_LABELS[
+                      i.category as keyof typeof INCOME_CATEGORY_LABELS
+                    ]
+                  }
+                </td>
+                <td className="py-2.5 pr-3 text-white/35 whitespace-nowrap">
+                  {DateTime.fromMillis(i.effectiveDate).toFormat("dd MMM", {
+                    locale: "es",
+                  })}
+                </td>
+                <td className="py-2.5 text-right font-mono text-emerald-400 font-semibold whitespace-nowrap">
+                  S/ {i.amount.toFixed(2)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <button
+        onClick={onViewMore}
+        className="mt-1 self-end text-xs font-mono text-white/30 hover:text-emerald-400 transition-colors cursor-pointer"
+      >
+        Ver más →
+      </button>
+    </div>
+  );
+}
 interface DashboardProps {
   username: string | null;
   onSignOut: () => void;
@@ -188,6 +214,7 @@ export function Dashboard({
   const [toastMessage, setToastMessage] = useState("");
 
   const { data, loading, refreshing, error, refresh } = useDashboardMetrics();
+  const { data: chartData, loading: chartLoading } = useDashboardChart();
 
   function handleCreated(message: string) {
     refresh();
@@ -247,46 +274,57 @@ export function Dashboard({
         className={`grid grid-cols-1 sm:grid-cols-3 gap-4 transition-opacity duration-500 ${refreshing ? "opacity-40" : "opacity-100"}`}
       >
         <StatCard
-          label="Gasto del mes"
+          label="Gastos del mes"
           valueNode={
-            <MonthTotal
+            <MonthAmount
               loading={loading}
-              totalAmount={data.currentMonthTotal}
+              amount={data.totalAmountExpenses}
+              color="text-gold"
             />
           }
-          accent
         />
         <StatCard
-          label="Variación de gasto vs mes anterior"
+          label="Ingresos del mes"
           valueNode={
-            <MonthlyVariationIndicator
+            <MonthAmount
               loading={loading}
-              previousMonthVariationPercentage={
-                data.previousMonthVariationPercentage
+              amount={data.totalAmountIncomes}
+              color="text-emerald-400"
+            />
+          }
+        />
+        <StatCard
+          label="Balance neto"
+          valueNode={
+            <MonthAmount
+              loading={loading}
+              amount={data.balance}
+              color={
+                loading
+                  ? "text-white"
+                  : data.balance >= 0
+                    ? "text-emerald-400"
+                    : "text-red-400"
               }
             />
           }
-          accent
-        />
-        <StatCard
-          label="Categoría más gastada"
-          valueNode={
-            <TopCategory
-              loading={loading}
-              topCategory={data.topCategory.code}
-              totalAmount={data.topCategory.total}
-            />
-          }
-          accent
         />
       </div>
 
-      {/* Bottom row: last expenses (50%) + future incomes (50%) */}
+      {/* Monthly chart */}
+      <MonthlyChart data={chartData} loading={chartLoading} />
+
+      {/* Last expenses */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <LastExpensesTable
           loading={loading}
           expenses={data.lastExpenses}
           onViewMore={() => onNavigate("expenses")}
+        />
+        <LastIncomesTable
+          loading={loading}
+          incomes={data.lastIncomes}
+          onViewMore={() => onNavigate("incomes")}
         />
       </div>
 
