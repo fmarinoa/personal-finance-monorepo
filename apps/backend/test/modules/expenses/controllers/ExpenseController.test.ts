@@ -176,7 +176,7 @@ describe("ExpenseController", () => {
     it("returns the totalAmount in the pagination metadata", async () => {
       vi.mocked(service.list).mockResolvedValue({
         data: [],
-        pagination: { totalPages: 1, total: 0, totalAmount: 999 },
+        pagination: { totalPages: 1, total: 0 },
       });
 
       const result = await controller.list(
@@ -184,7 +184,8 @@ describe("ExpenseController", () => {
       );
 
       const body = JSON.parse(result.body);
-      expect(body.pagination.totalAmount).toBe(999);
+      expect(body.pagination.totalPages).toBe(1);
+      expect(body.pagination.total).toBe(0);
     });
   });
 

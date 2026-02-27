@@ -1,17 +1,28 @@
 import type { Expense, Income } from "@packages/core";
 import { DateTime } from "luxon";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
-import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
 import { useDashboardChart } from "@/hooks/metrics/useDashboardChart";
 import { useDashboardMetrics } from "@/hooks/metrics/useDashboardMetrics";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "@/types/expense";
 import { INCOME_CATEGORY_ICONS, INCOME_CATEGORY_LABELS } from "@/types/income";
 
-import { CreateIncomeDrawer } from "../shared/CreateIncomeDrawer";
 import { MobileFAB } from "./MobileFAB";
-import { MonthlyChart } from "./MonthlyChart";
+
+const MonthlyChart = lazy(() =>
+  import("./MonthlyChart").then((m) => ({ default: m.MonthlyChart })),
+);
+const CreateIncomeDrawer = lazy(() =>
+  import("@/components/shared/CreateIncomeDrawer").then((m) => ({
+    default: m.CreateIncomeDrawer,
+  })),
+);
+const CreateExpenseDrawer = lazy(() =>
+  import("@/components/shared/CreateExpenseDrawer").then((m) => ({
+    default: m.CreateExpenseDrawer,
+  })),
+);
 
 /* ── Sub-components ── */
 
@@ -312,7 +323,13 @@ export function Dashboard({
       </div>
 
       {/* Monthly chart */}
-      <MonthlyChart data={chartData} loading={chartLoading} />
+      <Suspense
+        fallback={
+          <div className="h-44 w-full rounded-xl bg-white/6 animate-pulse" />
+        }
+      >
+        <MonthlyChart data={chartData} loading={chartLoading} />
+      </Suspense>
 
       {/* Last expenses */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -335,17 +352,21 @@ export function Dashboard({
       />
 
       {/* Create income drawer */}
-      <CreateIncomeDrawer
-        open={incomeDrawerOpen}
-        onClose={() => setIncomeDrawerOpen(false)}
-        onCreated={() => handleCreated("Ingreso registrado correctamente")}
-      />
+      <Suspense fallback={<div />}>
+        <CreateIncomeDrawer
+          open={incomeDrawerOpen}
+          onClose={() => setIncomeDrawerOpen(false)}
+          onCreated={() => handleCreated("Ingreso registrado correctamente")}
+        />
+      </Suspense>
       {/* Create expense drawer */}
-      <CreateExpenseDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onCreated={() => handleCreated("Gasto registrado correctamente")}
-      />
+      <Suspense fallback={<div />}>
+        <CreateExpenseDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          onCreated={() => handleCreated("Gasto registrado correctamente")}
+        />
+      </Suspense>
 
       {/* Success toast */}
       <div

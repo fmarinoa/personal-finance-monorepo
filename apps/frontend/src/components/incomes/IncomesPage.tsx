@@ -1,13 +1,18 @@
 import type { Income } from "@packages/core";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
 import { MobileFAB } from "@/components/dashboard/MobileFAB";
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
-import { CreateIncomeDrawer } from "@/components/shared/CreateIncomeDrawer";
 import { useIncomes } from "@/hooks/incomes/useIncomes";
 import { type Period, usePeriod } from "@/hooks/usePeriod";
 
 import { IncomesTable } from "./IncomesTable";
+
+const CreateIncomeDrawer = lazy(() =>
+  import("@/components/shared/CreateIncomeDrawer").then((m) => ({
+    default: m.CreateIncomeDrawer,
+  })),
+);
 
 interface IncomesPageProps {
   username: string | null;
@@ -89,15 +94,17 @@ export function IncomesPage({
         }}
       />
 
-      <CreateIncomeDrawer
-        open={drawerOpen}
-        onClose={() => {
-          setDrawerOpen(false);
-          setSelectedIncome(undefined);
-        }}
-        onCreated={refresh}
-        income={selectedIncome}
-      />
+      <Suspense fallback={<div />}>
+        <CreateIncomeDrawer
+          open={drawerOpen}
+          onClose={() => {
+            setDrawerOpen(false);
+            setSelectedIncome(undefined);
+          }}
+          onCreated={refresh}
+          income={selectedIncome}
+        />
+      </Suspense>
     </AppLayout>
   );
 }

@@ -1,13 +1,18 @@
 import type { Expense } from "@packages/core";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
 import { MobileFAB } from "@/components/dashboard/MobileFAB";
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
-import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
 import { useExpenses } from "@/hooks/expenses/useExpenses";
 import { type Period, usePeriod } from "@/hooks/usePeriod";
 
 import { Table } from "./Table";
+
+const CreateExpenseDrawer = lazy(() =>
+  import("@/components/shared/CreateExpenseDrawer").then((m) => ({
+    default: m.CreateExpenseDrawer,
+  })),
+);
 
 interface ExpensesPageProps {
   username: string | null;
@@ -91,15 +96,17 @@ export function ExpensesPage({
         }}
       />
 
-      <CreateExpenseDrawer
-        open={drawerOpen}
-        onClose={() => {
-          setDrawerOpen(false);
-          setSelectedExpense(undefined);
-        }}
-        onCreated={refresh}
-        expense={selectedExpense}
-      />
+      <Suspense fallback={<div />}>
+        <CreateExpenseDrawer
+          open={drawerOpen}
+          onClose={() => {
+            setDrawerOpen(false);
+            setSelectedExpense(undefined);
+          }}
+          onCreated={refresh}
+          expense={selectedExpense}
+        />
+      </Suspense>
     </AppLayout>
   );
 }

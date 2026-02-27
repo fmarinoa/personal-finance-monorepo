@@ -5,7 +5,8 @@
     "prepare": "husky || true",
     "prettier": "pnpm --parallel run prettier",
     "lint": "pnpm --parallel run lint",
-    "test": "pnpm --parallel run test"
+    "test": "pnpm --parallel run test",
+    "build": "pnpm --parallel run build"
   },
   "repository": {
     "type": "git",
