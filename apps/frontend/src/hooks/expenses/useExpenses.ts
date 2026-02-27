@@ -12,7 +12,6 @@ interface UseExpensesOptions extends DateRange {
 interface State {
   data: Expense[];
   totalCount: number;
-  totalAmount: number;
   totalPages: number;
   loading: boolean;
   error: string | null;
@@ -25,7 +24,6 @@ export function useExpenses(
   const [state, setState] = useState<State>({
     data: [],
     totalCount: 0,
-    totalAmount: 0,
     totalPages: 1,
     loading: true,
     error: null,
@@ -45,7 +43,6 @@ export function useExpenses(
           setState({
             data: res.data,
             totalCount: res.pagination.total,
-            totalAmount: res.pagination.totalAmount,
             totalPages: res.pagination.totalPages,
             loading: false,
             error: null,
@@ -77,7 +74,6 @@ export function useExpenses(
   return {
     data: state.data,
     totalCount: state.totalCount,
-    totalAmount: state.totalAmount,
     totalPages: state.totalPages,
     loading: state.loading || isStale,
     error: state.error,
