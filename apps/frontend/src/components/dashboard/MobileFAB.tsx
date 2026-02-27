@@ -22,12 +22,12 @@ function FABActions({
 }) {
   const [open, setOpen] = useState(false);
 
-  function handleEgreso() {
+  function handleExpense() {
     setOpen(false);
     onNewExpense();
   }
 
-  function handleIngreso() {
+  function handleIncome() {
     setOpen(false);
     onNewIncome?.();
   }
@@ -53,7 +53,7 @@ function FABActions({
           delay="delay-[40ms]"
           open={open}
           color="bg-emerald-500 hover:bg-emerald-400"
-          onClick={handleIngreso}
+          onClick={handleIncome}
           icon={
             <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15">
               <path d="M8 1.5a.75.75 0 01.75.75v9.19l2.72-2.72a.75.75 0 111.06 1.06l-4 4a.75.75 0 01-1.06 0l-4-4a.75.75 0 111.06-1.06l2.72 2.72V2.25A.75.75 0 018 1.5z" />
@@ -63,12 +63,12 @@ function FABActions({
 
         {/* Egreso */}
         <FABOption
-          label="Egreso"
+          label="Gasto"
           delay="delay-[0ms]"
           open={open}
-          color="bg-gold hover:bg-gold-light"
+          color="bg-rose-500 hover:bg-rose-400 active:scale-[.98] text-white"
           textColor="text-canvas"
-          onClick={handleEgreso}
+          onClick={handleExpense}
           icon={
             <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15">
               <path d="M8 14.5a.75.75 0 01-.75-.75V4.56L4.53 7.28a.75.75 0 01-1.06-1.06l4-4a.75.75 0 011.06 0l4 4a.75.75 0 01-1.06 1.06L8.75 4.56v9.19A.75.75 0 018 14.5z" />

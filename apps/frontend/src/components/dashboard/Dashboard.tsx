@@ -7,6 +7,7 @@ import { CreateExpenseDrawer } from "@/components/shared/CreateExpenseDrawer";
 import { useDashboardMetrics } from "@/hooks/metrics/useDashboardMetrics";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "@/types/expense";
 
+import { CreateIncomeDrawer } from "../shared/CreateIncomeDrawer";
 import { MobileFAB } from "./MobileFAB";
 
 /* ── Sub-components ── */
@@ -182,12 +183,15 @@ export function Dashboard({
   onNavigate,
 }: DashboardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [incomeDrawerOpen, setIncomeDrawerOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   const { data, loading, refreshing, error, refresh } = useDashboardMetrics();
 
-  function handleCreated() {
+  function handleCreated(message: string) {
     refresh();
+    setToastMessage(message);
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 3000);
   }
@@ -200,15 +204,28 @@ export function Dashboard({
       onNavigate={onNavigate}
       title="Dashboard"
       headerActions={
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light active:scale-[.98] text-canvas text-sm font-bold tracking-wide transition cursor-pointer"
-        >
-          <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
-            <path d="M8 1.5a.75.75 0 01.75.75V7.5h5.25a.75.75 0 010 1.5H8.75v5.25a.75.75 0 01-1.5 0V9H2a.75.75 0 010-1.5h5.25V2.25A.75.75 0 018 1.5z" />
-          </svg>
-          Nuevo gasto
-        </button>
+        <div className="hidden md:flex items-center gap-2">
+          <button
+            onClick={() => setIncomeDrawerOpen(true)}
+            id="new-income-button"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[.98] text-white text-sm font-bold tracking-wide transition cursor-pointer"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
+              <path d="M8 1.5a.75.75 0 01.75.75v9.19l2.72-2.72a.75.75 0 111.06 1.06l-4 4a.75.75 0 01-1.06 0l-4-4a.75.75 0 111.06-1.06l2.72 2.72V2.25A.75.75 0 018 1.5z" />
+            </svg>
+            Nuevo ingreso
+          </button>
+          <button
+            onClick={() => setDrawerOpen(true)}
+            id="new-expense-button"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 active:scale-[.98] text-white text-sm font-bold tracking-wide transition cursor-pointer"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
+              <path d="M8 14.5a.75.75 0 01-.75-.75V4.31l-2.72 2.72a.75.75 0 11-1.06-1.06l4-4a.75.75 0 011.06 0l4 4a.75.75 0 11-1.06 1.06l-2.72-2.72v9.19a.75.75 0 01-.75.75z" />
+            </svg>
+            Nuevo gasto
+          </button>
+        </div>
       }
     >
       {/* Stats row */}
@@ -274,13 +291,22 @@ export function Dashboard({
       </div>
 
       {/* Mobile FAB */}
-      <MobileFAB onNewExpense={() => setDrawerOpen(true)} />
+      <MobileFAB
+        onNewExpense={() => setDrawerOpen(true)}
+        onNewIncome={() => setIncomeDrawerOpen(true)}
+      />
 
+      {/* Create income drawer */}
+      <CreateIncomeDrawer
+        open={incomeDrawerOpen}
+        onClose={() => setIncomeDrawerOpen(false)}
+        onCreated={() => handleCreated("Ingreso registrado correctamente")}
+      />
       {/* Create expense drawer */}
       <CreateExpenseDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onCreated={handleCreated}
+        onCreated={() => handleCreated("Gasto registrado correctamente")}
       />
 
       {/* Success toast */}
@@ -303,7 +329,7 @@ export function Dashboard({
             />
           </svg>
         </span>
-        Gasto registrado correctamente
+        {toastMessage}
       </div>
     </AppLayout>
   );
