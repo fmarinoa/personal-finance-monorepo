@@ -3,7 +3,6 @@ export interface PaginatedResponse<T> {
   pagination: {
     totalPages: number;
     total: number;
-    totalAmount: number;
   };
 }
 

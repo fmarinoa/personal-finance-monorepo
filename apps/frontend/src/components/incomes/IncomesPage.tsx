@@ -38,8 +38,11 @@ export function IncomesPage({
     setRawPeriod(p);
   };
 
-  const { data, loading, error, totalCount, totalAmount, totalPages, refresh } =
-    useIncomes({ ...dateRange, limit: 10, page });
+  const { data, loading, error, totalCount, totalPages, refresh } = useIncomes({
+    ...dateRange,
+    limit: 10,
+    page,
+  });
 
   return (
     <AppLayout
@@ -67,7 +70,6 @@ export function IncomesPage({
         error={error}
         periodLabel={periodLabel}
         totalCount={totalCount}
-        totalAmount={totalAmount}
         period={period}
         setPeriod={setPeriod}
         page={page}

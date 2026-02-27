@@ -59,7 +59,7 @@ export class DynamoDbRepositoryImp
   async list(
     userId: string,
     filters: FiltersForList,
-  ): Promise<{ data: Income[]; total: number; totalAmount: number }> {
+  ): Promise<{ data: Income[]; total: number }> {
     const expressionAttributeValues: Record<string, any> = {
       ":userId": userId,
     };
@@ -111,17 +111,15 @@ export class DynamoDbRepositoryImp
       });
 
     const total = allIncomes.length;
-    const totalAmount = allIncomes.reduce((sum, i) => sum + i.amount, 0);
 
     if (filters.limit === undefined) {
-      return { data: allIncomes, total, totalAmount };
+      return { data: allIncomes, total };
     }
 
     const start = filters.page ? (filters.page - 1) * filters.limit : 0;
     return {
       data: allIncomes.slice(start, start + filters.limit),
       total,
-      totalAmount,
     };
   }
 }

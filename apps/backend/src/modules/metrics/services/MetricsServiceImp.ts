@@ -1,7 +1,9 @@
 import { DashboardSummary } from "@packages/core";
 import { DateTime } from "luxon";
 
+import { Expense } from "@/modules/expenses/domains";
 import { DbRepository as ExpensesRepository } from "@/modules/expenses/repositories/DbRepository";
+import { Income } from "@/modules/incomes/domains";
 import { DbRepository as IncomesRepository } from "@/modules/incomes/repositories/DbRepository";
 
 import { MetricsService } from "./MetricsService";
@@ -11,6 +13,7 @@ interface MetricsServiceImpProps {
   incomesRepository: IncomesRepository;
   options: {
     lastMonthsForChart: number;
+    lastRecordsForSummary: number;
   };
 }
 
@@ -25,28 +28,34 @@ export class MetricsServiceImp implements MetricsService {
     const currentStart = dt.startOf("month").toMillis();
     const currentEnd = dt.endOf("month").toMillis();
 
-    const [
-      { data: lastExpenses, totalAmount: totalAmountExpenses },
-      { data: lastIncomes, totalAmount: totalAmountIncomes },
-    ] = await Promise.all([
+    const [{ data: lastExpenses }, { data: lastIncomes }] = await Promise.all([
       this.props.expensesRepository.list(userId, {
         startDate: currentStart,
         endDate: currentEnd,
-        limit: 5,
       }),
       this.props.incomesRepository.list(userId, {
         startDate: currentStart,
         endDate: currentEnd,
-        limit: 5,
       }),
     ]);
+
+    const totalAmountExpenses =
+      Expense.calculateTotalExpenseAmount(lastExpenses);
+
+    const totalAmountIncomes = Income.calculateTotalIncomeAmount(lastIncomes);
 
     return {
       totalAmountExpenses,
       totalAmountIncomes,
       balance: totalAmountIncomes - totalAmountExpenses,
-      lastExpenses,
-      lastIncomes,
+      lastExpenses: lastExpenses.slice(
+        0,
+        this.props.options.lastRecordsForSummary,
+      ),
+      lastIncomes: lastIncomes.slice(
+        0,
+        this.props.options.lastRecordsForSummary,
+      ),
     };
   }
 
@@ -60,19 +69,23 @@ export class MetricsServiceImp implements MetricsService {
       const start = month.toMillis();
       const end = month.endOf("month").toMillis();
 
-      const [
-        { totalAmount: totalAmountIncomes },
-        { totalAmount: totalAmountExpenses },
-      ] = await Promise.all([
-        this.props.incomesRepository.list(userId, {
-          startDate: start,
-          endDate: end,
-        }),
-        this.props.expensesRepository.list(userId, {
-          startDate: start,
-          endDate: end,
-        }),
-      ]);
+      const [{ data: lastExpenses }, { data: lastIncomes }] = await Promise.all(
+        [
+          this.props.expensesRepository.list(userId, {
+            startDate: start,
+            endDate: end,
+          }),
+          this.props.incomesRepository.list(userId, {
+            startDate: start,
+            endDate: end,
+          }),
+        ],
+      );
+
+      const totalAmountExpenses =
+        Expense.calculateTotalExpenseAmount(lastExpenses);
+
+      const totalAmountIncomes = Income.calculateTotalIncomeAmount(lastIncomes);
 
       chartData.push({
         month: month.toFormat("yyyy-MM"),

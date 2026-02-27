@@ -109,4 +109,8 @@ export class Income implements IncomeInterface {
     if (error) throw new BadRequestError({ details: error.message });
     return { filters: data };
   }
+
+  static calculateTotalIncomeAmount(incomes: Income[]): number {
+    return incomes.reduce((sum, income) => sum + income.amount, 0);
+  }
 }

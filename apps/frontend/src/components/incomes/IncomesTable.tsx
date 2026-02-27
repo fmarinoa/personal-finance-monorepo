@@ -12,7 +12,6 @@ import {
 
 interface IncomesTableProps {
   totalCount: number;
-  totalAmount: number;
   data: Income[];
   loading: boolean;
   error: string | null;

@@ -4,7 +4,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "prettier": "prettier --write .",
-    "lint": "eslint .",
+    "lint": "eslint --cache --fix .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

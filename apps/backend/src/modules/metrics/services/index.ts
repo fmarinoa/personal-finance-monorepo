@@ -8,5 +8,6 @@ export const metricsService = new MetricsServiceImp({
   incomesRepository,
   options: {
     lastMonthsForChart: 6,
+    lastRecordsForSummary: 5,
   },
 });

@@ -60,7 +60,6 @@ export class DynamoDbRepositoryImp
   ): Promise<{
     data: Expense[];
     total: number;
-    totalAmount: number;
   }> {
     const expressionAttributeValues: Record<string, any> = {
       ":userId": userId,
@@ -117,17 +116,16 @@ export class DynamoDbRepositoryImp
       });
 
     const total = allExpenses.length;
-    const totalAmount = allExpenses.reduce((sum, e) => sum + e.amount, 0);
 
     if (filters.limit === undefined) {
-      return { data: allExpenses, total, totalAmount };
+      return { data: allExpenses, total };
     }
 
     const limit = filters.limit;
     const start = filters.page ? (filters.page - 1) * limit : 0;
     const data = allExpenses.slice(start, start + limit);
 
-    return { data, total, totalAmount };
+    return { data, total };
   }
 
   async getById(expense: Expense): Promise<Expense> {

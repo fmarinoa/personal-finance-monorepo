@@ -11,7 +11,6 @@ export interface DbRepository {
   ): Promise<{
     data: Expense[];
     total: number;
-    totalAmount: number;
   }>;
   update(expense: Expense): Promise<Expense>;
   delete(expense: Expense): Promise<void>;

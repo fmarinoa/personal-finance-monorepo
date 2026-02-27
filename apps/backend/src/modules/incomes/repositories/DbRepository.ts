@@ -7,5 +7,5 @@ export interface DbRepository {
   list(
     userId: string,
     filters: FiltersForList,
-  ): Promise<{ data: Income[]; total: number; totalAmount: number }>;
+  ): Promise<{ data: Income[]; total: number }>;
 }

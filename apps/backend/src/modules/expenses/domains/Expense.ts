@@ -155,4 +155,8 @@ export class Expense implements ExpenseInterface {
       user: new User({ id: this.user.id }),
     });
   }
+
+  static calculateTotalExpenseAmount(expenses: Expense[]): number {
+    return expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  }
 }

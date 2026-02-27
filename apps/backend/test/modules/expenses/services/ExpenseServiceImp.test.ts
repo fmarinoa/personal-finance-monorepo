@@ -65,7 +65,6 @@ describe("ExpenseServiceImp", () => {
       vi.mocked(repository.list).mockResolvedValue({
         data: [mockExpense],
         total: 10,
-        totalAmount: 500,
       });
 
       const result = await service.list(user, { limit: 5 });
@@ -74,7 +73,6 @@ describe("ExpenseServiceImp", () => {
       expect(result.pagination).toEqual({
         totalPages: 2,
         total: 10,
-        totalAmount: 500,
       });
     });
 
@@ -82,7 +80,6 @@ describe("ExpenseServiceImp", () => {
       vi.mocked(repository.list).mockResolvedValue({
         data: [mockExpense],
         total: 10,
-        totalAmount: 500,
       });
 
       const result = await service.list(user, {});
@@ -95,7 +92,6 @@ describe("ExpenseServiceImp", () => {
       vi.mocked(repository.list).mockResolvedValue({
         data: [],
         total: 0,
-        totalAmount: 0,
       });
       const filters = { limit: 3, page: 2 };
 
@@ -108,14 +104,12 @@ describe("ExpenseServiceImp", () => {
       vi.mocked(repository.list).mockResolvedValue({
         data: [],
         total: 0,
-        totalAmount: 0,
       });
 
       const result = await service.list(user, {});
 
       expect(result.data).toHaveLength(0);
       expect(result.pagination.total).toBe(0);
-      expect(result.pagination.totalAmount).toBe(0);
     });
 
     it("throws NotFoundError when getById is called with a missing expense", async () => {

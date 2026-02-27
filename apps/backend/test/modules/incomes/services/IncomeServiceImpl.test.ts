@@ -60,7 +60,6 @@ describe("IncomeServiceImpl", () => {
       vi.mocked(repository.list).mockResolvedValue({
         data: [mockIncome],
         total: 10,
-        totalAmount: 5000,
       });
 
       const result = await service.list(user, { limit: 5 });
@@ -69,7 +68,6 @@ describe("IncomeServiceImpl", () => {
       expect(result.pagination).toEqual({
         totalPages: 2,
         total: 10,
-        totalAmount: 5000,
       });
     });
 
@@ -77,7 +75,6 @@ describe("IncomeServiceImpl", () => {
       vi.mocked(repository.list).mockResolvedValue({
         data: [mockIncome],
         total: 10,
-        totalAmount: 5000,
       });
 
       const result = await service.list(user, {});
@@ -90,7 +87,6 @@ describe("IncomeServiceImpl", () => {
       vi.mocked(repository.list).mockResolvedValue({
         data: [],
         total: 0,
-        totalAmount: 0,
       });
       const filters = { limit: 3, page: 2 };
 
@@ -103,21 +99,18 @@ describe("IncomeServiceImpl", () => {
       vi.mocked(repository.list).mockResolvedValue({
         data: [],
         total: 0,
-        totalAmount: 0,
       });
 
       const result = await service.list(user, {});
 
       expect(result.data).toHaveLength(0);
       expect(result.pagination.total).toBe(0);
-      expect(result.pagination.totalAmount).toBe(0);
     });
 
     it("calculates totalPages as 1 when total is 0", async () => {
       vi.mocked(repository.list).mockResolvedValue({
         data: [],
         total: 0,
-        totalAmount: 0,
       });
 
       const result = await service.list(user, { limit: 10 });

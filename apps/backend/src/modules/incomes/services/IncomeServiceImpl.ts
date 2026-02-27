@@ -27,7 +27,7 @@ export class IncomeServiceImpl implements IncomeService {
     user: User,
     filters: FiltersForList,
   ): Promise<PaginatedResponse<Income>> {
-    const { data, total, totalAmount } = await this.props.dbRepository.list(
+    const { data, total } = await this.props.dbRepository.list(
       user.id,
       filters,
     );
@@ -37,7 +37,6 @@ export class IncomeServiceImpl implements IncomeService {
       pagination: {
         totalPages: Math.ceil(total / (filters.limit || total)),
         total,
-        totalAmount,
       },
     };
   }
