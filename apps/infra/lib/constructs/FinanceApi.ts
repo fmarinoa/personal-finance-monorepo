@@ -93,7 +93,7 @@ export class FinanceApi extends Construct {
       `${route.id}Lambda${props.stage}`,
       {
         functionName: `finance-${kebabId}-${props.stage.toLowerCase()}`,
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_22_X,
         entry: path.join(__dirname, "../../../backend/src/handler/index.ts"),
         handler: "handler",
         description: route.description,
