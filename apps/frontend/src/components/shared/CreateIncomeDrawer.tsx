@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 import { useCallback, useState } from "react";
 
 import { useCreateIncome } from "@/hooks/incomes/useCreateIncome";
+import { useUpdateIncome } from "@/hooks/incomes/useUpdateIncome";
 import {
   INCOME_CATEGORY_ICONS,
   INCOME_CATEGORY_LABELS,
@@ -36,16 +37,26 @@ export function CreateIncomeDrawer({
 
   const [form, setForm] = useState({ ...EMPTY });
   const [formError, setFormError] = useState<string | null>(null);
-  const {
-    submit,
-    loading,
-    error: submitError,
-  } = useCreateIncome(() => {
+  const handleSuccess = () => {
     onCreated();
     setFormError(null);
     onClose();
-  });
-  const error = formError ?? submitError;
+  };
+
+  const {
+    submit: submitCreate,
+    loading: creating,
+    error: createError,
+  } = useCreateIncome(handleSuccess);
+
+  const {
+    submit: submitUpdate,
+    loading: updating,
+    error: updateError,
+  } = useUpdateIncome(handleSuccess);
+
+  const loading = creating || updating;
+  const error = formError ?? createError ?? updateError;
 
   // Reset form when drawer opens or income changes (setState during render — no effect needed)
   const [prevOpen, setPrevOpen] = useState(open);
@@ -90,28 +101,54 @@ export function CreateIncomeDrawer({
     if (isNaN(amount) || amount <= 0)
       return setFormError("Ingresa un monto válido mayor a 0.");
 
-    if (form.status === IncomeStatus.PROJECTED) {
-      await submit({
-        amount,
-        description: form.description.trim(),
-        category: form.category as IncomeCategory,
-        status: IncomeStatus.PROJECTED,
-        projectedDate: DateTime.fromISO(form.projectedDate, { zone: "local" })
-          .startOf("day")
-          .toUTC()
-          .toMillis(),
-      });
+    const payloadBase = {
+      amount,
+      description: form.description.trim(),
+      category: form.category as IncomeCategory,
+    };
+
+    if (isEdit && income) {
+      // Update path
+      if (form.status === IncomeStatus.PROJECTED) {
+        await submitUpdate(income.id, {
+          ...payloadBase,
+          status: IncomeStatus.PROJECTED,
+          projectedDate: DateTime.fromISO(form.projectedDate, { zone: "local" })
+            .startOf("day")
+            .toUTC()
+            .toMillis(),
+        });
+      } else {
+        await submitUpdate(income.id, {
+          ...payloadBase,
+          status: IncomeStatus.RECEIVED,
+          receivedDate: DateTime.fromISO(form.receivedDate, { zone: "local" })
+            .startOf("day")
+            .toUTC()
+            .toMillis(),
+        });
+      }
     } else {
-      await submit({
-        amount,
-        description: form.description.trim(),
-        category: form.category as IncomeCategory,
-        status: IncomeStatus.RECEIVED,
-        receivedDate: DateTime.fromISO(form.receivedDate, { zone: "local" })
-          .startOf("day")
-          .toUTC()
-          .toMillis(),
-      });
+      // Create path
+      if (form.status === IncomeStatus.PROJECTED) {
+        await submitCreate({
+          ...payloadBase,
+          status: IncomeStatus.PROJECTED,
+          projectedDate: DateTime.fromISO(form.projectedDate, { zone: "local" })
+            .startOf("day")
+            .toUTC()
+            .toMillis(),
+        });
+      } else {
+        await submitCreate({
+          ...payloadBase,
+          status: IncomeStatus.RECEIVED,
+          receivedDate: DateTime.fromISO(form.receivedDate, { zone: "local" })
+            .startOf("day")
+            .toUTC()
+            .toMillis(),
+        });
+      }
     }
   }
 

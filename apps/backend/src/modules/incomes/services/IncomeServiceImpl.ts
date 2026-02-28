@@ -1,5 +1,5 @@
 import { FiltersForList, PaginatedResponse } from "@packages/core";
-import { InternalError } from "@packages/lambda";
+import { BaseError, InternalError, NotFoundError } from "@packages/lambda";
 
 import { User } from "@/modules/shared/domains";
 
@@ -39,5 +39,26 @@ export class IncomeServiceImpl implements IncomeService {
         total,
       },
     };
+  }
+
+  async update(income: Income): Promise<Income> {
+    try {
+      const existing = await this.props.dbRepository.getById(income);
+
+      if (!existing) {
+        throw new NotFoundError({ details: "Income not found" });
+      }
+
+      income.updateFromExisting(existing);
+
+      const response = await this.props.dbRepository.update(income);
+
+      return response;
+    } catch (error) {
+      if (error instanceof BaseError) {
+        throw error;
+      }
+      throw new InternalError({ details: error });
+    }
   }
 }

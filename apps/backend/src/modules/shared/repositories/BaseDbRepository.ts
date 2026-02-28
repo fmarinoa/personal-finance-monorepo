@@ -1,9 +1,7 @@
 import { randomUUID } from "crypto";
 import { DateTime } from "luxon";
 
-import { Expense } from "@/modules/expenses/domains";
-
-export abstract class BaseDbRepository {
+export abstract class BaseDbRepository<T> {
   protected generateId(): string {
     return randomUUID();
   }
@@ -13,7 +11,7 @@ export abstract class BaseDbRepository {
   }
 
   protected buildUpdateExpression(
-    expense: Expense,
+    item: T,
     fieldsToUpdate: string[],
   ): {
     UpdateExpression: string;
@@ -29,7 +27,7 @@ export abstract class BaseDbRepository {
       const attributeValue = `:${field}`;
 
       attributeNames[attributeName] = field;
-      attributeValues[attributeValue] = expense[field as keyof Expense];
+      attributeValues[attributeValue] = item[field as keyof T];
       setExpressions.push(`${attributeName} = ${attributeValue}`);
     });
 

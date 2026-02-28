@@ -14,6 +14,36 @@ const validCreatePayload = {
 };
 
 describe("Income domain", () => {
+  describe("instanceForUpdate", () => {
+    const base = {
+      user,
+      id: "income-1",
+      amount: 1000,
+      description: "desc",
+      category: "SALARY" as const,
+    };
+    it("returns an Income instance for valid update", () => {
+      const income = Income.instanceForUpdate(base);
+      expect(income).toBeInstanceOf(Income);
+      expect(income.amount).toBe(1000);
+      expect(income.id).toBe("income-1");
+    });
+    it("throws BadRequestError for negative amount", () => {
+      expect(() => Income.instanceForUpdate({ ...base, amount: -10 })).toThrow(
+        BadRequestError,
+      );
+    });
+    it("throws BadRequestError for zero amount", () => {
+      expect(() => Income.instanceForUpdate({ ...base, amount: 0 })).toThrow(
+        BadRequestError,
+      );
+    });
+    it("throws BadRequestError for invalid category", () => {
+      expect(() =>
+        Income.instanceForUpdate({ ...base, category: "INVALID" as any }),
+      ).toThrow(BadRequestError);
+    });
+  });
   describe("instanceForCreate", () => {
     it("returns an Income instance for a valid RECEIVED payload", () => {
       const income = Income.instanceForCreate(validCreatePayload);

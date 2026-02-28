@@ -20,7 +20,7 @@ export interface DynamoDbRepositoryImpProps {
 }
 
 export class DynamoDbRepositoryImp
-  extends BaseDbRepository
+  extends BaseDbRepository<Expense>
   implements DbRepository
 {
   constructor(private readonly props: DynamoDbRepositoryImpProps) {

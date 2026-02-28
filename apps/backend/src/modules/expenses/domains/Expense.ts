@@ -11,7 +11,7 @@ import { BadRequestError } from "@packages/lambda";
 import { DateTime } from "luxon";
 import z from "zod";
 
-import { User } from "@/modules/shared/domains";
+import { BaseDomain, User } from "@/modules/shared/domains";
 import { schemaForList } from "@/modules/shared/schemas";
 
 const schemaForCreate = z.object({
@@ -46,7 +46,7 @@ const schemaForDelete = z.object({
   }),
 });
 
-export class Expense implements ExpenseInterface {
+export class Expense extends BaseDomain<Expense> implements ExpenseInterface {
   user: User;
   id: string;
   amount: number;
@@ -63,6 +63,7 @@ export class Expense implements ExpenseInterface {
   };
 
   constructor(data: Partial<Expense>) {
+    super();
     Object.assign(this, data);
   }
 
@@ -142,17 +143,6 @@ export class Expense implements ExpenseInterface {
       user: data.user,
       id: data.id,
       onDelete: { reason: data.reason },
-    });
-  }
-
-  updateFromExisting(existing: Expense): void {
-    const patch = Object.fromEntries(
-      Object.entries(this).filter(([, v]) => v !== undefined),
-    );
-    Object.assign(this, {
-      ...existing,
-      ...patch,
-      user: new User({ id: this.user.id }),
     });
   }
 

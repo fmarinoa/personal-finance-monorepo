@@ -1,3 +1,4 @@
+import { BadRequestError } from "@packages/lambda";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 import { BaseController } from "@/modules/shared/controllers";
@@ -60,5 +61,37 @@ export class IncomeController extends BaseController {
     const result = await this.props.incomeService.list(user, filters);
 
     return this.ok(result);
+  }
+
+  async update(e: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+    const { context, body, pathParams } = this.retrieveRequestContext(e);
+    const id = pathParams?.id;
+    if (!id) {
+      throw new BadRequestError({ details: "Missing income ID" });
+    }
+
+    const [amount, description, category, status, receivedDate, projectedDate] =
+      this.retrieveFromBody(body!, [
+        "amount",
+        "description",
+        "category",
+        "status",
+        "receivedDate",
+        "projectedDate",
+      ]);
+
+    const incomeToUpdate = Income.instanceForUpdate({
+      user: new User({ id: context.authorizer?.claims["sub"] }),
+      id,
+      amount,
+      description,
+      category,
+      status,
+      projectedDate,
+      receivedDate,
+    });
+
+    const response = await this.props.incomeService.update(incomeToUpdate);
+    return this.ok(response);
   }
 }

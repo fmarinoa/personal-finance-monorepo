@@ -39,6 +39,7 @@ describe("IncomeController", () => {
     service = {
       create: vi.fn(),
       list: vi.fn(),
+      update: vi.fn(),
     };
     controller = new IncomeController({ incomeService: service });
   });
@@ -121,6 +122,53 @@ describe("IncomeController", () => {
   });
 
   // ── GET /incomes ──────────────────────────────────────────────────────────
+
+  describe("update", () => {
+    it("returns 200 and calls service.update with correct data", async () => {
+      vi.mocked(service.update).mockResolvedValue({ id: "income-1" } as Income);
+      const event = buildEvent({
+        body: { amount: 2000, description: "Updated" } as any,
+        pathParameters: { id: "income-1" },
+      });
+      const result = await controller.update(event as any);
+      expect(result.statusCode).toBe(200);
+      expect(service.update).toHaveBeenCalled();
+      const [called] = vi.mocked(service.update).mock.calls[0];
+      expect(called.id).toBe("income-1");
+      expect(called.amount).toBe(2000);
+      expect(called.description).toBe("Updated");
+    });
+
+    it("throws BadRequestError if id is missing", async () => {
+      const event = buildEvent({ body: { amount: 1000 } } as any);
+      await expect(controller.update(event as any)).rejects.toThrow(
+        BadRequestError,
+      );
+    });
+
+    it("throws BadRequestError for negative amount", async () => {
+      const event = buildEvent({
+        body: { amount: -10 },
+        pathParameters: { id: "income-1" },
+      } as any);
+      await expect(controller.update(event as any)).rejects.toThrow(
+        BadRequestError,
+      );
+    });
+
+    it("sets user.id from Cognito claims", async () => {
+      vi.mocked(service.update).mockResolvedValue({
+        id: "income-1",
+      } as any as Income);
+      const event = buildEvent({
+        body: { amount: 1000 },
+        pathParameters: { id: "income-1" },
+      } as any);
+      await controller.update(event as any);
+      const [called] = vi.mocked(service.update).mock.calls[0];
+      expect(called.user.id).toBe(TEST_USER_ID);
+    });
+  });
 
   describe("list", () => {
     it("returns 200 with a paginated incomes list", async () => {

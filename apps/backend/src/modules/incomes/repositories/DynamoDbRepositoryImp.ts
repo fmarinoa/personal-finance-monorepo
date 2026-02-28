@@ -1,10 +1,13 @@
 import {
   DynamoDBDocumentClient,
+  GetCommand,
   PutCommand,
   QueryCommand,
   QueryCommandInput,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { FiltersForList, IncomeStatus } from "@packages/core";
+import { NotFoundError } from "@packages/lambda";
 
 import { BaseDbRepository } from "@/modules/shared/repositories";
 
@@ -17,7 +20,7 @@ export interface DynamoDbRepositoryImpProps {
 }
 
 export class DynamoDbRepositoryImp
-  extends BaseDbRepository
+  extends BaseDbRepository<Income>
   implements DbRepository
 {
   constructor(private readonly props: DynamoDbRepositoryImpProps) {
@@ -121,5 +124,66 @@ export class DynamoDbRepositoryImp
       data: allIncomes.slice(start, start + filters.limit),
       total,
     };
+  }
+
+  async getById(income: Income): Promise<Income> {
+    const { Item } = await this.props.dbClient.send(
+      new GetCommand({
+        TableName: this.props.incomesTableName,
+        Key: {
+          userId: income.user.id,
+          id: income.id,
+        },
+      }),
+    );
+
+    if (!Item) {
+      throw new NotFoundError({ details: "Income not found" });
+    }
+
+    return Income.buildFromDbItem(Item);
+  }
+
+  async update(income: Income): Promise<Income> {
+    const fieldsToUpdate = [
+      "amount",
+      "description",
+      "category",
+      "status",
+      "receivedDate",
+      "projectedDate",
+    ].filter((field) => income[field as keyof Income] !== undefined);
+
+    const request = new Income({
+      ...income,
+      lastUpdatedDate: this.getCurrentTimestamp(),
+    });
+
+    const {
+      UpdateExpression,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+    } = this.buildUpdateExpression(request, fieldsToUpdate);
+
+    try {
+      await this.props.dbClient.send(
+        new UpdateCommand({
+          TableName: this.props.incomesTableName,
+          Key: { userId: income.user.id, id: income.id },
+          UpdateExpression,
+          ExpressionAttributeNames,
+          ExpressionAttributeValues,
+          ConditionExpression: "attribute_exists(userId)",
+          ReturnValues: "ALL_NEW",
+        }),
+      );
+
+      return request;
+    } catch (error: any) {
+      if (error.name === "ConditionalCheckFailedException") {
+        throw new NotFoundError({ details: "Income not found" });
+      }
+      throw error;
+    }
   }
 }

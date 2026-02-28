@@ -76,6 +76,10 @@ export const dispatcher = new Dispatcher(middyAdapter)
   .get("/incomes", (e) => incomeController.list(e), {
     timeout: 5,
     description: "List all incomes for the authenticated user",
+  })
+  .patch("/incomes/{id}", (e) => incomeController.update(e), {
+    timeout: 10,
+    description: "Update an existing income by ID",
   });
 
 export const handler: APIGatewayProxyHandler = (...args) =>

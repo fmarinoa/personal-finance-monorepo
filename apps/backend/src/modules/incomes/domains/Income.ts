@@ -10,7 +10,7 @@ import { BadRequestError } from "@packages/lambda";
 import { DateTime } from "luxon";
 import z from "zod";
 
-import { User } from "@/modules/shared/domains";
+import { BaseDomain, User } from "@/modules/shared/domains";
 import { schemaForList } from "@/modules/shared/schemas";
 
 const baseFields = {
@@ -45,7 +45,17 @@ const schemaForCreate = z.preprocess(
   ]),
 );
 
-export class Income implements IncomeInterface {
+const schemaForUpdate = z.object({
+  user: z.object({ id: z.string() }),
+  amount: z.number().positive("Amount must be greater than zero").optional(),
+  description: z.string().optional(),
+  category: z.enum(IncomeCategory).optional(),
+  status: z.enum(IncomeStatus).optional(),
+  projectedDate: z.number().optional(),
+  receivedDate: z.number().optional(),
+});
+
+export class Income extends BaseDomain<Income> implements IncomeInterface {
   user: User;
   id: string;
   amount: number;
@@ -63,6 +73,7 @@ export class Income implements IncomeInterface {
   };
 
   constructor(data: Partial<Income>) {
+    super();
     Object.assign(this, data);
   }
 
@@ -101,6 +112,22 @@ export class Income implements IncomeInterface {
     return new Income({
       ...newData,
       user: new User({ id: data.user.id }),
+    });
+  }
+
+  static instanceForUpdate(
+    data: Partial<CreateIncomePayload> & { user: User; id: string },
+  ): Income {
+    const { error, data: newData } = schemaForUpdate.safeParse(data);
+
+    if (error) {
+      throw new BadRequestError({ details: error.message });
+    }
+
+    return new Income({
+      ...newData,
+      user: new User({ id: data.user.id }),
+      id: data.id,
     });
   }
 

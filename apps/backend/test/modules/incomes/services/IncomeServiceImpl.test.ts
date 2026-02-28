@@ -15,8 +15,6 @@ const mockIncome = new Income({
   description: "Monthly salary",
   category: "SALARY",
   status: "RECEIVED",
-  effectiveDate: 1700000000000,
-  creationDate: 1700000000000,
   receivedDate: 1700000000000,
 });
 
@@ -28,6 +26,8 @@ describe("IncomeServiceImpl", () => {
     repository = {
       create: vi.fn(),
       list: vi.fn(),
+      getById: vi.fn(),
+      update: vi.fn(),
     };
     service = new IncomeServiceImpl({ dbRepository: repository });
   });
@@ -54,6 +54,33 @@ describe("IncomeServiceImpl", () => {
   });
 
   // ── GET /incomes ──────────────────────────────────────────────────────────
+
+  describe("update", () => {
+    it("calls repository.update and returns the updated id", async () => {
+      const updatedIncome = new Income({ ...mockIncome, amount: 2000 });
+      repository.getById = vi.fn().mockResolvedValue(mockIncome);
+      repository.update = vi.fn().mockResolvedValue(updatedIncome);
+      const updated = await service.update(updatedIncome);
+      expect(repository.getById).toHaveBeenCalledWith({
+        ...mockIncome,
+        amount: 2000,
+      });
+      expect(repository.update).toHaveBeenCalledWith({
+        ...mockIncome,
+        amount: 2000,
+      });
+      expect(updated).toBeInstanceOf(Income);
+      expect(updated.amount).toBe(2000);
+    });
+
+    it("wraps repository errors in InternalError", async () => {
+      repository.getById = vi.fn().mockResolvedValue(mockIncome);
+      repository.update = vi
+        .fn()
+        .mockRejectedValue(new Error("DynamoDB error"));
+      await expect(service.update(mockIncome)).rejects.toThrow(InternalError);
+    });
+  });
 
   describe("list", () => {
     it("returns a paginated response with data and pagination metadata", async () => {

@@ -7,4 +7,5 @@ import { Income } from "../domains";
 export interface IncomeService {
   create(income: Income): Promise<{ id: string }>;
   list(user: User, filters: FiltersForList): Promise<PaginatedResponse<Income>>;
+  update(income: Income): Promise<Income>;
 }

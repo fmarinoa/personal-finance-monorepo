@@ -64,6 +64,13 @@ export async function createIncome(
   return response.data;
 }
 
+export async function updateIncome(
+  id: string,
+  payload: Partial<CreateIncomePayload>,
+): Promise<void> {
+  await api.patch(`/incomes/${id}`, payload);
+}
+
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const response = await api.get("/metrics/dashboard-summary");
   return response.data;
