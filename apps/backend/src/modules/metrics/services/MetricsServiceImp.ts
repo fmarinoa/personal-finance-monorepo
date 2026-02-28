@@ -1,4 +1,4 @@
-import { DashboardSummary } from "@packages/core";
+import { DashboardChartPoint, DashboardSummary } from "@packages/core";
 import { DateTime } from "luxon";
 
 import { Expense } from "@/modules/expenses/domains";
@@ -59,9 +59,9 @@ export class MetricsServiceImp implements MetricsService {
     };
   }
 
-  async getDashboardChart(userId: string) {
+  async getDashboardChart(userId: string): Promise<DashboardChartPoint[]> {
     const months = this.props.options.lastMonthsForChart;
-    const chartData: any[] = [];
+    const chartData: DashboardChartPoint[] = [];
     const now = DateTime.now();
 
     for (let i = 0; i < months; i++) {
