@@ -6,12 +6,19 @@ import { ExpensesTable } from "./constructs/ExpensesTable";
 import { FinanceApi } from "./constructs/FinanceApi";
 import { IncomesTable } from "./constructs/IncomesTable";
 
+const STAGES = ["Dev", "Prod"] as const;
+type Stage = (typeof STAGES)[number];
+
 interface BackendStackProps extends cdk.StackProps {
-  stage: string;
+  stage: Stage;
 }
 
 export class BackendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BackendStackProps) {
+    if (!STAGES.includes(props.stage)) {
+      throw new Error("Stage must be one of: " + STAGES.join(", "));
+    }
+
     super(scope, id, props);
 
     const { stage } = props;
