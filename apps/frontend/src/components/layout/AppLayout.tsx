@@ -195,8 +195,12 @@ export function AppLayout({
 
         <div className="flex-1" />
 
-        <SignOutButton onClick={handleSignOut} loading={signingOut} />
-        <PoweredBy />
+        <div className="relative w-full">
+          <div className="fixed bottom-8 left-0 w-55 px-4 z-30 flex flex-col items-stretch gap-1">
+            <SignOutButton onClick={handleSignOut} loading={signingOut} />
+            <PoweredBy />
+          </div>
+        </div>
       </nav>
 
       {/* ── Main content ── */}
