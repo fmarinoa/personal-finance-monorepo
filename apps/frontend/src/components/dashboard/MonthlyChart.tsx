@@ -1,9 +1,9 @@
 import type { DashboardChartPoint } from "@packages/core";
 import { DateTime } from "luxon";
 
-const PADDING = { top: 24, right: 24, bottom: 36, left: 56 };
-const VIEW_W = 800;
-const VIEW_H = 280;
+const PADDING = { top: 12, right: 12, bottom: 24, left: 24 };
+const VIEW_W = 400;
+const VIEW_H = 80;
 const CHART_W = VIEW_W - PADDING.left - PADDING.right;
 const CHART_H = VIEW_H - PADDING.top - PADDING.bottom;
 
@@ -100,8 +100,8 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
             <span className="w-4 h-0.5 bg-emerald-400 rounded-full inline-block" />
             Ingresos
           </span>
-          <span className="flex items-center gap-1.5 text-[10px] font-mono text-gold/70">
-            <span className="w-4 h-0.5 bg-gold rounded-full inline-block" />
+          <span className="flex items-center gap-1.5 text-[10px] font-mono text-rose-400">
+            <span className="w-4 h-0.5 bg-rose-400 rounded-full inline-block" />
             Gastos
           </span>
         </div>
@@ -118,8 +118,8 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
             <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="expense-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f5c142" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#f5c142" stopOpacity="0" />
+            <stop offset="0%" stopColor="#ff2056" stopOpacity="0.10" />
+            <stop offset="100%" stopColor="#ff2056" stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -142,7 +142,7 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
                 x={PADDING.left - 8}
                 y={y + 4}
                 textAnchor="end"
-                fontSize="11"
+                fontSize="4"
                 fontFamily="monospace"
                 fill="rgba(255,255,255,0.25)"
               >
@@ -163,15 +163,15 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
           points={incomePoints}
           fill="none"
           stroke="#34d399"
-          strokeWidth="2"
+          strokeWidth="1"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
         <polyline
           points={expensePoints}
           fill="none"
-          stroke="#f5c142"
-          strokeWidth="2"
+          stroke="#ff2056"
+          strokeWidth="1"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
@@ -192,21 +192,21 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
           return (
             <g key={d.month}>
               {/* Income dot */}
-              <circle cx={x} cy={yIncome} r="4" fill="#34d399" />
+              <circle cx={x} cy={yIncome} r="2" fill="#34d399" />
               <circle
                 cx={x}
                 cy={yIncome}
-                r="7"
+                r="4"
                 fill="#34d399"
                 fillOpacity="0.15"
               />
               {/* Expense dot */}
-              <circle cx={x} cy={yExpense} r="4" fill="#f5c142" />
+              <circle cx={x} cy={yExpense} r="2" fill="#ff2056" />
               <circle
                 cx={x}
                 cy={yExpense}
-                r="7"
-                fill="#f5c142"
+                r="4"
+                fill="#ff2056"
                 fillOpacity="0.12"
               />
               {/* Month label */}
@@ -214,9 +214,9 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
                 x={x}
                 y={VIEW_H - 6}
                 textAnchor="middle"
-                fontSize="11"
+                fontSize="4"
                 fontFamily="monospace"
-                fill="rgba(255,255,255,0.3)"
+                fill="rgba(255,255,255,0.18)"
                 style={{ textTransform: "capitalize" }}
               >
                 {label}
