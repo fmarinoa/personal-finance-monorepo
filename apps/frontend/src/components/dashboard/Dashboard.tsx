@@ -290,7 +290,7 @@ export function Dashboard({
             <MonthAmount
               loading={loading}
               amount={data.totalAmountExpenses}
-              color="text-gold"
+              color="text-rose-400"
             />
           }
         />
@@ -313,9 +313,11 @@ export function Dashboard({
               color={
                 loading
                   ? "text-white"
-                  : data.balance >= 0
-                    ? "text-emerald-400"
-                    : "text-red-400"
+                  : data.balance <= data.totalAmountExpenses * 0.1
+                    ? "text-red-400"
+                    : data.balance <= data.totalAmountIncomes * 0.5
+                      ? "text-amber-400"
+                      : "text-emerald-400"
               }
             />
           }

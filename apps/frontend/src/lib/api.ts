@@ -71,8 +71,13 @@ export async function updateIncome(
   await api.patch(`/incomes/${id}`, payload);
 }
 
-export async function fetchDashboardSummary(): Promise<DashboardSummary> {
-  const response = await api.get("/metrics/dashboard-summary");
+export async function fetchDashboardSummary(
+  startDate: number,
+  endDate: number,
+): Promise<DashboardSummary> {
+  const response = await api.get("/metrics/dashboard-summary", {
+    params: { startDate, endDate },
+  });
   return response.data;
 }
 

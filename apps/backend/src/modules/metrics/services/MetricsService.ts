@@ -4,7 +4,8 @@ export interface MetricsService {
   getDashboardSummary(
     userId: string,
     params: {
-      period: string;
+      startDate: number;
+      endDate: number;
     },
   ): Promise<DashboardSummary>;
   getDashboardChart(userId: string): Promise<DashboardChartPoint[]>;

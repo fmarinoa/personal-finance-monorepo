@@ -1,6 +1,5 @@
 import { BadRequestError } from "@packages/lambda";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { DateTime } from "luxon";
 import z from "zod";
 
 import { BaseController } from "@/modules/shared/controllers";
@@ -8,13 +7,18 @@ import { BaseController } from "@/modules/shared/controllers";
 import { MetricsService } from "../services/MetricsService";
 
 const dashboardSummaryQuerySchema = z.object({
-  period: z
-    .string()
-    .optional()
-    .transform((val) => val || DateTime.now().toFormat("yyyy-MM"))
-    .pipe(
-      z.string().regex(/^\d{4}-\d{2}$/, "period must be in YYYY-MM format"),
-    ),
+  startDate: z
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === "number" ? val : Number(val)))
+    .refine((val) => Number.isFinite(val) && val > 0, {
+      message: "startDate must be a positive number representing a timestamp",
+    }),
+  endDate: z
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === "number" ? val : Number(val)))
+    .refine((val) => Number.isFinite(val) && val > 0, {
+      message: "endDate must be a positive number representing a timestamp",
+    }),
 });
 
 interface MetricsControllerProps {
@@ -30,9 +34,15 @@ export class MetricsController extends BaseController {
     event: APIGatewayProxyEvent,
   ): Promise<APIGatewayProxyResult> {
     const { context, queryParams } = this.retrieveRequestContext(event);
-    const [period] = this.retrieveFromQueryParams(queryParams!, ["period"]);
+    const [startDate, endDate] = this.retrieveFromQueryParams(queryParams!, [
+      "startDate",
+      "endDate",
+    ]);
 
-    const { error, data } = dashboardSummaryQuerySchema.safeParse({ period });
+    const { error, data } = dashboardSummaryQuerySchema.safeParse({
+      startDate,
+      endDate,
+    });
     if (error) throw new BadRequestError({ details: error.issues[0].message });
 
     const userId = context.authorizer?.claims["sub"];

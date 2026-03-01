@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { fetchDashboardSummary } from "@/lib/api";
 
+import { getDateRange } from "../usePeriod";
+
 const DEFAULT_DATA: DashboardSummary = {
   totalAmountExpenses: 0,
   totalAmountIncomes: 0,
@@ -24,8 +26,10 @@ export function useDashboardMetrics() {
     error: null,
   });
 
+  const { startDate, endDate } = getDateRange("this-month");
+
   const load = useCallback(() => {
-    fetchDashboardSummary()
+    fetchDashboardSummary(startDate, endDate)
       .then((res) => {
         setState({ data: res, loading: false, refreshing: false, error: null });
       })

@@ -22,20 +22,16 @@ export class MetricsServiceImp implements MetricsService {
 
   async getDashboardSummary(
     userId: string,
-    params: { period: string },
+    params: { startDate: number; endDate: number },
   ): Promise<DashboardSummary> {
-    const dt = DateTime.fromFormat(params.period, "yyyy-MM");
-    const currentStart = dt.startOf("month").toMillis();
-    const currentEnd = dt.endOf("month").toMillis();
-
     const [{ data: lastExpenses }, { data: lastIncomes }] = await Promise.all([
       this.props.expensesRepository.list(userId, {
-        startDate: currentStart,
-        endDate: currentEnd,
+        startDate: params.startDate,
+        endDate: params.endDate,
       }),
       this.props.incomesRepository.list(userId, {
-        startDate: currentStart,
-        endDate: currentEnd,
+        startDate: params.startDate,
+        endDate: params.endDate,
       }),
     ]);
 
