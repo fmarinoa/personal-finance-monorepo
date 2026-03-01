@@ -1,12 +1,12 @@
 import type { Expense } from "@packages/core";
 import { DateTime } from "luxon";
 
-import type { Period } from "@/hooks/usePeriod";
 import {
   CATEGORY_ICONS,
   CATEGORY_LABELS,
   PAYMENT_METHOD_LABELS,
 } from "@/types/expense";
+import type { Period } from "@/utils/getDateRange";
 
 import { PeriodSelector } from "./PeriodSelector";
 

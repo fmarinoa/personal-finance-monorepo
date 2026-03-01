@@ -1,7 +1,6 @@
-import type { Income } from "@packages/core";
+import type { DateRange, Income } from "@packages/core";
 import { useCallback, useEffect, useState } from "react";
 
-import type { DateRange } from "@/hooks/usePeriod";
 import { listIncomes } from "@/lib/api";
 
 interface UseIncomesOptions extends DateRange {

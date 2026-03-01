@@ -3,12 +3,12 @@ import { IncomeStatus } from "@packages/core";
 import { DateTime } from "luxon";
 
 import { PeriodSelector } from "@/components/expenses/PeriodSelector";
-import type { Period } from "@/hooks/usePeriod";
 import {
   INCOME_CATEGORY_ICONS,
   INCOME_CATEGORY_LABELS,
   INCOME_STATUS_LABELS,
 } from "@/types/income";
+import type { Period } from "@/utils/getDateRange";
 
 interface IncomesTableProps {
   totalCount: number;

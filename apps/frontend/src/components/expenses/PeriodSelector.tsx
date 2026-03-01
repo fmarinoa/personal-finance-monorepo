@@ -1,5 +1,5 @@
-import type { Period } from "@/hooks/usePeriod";
 import { PERIOD_OPTIONS } from "@/hooks/usePeriod";
+import type { Period } from "@/utils/getDateRange";
 
 interface PeriodSelectorProps {
   period: Period;
