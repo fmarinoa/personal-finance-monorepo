@@ -140,4 +140,21 @@ export class Income extends BaseDomain<Income> implements IncomeInterface {
   static calculateTotalIncomeAmount(incomes: Income[]): number {
     return incomes.reduce((sum, income) => sum + income.amount, 0);
   }
+
+  static groupIncomesByMonth(incomes: Income[]) {
+    const grouped: Record<string, Income[]> = {};
+
+    incomes.forEach((income) => {
+      const date = income.receivedDate;
+      if (!date) return;
+      const monthKey = DateTime.fromMillis(date).toFormat("yyyy-MM");
+
+      if (!grouped[monthKey]) {
+        grouped[monthKey] = [];
+      }
+      grouped[monthKey].push(income);
+    });
+
+    return grouped;
+  }
 }

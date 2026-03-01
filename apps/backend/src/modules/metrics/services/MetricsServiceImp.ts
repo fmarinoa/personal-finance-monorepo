@@ -1,5 +1,8 @@
-import { DashboardChartPoint, DashboardSummary } from "@packages/core";
-import { DateTime } from "luxon";
+import {
+  DashboardChartPoint,
+  DashboardSummary,
+  DateRange,
+} from "@packages/core";
 
 import { Expense } from "@/modules/expenses/domains";
 import { DbRepository as ExpensesRepository } from "@/modules/expenses/repositories/DbRepository";
@@ -22,7 +25,7 @@ export class MetricsServiceImp implements MetricsService {
 
   async getDashboardSummary(
     userId: string,
-    params: { startDate: number; endDate: number },
+    params: DateRange,
   ): Promise<DashboardSummary> {
     const [{ data: lastExpenses }, { data: lastIncomes }] = await Promise.all([
       this.props.expensesRepository.list(userId, {
@@ -55,38 +58,43 @@ export class MetricsServiceImp implements MetricsService {
     };
   }
 
-  async getDashboardChart(userId: string): Promise<DashboardChartPoint[]> {
-    const months = this.props.options.lastMonthsForChart;
+  async getDashboardChart(
+    userId: string,
+    params: DateRange,
+  ): Promise<DashboardChartPoint[]> {
     const chartData: DashboardChartPoint[] = [];
-    const now = DateTime.now();
+    const [{ data: allExpenses }, { data: allIncomes }] = await Promise.all([
+      this.props.expensesRepository.list(userId, {
+        startDate: params.startDate,
+        endDate: params.endDate,
+      }),
+      this.props.incomesRepository.list(userId, {
+        startDate: params.startDate,
+        endDate: params.endDate,
+      }),
+    ]);
 
-    for (let i = 0; i < months; i++) {
-      const month = now.minus({ months: i }).startOf("month");
-      const start = month.toMillis();
-      const end = month.endOf("month").toMillis();
+    const expensesByMonth = Expense.groupExpensesByMonth(allExpenses);
+    const incomesByMonth = Income.groupIncomesByMonth(allIncomes);
 
-      const [{ data: lastExpenses }, { data: lastIncomes }] = await Promise.all(
-        [
-          this.props.expensesRepository.list(userId, {
-            startDate: start,
-            endDate: end,
-          }),
-          this.props.incomesRepository.list(userId, {
-            startDate: start,
-            endDate: end,
-          }),
-        ],
-      );
+    const allMonths = new Set([
+      ...Object.keys(expensesByMonth),
+      ...Object.keys(incomesByMonth),
+    ]);
 
-      const totalAmountExpenses =
-        Expense.calculateTotalExpenseAmount(lastExpenses);
+    for (const month of allMonths) {
+      const totalAmountExpenses = expensesByMonth[month]
+        ? Expense.calculateTotalExpenseAmount(expensesByMonth[month])
+        : 0;
 
-      const totalAmountIncomes = Income.calculateTotalIncomeAmount(lastIncomes);
+      const totalAmountIncomes = incomesByMonth[month]
+        ? Income.calculateTotalIncomeAmount(incomesByMonth[month])
+        : 0;
 
       chartData.push({
-        month: month.toFormat("yyyy-MM"),
-        totalAmountIncomes,
+        month,
         totalAmountExpenses,
+        totalAmountIncomes,
       });
     }
 

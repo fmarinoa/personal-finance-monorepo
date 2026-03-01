@@ -3,6 +3,7 @@ import type {
   CreateIncomePayload,
   DashboardChartPoint,
   DashboardSummary,
+  DateRange,
   DeleteReason,
   Expense,
   FiltersForList,
@@ -59,9 +60,8 @@ export async function listIncomes(
 
 export async function createIncome(
   payload: CreateIncomePayload,
-): Promise<Expense> {
-  const response = await api.post(`/incomes`, payload);
-  return response.data;
+): Promise<void> {
+  await api.post(`/incomes`, payload);
 }
 
 export async function updateIncome(
@@ -72,16 +72,17 @@ export async function updateIncome(
 }
 
 export async function fetchDashboardSummary(
-  startDate: number,
-  endDate: number,
+  params: DateRange,
 ): Promise<DashboardSummary> {
   const response = await api.get("/metrics/dashboard-summary", {
-    params: { startDate, endDate },
+    params,
   });
   return response.data;
 }
 
-export async function fetchDashboardChart(): Promise<DashboardChartPoint[]> {
-  const response = await api.get("/metrics/dashboard-chart");
+export async function fetchDashboardChart(
+  params: DateRange,
+): Promise<DashboardChartPoint[]> {
+  const response = await api.get("/metrics/dashboard-chart", { params });
   return response.data;
 }

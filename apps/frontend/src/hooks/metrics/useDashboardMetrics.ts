@@ -28,7 +28,7 @@ export function useDashboardMetrics() {
   const { startDate, endDate } = getDateRange("this-month");
 
   const load = useCallback(() => {
-    fetchDashboardSummary(startDate, endDate)
+    fetchDashboardSummary({ startDate, endDate })
       .then((res) => {
         setState({ data: res, loading: false, refreshing: false, error: null });
       })

@@ -28,7 +28,7 @@ export class MetricsController extends BaseController {
       startDate,
       endDate,
     });
-    if (error) throw new BadRequestError({ details: error.issues[0].message });
+    if (error) throw new BadRequestError({ details: error.message });
 
     const userId = context.authorizer?.claims["sub"];
     const summary = await this.props.metricsService.getDashboardSummary(
@@ -42,10 +42,23 @@ export class MetricsController extends BaseController {
   async getDashboardChart(
     event: APIGatewayProxyEvent,
   ): Promise<APIGatewayProxyResult> {
-    const { context } = this.retrieveRequestContext(event);
+    const { context, queryParams } = this.retrieveRequestContext(event);
+    const [startDate, endDate] = this.retrieveFromQueryParams(queryParams!, [
+      "startDate",
+      "endDate",
+    ]);
+
+    const { error, data } = periodSchema.safeParse({
+      startDate,
+      endDate,
+    });
+    if (error) throw new BadRequestError({ details: error.message });
 
     const userId = context.authorizer?.claims["sub"];
-    const chartData = await this.props.metricsService.getDashboardChart(userId);
+    const chartData = await this.props.metricsService.getDashboardChart(
+      userId,
+      data,
+    );
 
     return this.ok(chartData);
   }

@@ -149,4 +149,21 @@ export class Expense extends BaseDomain<Expense> implements ExpenseInterface {
   static calculateTotalExpenseAmount(expenses: Expense[]): number {
     return expenses.reduce((sum, expense) => sum + expense.amount, 0);
   }
+
+  static groupExpensesByMonth(expenses: Expense[]) {
+    const grouped: Record<string, Expense[]> = {};
+
+    expenses.forEach((expense) => {
+      const monthKey = DateTime.fromMillis(expense.paymentDate).toFormat(
+        "yyyy-MM",
+      );
+
+      if (!grouped[monthKey]) {
+        grouped[monthKey] = [];
+      }
+      grouped[monthKey].push(expense);
+    });
+
+    return grouped;
+  }
 }

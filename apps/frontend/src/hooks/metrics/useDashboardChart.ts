@@ -2,16 +2,19 @@ import type { DashboardChartPoint } from "@packages/core";
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchDashboardChart } from "@/lib/api";
+import { getDateRange } from "@/utils/getDateRange";
 
 export function useDashboardChart() {
   const [data, setData] = useState<DashboardChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { startDate, endDate } = getDateRange("this-month");
+
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    fetchDashboardChart()
+    fetchDashboardChart({ startDate, endDate })
       .then((res) => {
         setData(res);
         setLoading(false);

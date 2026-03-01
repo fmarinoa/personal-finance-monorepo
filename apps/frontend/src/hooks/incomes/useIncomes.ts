@@ -1,12 +1,7 @@
-import type { DateRange, Income } from "@packages/core";
+import type { FiltersForList, Income } from "@packages/core";
 import { useCallback, useEffect, useState } from "react";
 
 import { listIncomes } from "@/lib/api";
-
-interface UseIncomesOptions extends DateRange {
-  limit?: number;
-  page?: number;
-}
 
 interface State {
   data: Income[];
@@ -17,7 +12,7 @@ interface State {
 }
 
 export function useIncomes(
-  { startDate, endDate, limit = 10, page = 1 }: UseIncomesOptions,
+  { startDate, endDate, limit = 10, page = 1 }: FiltersForList,
   enabled = true,
 ) {
   const [state, setState] = useState<State>({
