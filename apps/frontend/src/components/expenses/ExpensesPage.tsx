@@ -4,7 +4,8 @@ import { lazy, Suspense, useState } from "react";
 import { MobileFAB } from "@/components/dashboard/MobileFAB";
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
 import { useExpenses } from "@/hooks/expenses/useExpenses";
-import { type Period, usePeriod } from "@/hooks/usePeriod";
+import { usePeriod } from "@/hooks/usePeriod";
+import type { Period } from "@/utils/getDateRange";
 
 import { Table } from "./Table";
 

@@ -1,25 +1,10 @@
 import { BadRequestError } from "@packages/lambda";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import z from "zod";
 
 import { BaseController } from "@/modules/shared/controllers";
+import { periodSchema } from "@/modules/shared/schemas";
 
 import { MetricsService } from "../services/MetricsService";
-
-const dashboardSummaryQuerySchema = z.object({
-  startDate: z
-    .union([z.string(), z.number()])
-    .transform((val) => (typeof val === "number" ? val : Number(val)))
-    .refine((val) => Number.isFinite(val) && val > 0, {
-      message: "startDate must be a positive number representing a timestamp",
-    }),
-  endDate: z
-    .union([z.string(), z.number()])
-    .transform((val) => (typeof val === "number" ? val : Number(val)))
-    .refine((val) => Number.isFinite(val) && val > 0, {
-      message: "endDate must be a positive number representing a timestamp",
-    }),
-});
 
 interface MetricsControllerProps {
   metricsService: MetricsService;
@@ -39,7 +24,7 @@ export class MetricsController extends BaseController {
       "endDate",
     ]);
 
-    const { error, data } = dashboardSummaryQuerySchema.safeParse({
+    const { error, data } = periodSchema.safeParse({
       startDate,
       endDate,
     });

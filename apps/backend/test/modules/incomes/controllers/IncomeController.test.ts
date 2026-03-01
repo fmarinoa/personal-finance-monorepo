@@ -175,7 +175,12 @@ describe("IncomeController", () => {
       vi.mocked(service.list).mockResolvedValue(paginatedResult);
 
       const result = await controller.list(
-        buildEvent({ queryStringParameters: {} }),
+        buildEvent({
+          queryStringParameters: {
+            startDate: "1769922000000",
+            endDate: "1772341199999",
+          },
+        }),
       );
 
       expect(result.statusCode).toBe(200);
@@ -188,7 +193,14 @@ describe("IncomeController", () => {
       vi.mocked(service.list).mockResolvedValue(paginatedResult);
 
       await controller.list(
-        buildEvent({ queryStringParameters: { limit: "5", page: "2" } }),
+        buildEvent({
+          queryStringParameters: {
+            limit: "5",
+            page: "2",
+            startDate: "1769922000000",
+            endDate: "1772341199999",
+          },
+        }),
       );
 
       const [, filters] = vi.mocked(service.list).mock.calls[0];
@@ -217,7 +229,12 @@ describe("IncomeController", () => {
       vi.mocked(service.list).mockResolvedValue(paginatedResult);
 
       const result = await controller.list(
-        buildEvent({ queryStringParameters: null }),
+        buildEvent({
+          queryStringParameters: {
+            startDate: "1769922000000",
+            endDate: "1772341199999",
+          },
+        }),
       );
 
       expect(result.statusCode).toBe(200);
@@ -226,7 +243,14 @@ describe("IncomeController", () => {
     it("passes the userId extracted from Cognito claims to service", async () => {
       vi.mocked(service.list).mockResolvedValue(paginatedResult);
 
-      await controller.list(buildEvent({ queryStringParameters: {} }));
+      await controller.list(
+        buildEvent({
+          queryStringParameters: {
+            startDate: "1769922000000",
+            endDate: "1772341199999",
+          },
+        }),
+      );
 
       const [calledUser] = vi.mocked(service.list).mock.calls[0];
       expect(calledUser.id).toBe(TEST_USER_ID);
@@ -239,7 +263,12 @@ describe("IncomeController", () => {
       });
 
       const result = await controller.list(
-        buildEvent({ queryStringParameters: {} }),
+        buildEvent({
+          queryStringParameters: {
+            startDate: "1769922000000",
+            endDate: "1772341199999",
+          },
+        }),
       );
 
       const body = JSON.parse(result.body);

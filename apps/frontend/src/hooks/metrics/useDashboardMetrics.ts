@@ -2,8 +2,7 @@ import { type DashboardSummary } from "@packages/core";
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchDashboardSummary } from "@/lib/api";
-
-import { getDateRange } from "../usePeriod";
+import { getDateRange } from "@/utils/getDateRange";
 
 const DEFAULT_DATA: DashboardSummary = {
   totalAmountExpenses: 0,

@@ -154,10 +154,13 @@ describe("Expense domain", () => {
   });
 
   it("returns undefined for all optional filters when not provided", () => {
-    const { filters } = Expense.validateFilters({});
+    const { filters } = Expense.validateFilters({
+      startDate: 1769922000000,
+      endDate: 1772341199999,
+    });
     expect(filters.limit).toBeUndefined();
     expect(filters.page).toBeUndefined();
-    expect(filters.startDate).toBeUndefined();
-    expect(filters.endDate).toBeUndefined();
+    expect(filters.startDate).toBe(1769922000000);
+    expect(filters.endDate).toBe(1772341199999);
   });
 });

@@ -6,11 +6,14 @@ export interface PaginatedResponse<T> {
   };
 }
 
-export interface FiltersForList {
+export interface DateRange {
+  startDate: number;
+  endDate: number;
+}
+
+export interface FiltersForList extends DateRange {
   limit?: number;
   page?: number;
-  startDate?: number;
-  endDate?: number;
 }
 
 export const DeleteReason = {
