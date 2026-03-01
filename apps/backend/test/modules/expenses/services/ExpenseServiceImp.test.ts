@@ -67,7 +67,11 @@ describe("ExpenseServiceImp", () => {
         total: 10,
       });
 
-      const result = await service.list(user, { limit: 5 });
+      const result = await service.list(user, {
+        limit: 5,
+        startDate: 1769922000000,
+        endDate: 1772341199999,
+      });
 
       expect(result.data).toHaveLength(1);
       expect(result.pagination).toEqual({
@@ -82,7 +86,10 @@ describe("ExpenseServiceImp", () => {
         total: 10,
       });
 
-      const result = await service.list(user, {});
+      const result = await service.list(user, {
+        startDate: 1769922000000,
+        endDate: 1772341199999,
+      });
 
       // ceil(10 / 10) = 1 because limit falls back to total
       expect(result.pagination.totalPages).toBe(1);
@@ -93,7 +100,12 @@ describe("ExpenseServiceImp", () => {
         data: [],
         total: 0,
       });
-      const filters = { limit: 3, page: 2 };
+      const filters = {
+        limit: 3,
+        page: 2,
+        startDate: 1769922000000,
+        endDate: 1772341199999,
+      };
 
       await service.list(user, filters);
 
@@ -106,7 +118,10 @@ describe("ExpenseServiceImp", () => {
         total: 0,
       });
 
-      const result = await service.list(user, {});
+      const result = await service.list(user, {
+        startDate: 1769922000000,
+        endDate: 1772341199999,
+      });
 
       expect(result.data).toHaveLength(0);
       expect(result.pagination.total).toBe(0);

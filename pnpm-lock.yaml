@@ -8,21 +8,12 @@ importers:
 
   .:
     dependencies:
-      '@vitest/coverage-v8':
-        specifier: 4.0.18
-        version: 4.0.18(vitest@4.0.18(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))
       luxon:
         specifier: 3.7.2
         version: 3.7.2
       typescript:
         specifier: 5.9.3
         version: 5.9.3
-      vite-tsconfig-paths:
-        specifier: 6.1.1
-        version: 6.1.1(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))
-      vitest:
-        specifier: 4.0.18
-        version: 4.0.18(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2)
     devDependencies:
       '@eslint/js':
         specifier: 9.39.1
@@ -36,6 +27,9 @@ importers:
       '@types/node':
         specifier: 25.2.3
         version: 25.2.3
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))
       eslint:
         specifier: 9.39.1
         version: 9.39.1(jiti@2.6.1)
@@ -63,6 +57,12 @@ importers:
       typescript-eslint:
         specifier: 8.48.0
         version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+      vite-tsconfig-paths:
+        specifier: 6.1.1
+        version: 6.1.1(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2)
 
   apps/backend:
     dependencies:

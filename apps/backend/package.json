@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc --p tsconfig.build.json",
     "prettier": "prettier --write .",
     "lint": "eslint --cache --fix .",
     "test": "vitest run",

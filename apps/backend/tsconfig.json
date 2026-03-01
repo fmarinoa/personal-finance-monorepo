@@ -1,7 +1,7 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
   "include": ["src", "test", "vitest.config.ts"],
-  "exclude": ["dist"],
+  "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
