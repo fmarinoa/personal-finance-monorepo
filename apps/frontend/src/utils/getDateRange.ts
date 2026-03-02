@@ -1,7 +1,11 @@
 import type { DateRange } from "@packages/core";
 import { DateTime } from "luxon";
 
-export type Period = "this-month" | "last-month" | "last-30-days";
+export type Period =
+  | "this-month"
+  | "last-month"
+  | "last-6-month"
+  | "last-30-days";
 
 export function getDateRange(period: Period): DateRange {
   const now = DateTime.local();
@@ -16,6 +20,17 @@ export function getDateRange(period: Period): DateRange {
       return {
         startDate: last.startOf("month").startOf("day").toUTC().toMillis(),
         endDate: last.endOf("month").endOf("day").toUTC().toMillis(),
+      };
+    }
+    case "last-6-month": {
+      return {
+        startDate: now
+          .minus({ months: 6 })
+          .startOf("month")
+          .startOf("day")
+          .toUTC()
+          .toMillis(),
+        endDate: now.endOf("month").endOf("day").toUTC().toMillis(),
       };
     }
     case "last-30-days":

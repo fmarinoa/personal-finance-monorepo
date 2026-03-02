@@ -9,7 +9,7 @@ export function useDashboardChart() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { startDate, endDate } = getDateRange("this-month");
+  const { startDate, endDate } = getDateRange("last-6-month");
 
   const load = useCallback(() => {
     setLoading(true);
