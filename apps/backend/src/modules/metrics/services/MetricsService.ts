@@ -7,10 +7,10 @@ import {
 export interface MetricsService {
   getDashboardSummary(
     userId: string,
-    params: DateRange,
+    params: DateRange & { onlyReceived?: boolean },
   ): Promise<DashboardSummary>;
   getDashboardChart(
     userId: string,
-    params: DateRange,
+    params: DateRange & { onlyReceived?: boolean },
   ): Promise<DashboardChartPoint[]>;
 }

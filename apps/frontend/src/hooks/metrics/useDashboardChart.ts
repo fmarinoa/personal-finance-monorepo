@@ -14,7 +14,7 @@ export function useDashboardChart() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    fetchDashboardChart({ startDate, endDate })
+    fetchDashboardChart({ startDate, endDate, onlyReceived: true })
       .then((res) => {
         setData(res);
         setLoading(false);

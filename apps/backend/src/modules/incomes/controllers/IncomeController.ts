@@ -44,10 +44,14 @@ export class IncomeController extends BaseController {
 
   async list(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
     const { context, queryParams } = this.retrieveRequestContext(event);
-    const [limit, page, startDate, endDate] = this.retrieveFromQueryParams(
-      queryParams!,
-      ["limit", "page", "startDate", "endDate"],
-    );
+    const [limit, page, startDate, endDate, onlyReceived] =
+      this.retrieveFromQueryParams(queryParams!, [
+        "limit",
+        "page",
+        "startDate",
+        "endDate",
+        "onlyReceived",
+      ]);
 
     const user = new User({ id: context.authorizer?.claims["sub"] });
 
@@ -58,7 +62,10 @@ export class IncomeController extends BaseController {
       endDate,
     });
 
-    const result = await this.props.incomeService.list(user, filters);
+    const result = await this.props.incomeService.list(user, {
+      ...filters,
+      onlyReceived: onlyReceived === "true",
+    });
 
     return this.ok(result);
   }

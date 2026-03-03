@@ -61,37 +61,61 @@ export class DynamoDbRepositoryImp
 
   async list(
     userId: string,
-    filters: FiltersForList,
+    filters: FiltersForList & { onlyReceived?: boolean },
   ): Promise<{ data: Income[]; total: number }> {
     const expressionAttributeValues: Record<string, any> = {
       ":userId": userId,
     };
+    const expressionAttributeNames: Record<string, string> = {
+      "#status": "status",
+    };
 
     let keyConditionExpression = "userId = :userId";
+    const filterExpressions: string[] = [];
+    let indexName: string;
 
-    if (filters.startDate && filters.endDate) {
-      keyConditionExpression +=
-        " AND effectiveDate BETWEEN :startDate AND :endDate";
-      expressionAttributeValues[":startDate"] = filters.startDate;
-      expressionAttributeValues[":endDate"] = filters.endDate;
-    } else if (filters.startDate) {
-      keyConditionExpression += " AND effectiveDate >= :startDate";
-      expressionAttributeValues[":startDate"] = filters.startDate;
-    } else if (filters.endDate) {
-      keyConditionExpression += " AND effectiveDate <= :endDate";
-      expressionAttributeValues[":endDate"] = filters.endDate;
+    if (filters.onlyReceived) {
+      indexName = "userIdStatusIndex";
+      keyConditionExpression += " AND #status = :receivedStatus";
+      expressionAttributeValues[":receivedStatus"] = IncomeStatus.RECEIVED;
+      if (filters.startDate) {
+        filterExpressions.push("receivedDate >= :startDate");
+        expressionAttributeValues[":startDate"] = Number(filters.startDate);
+      }
+      if (filters.endDate) {
+        filterExpressions.push("receivedDate <= :endDate");
+        expressionAttributeValues[":endDate"] = Number(filters.endDate);
+      }
+    } else {
+      indexName = "userIdEffectiveDateIndex";
+      filterExpressions.push("#status <> :deletedStatus");
+      expressionAttributeValues[":deletedStatus"] = IncomeStatus.DELETED;
+
+      if (filters.startDate && filters.endDate) {
+        keyConditionExpression +=
+          " AND effectiveDate BETWEEN :startDate AND :endDate";
+        expressionAttributeValues[":startDate"] = Number(filters.startDate);
+        expressionAttributeValues[":endDate"] = Number(filters.endDate);
+      } else if (filters.startDate) {
+        keyConditionExpression += " AND effectiveDate >= :startDate";
+        expressionAttributeValues[":startDate"] = Number(filters.startDate);
+      } else if (filters.endDate) {
+        keyConditionExpression += " AND effectiveDate <= :endDate";
+        expressionAttributeValues[":endDate"] = Number(filters.endDate);
+      }
     }
+
+    const filterExpression = filterExpressions.length
+      ? filterExpressions.join(" AND ")
+      : undefined;
 
     const queryInput: QueryCommandInput = {
       TableName: this.props.incomesTableName,
-      IndexName: "userIdEffectiveDateIndex",
+      IndexName: indexName,
       KeyConditionExpression: keyConditionExpression,
-      FilterExpression: "#status <> :deletedStatus",
-      ExpressionAttributeNames: { "#status": "status" },
-      ExpressionAttributeValues: {
-        ...expressionAttributeValues,
-        ":deletedStatus": IncomeStatus.DELETED,
-      },
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ...(filterExpression && { FilterExpression: filterExpression }),
       ScanIndexForward: false,
     };
 

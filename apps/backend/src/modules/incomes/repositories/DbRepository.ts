@@ -6,7 +6,7 @@ export interface DbRepository {
   create(income: Income): Promise<Income>;
   list(
     userId: string,
-    filters: FiltersForList,
+    filters: FiltersForList & { onlyReceived?: boolean },
   ): Promise<{ data: Income[]; total: number }>;
   getById(income: Income): Promise<Income>;
   update(existing: Income): Promise<Income>;

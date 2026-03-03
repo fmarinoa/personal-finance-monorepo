@@ -72,7 +72,7 @@ export async function updateIncome(
 }
 
 export async function fetchDashboardSummary(
-  params: DateRange,
+  params: DateRange & { onlyReceived?: boolean },
 ): Promise<DashboardSummary> {
   const response = await api.get("/metrics/dashboard-summary", {
     params,
@@ -81,7 +81,7 @@ export async function fetchDashboardSummary(
 }
 
 export async function fetchDashboardChart(
-  params: DateRange,
+  params: DateRange & { onlyReceived?: boolean },
 ): Promise<DashboardChartPoint[]> {
   const response = await api.get("/metrics/dashboard-chart", { params });
   return response.data;

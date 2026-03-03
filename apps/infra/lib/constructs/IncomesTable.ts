@@ -32,5 +32,12 @@ export class IncomesTable extends Construct {
       sortKey: { name: "effectiveDate", type: dynamodb.AttributeType.NUMBER },
       projectionType: dynamodb.ProjectionType.ALL,
     });
+
+    this.table.addGlobalSecondaryIndex({
+      indexName: "userIdStatusIndex",
+      partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "status", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
   }
 }

@@ -25,7 +25,7 @@ export class MetricsServiceImp implements MetricsService {
 
   async getDashboardSummary(
     userId: string,
-    params: DateRange,
+    params: DateRange & { onlyReceived?: boolean },
   ): Promise<DashboardSummary> {
     const [{ data: lastExpenses }, { data: lastIncomes }] = await Promise.all([
       this.props.expensesRepository.list(userId, {
@@ -35,6 +35,7 @@ export class MetricsServiceImp implements MetricsService {
       this.props.incomesRepository.list(userId, {
         startDate: params.startDate,
         endDate: params.endDate,
+        onlyReceived: params.onlyReceived,
       }),
     ]);
 
@@ -60,7 +61,7 @@ export class MetricsServiceImp implements MetricsService {
 
   async getDashboardChart(
     userId: string,
-    params: DateRange,
+    params: DateRange & { onlyReceived?: boolean },
   ): Promise<DashboardChartPoint[]> {
     const chartData: DashboardChartPoint[] = [];
     const [{ data: allExpenses }, { data: allIncomes }] = await Promise.all([
@@ -71,6 +72,7 @@ export class MetricsServiceImp implements MetricsService {
       this.props.incomesRepository.list(userId, {
         startDate: params.startDate,
         endDate: params.endDate,
+        onlyReceived: params.onlyReceived,
       }),
     ]);
 

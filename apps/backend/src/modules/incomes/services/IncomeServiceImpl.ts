@@ -25,7 +25,7 @@ export class IncomeServiceImpl implements IncomeService {
 
   async list(
     user: User,
-    filters: FiltersForList,
+    filters: FiltersForList & { onlyReceived?: boolean },
   ): Promise<PaginatedResponse<Income>> {
     const { data, total } = await this.props.dbRepository.list(
       user.id,

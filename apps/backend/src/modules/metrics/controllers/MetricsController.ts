@@ -19,10 +19,10 @@ export class MetricsController extends BaseController {
     event: APIGatewayProxyEvent,
   ): Promise<APIGatewayProxyResult> {
     const { context, queryParams } = this.retrieveRequestContext(event);
-    const [startDate, endDate] = this.retrieveFromQueryParams(queryParams!, [
-      "startDate",
-      "endDate",
-    ]);
+    const [startDate, endDate, onlyReceived] = this.retrieveFromQueryParams(
+      queryParams!,
+      ["startDate", "endDate", "onlyReceived"],
+    );
 
     const { error, data } = periodSchema.safeParse({
       startDate,
@@ -33,7 +33,7 @@ export class MetricsController extends BaseController {
     const userId = context.authorizer?.claims["sub"];
     const summary = await this.props.metricsService.getDashboardSummary(
       userId,
-      data,
+      { ...data, onlyReceived: onlyReceived === "true" },
     );
 
     return this.ok(summary);
@@ -43,10 +43,10 @@ export class MetricsController extends BaseController {
     event: APIGatewayProxyEvent,
   ): Promise<APIGatewayProxyResult> {
     const { context, queryParams } = this.retrieveRequestContext(event);
-    const [startDate, endDate] = this.retrieveFromQueryParams(queryParams!, [
-      "startDate",
-      "endDate",
-    ]);
+    const [startDate, endDate, onlyReceived] = this.retrieveFromQueryParams(
+      queryParams!,
+      ["startDate", "endDate", "onlyReceived"],
+    );
 
     const { error, data } = periodSchema.safeParse({
       startDate,
@@ -57,7 +57,7 @@ export class MetricsController extends BaseController {
     const userId = context.authorizer?.claims["sub"];
     const chartData = await this.props.metricsService.getDashboardChart(
       userId,
-      data,
+      { ...data, onlyReceived: onlyReceived === "true" },
     );
 
     return this.ok(chartData);
