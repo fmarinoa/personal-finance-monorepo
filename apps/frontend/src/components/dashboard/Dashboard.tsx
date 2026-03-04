@@ -3,7 +3,6 @@ import { DateTime } from "luxon";
 import { lazy, Suspense, useState } from "react";
 
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
-import { useDashboardChart } from "@/hooks/metrics/useDashboardChart";
 import { useDashboardMetrics } from "@/hooks/metrics/useDashboardMetrics";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "@/types/expense";
 import { INCOME_CATEGORY_ICONS, INCOME_CATEGORY_LABELS } from "@/types/income";
@@ -225,7 +224,6 @@ export function Dashboard({
   const [toastMessage, setToastMessage] = useState("");
 
   const { data, loading, refreshing, error, refresh } = useDashboardMetrics();
-  const { data: chartData, loading: chartLoading } = useDashboardChart();
 
   function handleCreated(message: string) {
     refresh();
@@ -330,7 +328,7 @@ export function Dashboard({
           <div className="h-44 w-full rounded-xl bg-white/6 animate-pulse" />
         }
       >
-        <MonthlyChart data={chartData} loading={chartLoading} />
+        <MonthlyChart />
       </Suspense>
 
       {/* Last expenses */}

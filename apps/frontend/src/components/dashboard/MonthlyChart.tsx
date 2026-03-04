@@ -1,46 +1,104 @@
-import type { DashboardChartPoint } from "@packages/core";
 import { DateTime } from "luxon";
+import { useMemo, useState } from "react";
+import type { TooltipProps } from "recharts";
+import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from "recharts";
+import { Tooltip } from "recharts";
 
-const PADDING = { top: 12, right: 12, bottom: 24, left: 24 };
-const VIEW_W = 400;
-const VIEW_H = 80;
-const CHART_W = VIEW_W - PADDING.left - PADDING.right;
-const CHART_H = VIEW_H - PADDING.top - PADDING.bottom;
+import { type ChartConfig,ChartContainer } from "@/components/ui/chart";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useDashboardChart } from "@/hooks/metrics/useDashboardChart";
+import { cn } from "@/lib/utils";
+import type { ChartPeriod } from "@/utils/getDateRange";
 
-function toPoints(
-  data: DashboardChartPoint[],
-  key: "totalAmountIncomes" | "totalAmountExpenses",
-  min: number,
-  max: number,
-): string {
-  const range = max - min || 1;
-  return data
-    .map((d, i) => {
-      const x = PADDING.left + (i / Math.max(data.length - 1, 1)) * CHART_W;
-      const y = PADDING.top + (1 - (d[key] - min) / range) * CHART_H;
-      return `${x},${y}`;
-    })
-    .join(" ");
+const chartConfig = {
+  totalAmountIncomes: { label: "Ingresos", color: "var(--color-income)" },
+  totalAmountExpenses: { label: "Gastos", color: "var(--color-expense)" },
+} satisfies ChartConfig;
+
+const PERIOD_OPTIONS: { value: ChartPeriod; label: string }[] = [
+  { value: "last-3-month", label: "3 meses" },
+  { value: "last-6-month", label: "6 meses" },
+  { value: "last-12-month", label: "12 meses" },
+];
+
+function fmtAmount(v: number): string {
+  if (Math.abs(v) >= 1000) {
+    return `S/ ${(Math.abs(v) / 1000).toFixed(1)}k`;
+  }
+  return `S/ ${Math.abs(v).toFixed(2)}`;
 }
 
-function toAreaPath(
-  data: DashboardChartPoint[],
-  key: "totalAmountIncomes" | "totalAmountExpenses",
-  min: number,
-  max: number,
-): string {
-  const range = max - min || 1;
-  const baseline = PADDING.top + CHART_H;
-  const pts = data.map((d, i) => {
-    const x = PADDING.left + (i / Math.max(data.length - 1, 1)) * CHART_W;
-    const y = PADDING.top + (1 - (d[key] - min) / range) * CHART_H;
-    return [x, y] as [number, number];
-  });
-  if (pts.length === 0) return "";
+function StatCell({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: string;
+  color: string;
+}) {
   return (
-    `M ${pts[0][0]},${baseline} ` +
-    pts.map(([x, y]) => `L ${x},${y}`).join(" ") +
-    ` L ${pts[pts.length - 1][0]},${baseline} Z`
+    <div className="flex-1 flex flex-col items-center gap-0.5 py-2.5">
+      <span className="text-[9px] font-mono tracking-[0.15em] text-white/25 uppercase">
+        {label}
+      </span>
+      <span className={cn("text-sm font-mono font-medium", color)}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null;
+
+  const income = (payload.find((p) => p.dataKey === "totalAmountIncomes")
+    ?.value ?? 0) as number;
+  const expense = (payload.find((p) => p.dataKey === "totalAmountExpenses")
+    ?.value ?? 0) as number;
+  const balance = income - expense;
+  const monthLabel = DateTime.fromFormat(String(label), "yyyy-MM").toFormat(
+    "MMMM yyyy",
+    { locale: "es" },
+  );
+
+  return (
+    <div className="rounded-xl border border-white/8 bg-[#0d0d0d] px-3.5 py-3 shadow-2xl text-[11px] font-mono min-w-36">
+      <p className="text-white/35 mb-2 capitalize">{monthLabel}</p>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between gap-8">
+          <span className="text-white/40">Ingresos</span>
+          <span className="text-income">S/ {income.toFixed(2)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-8">
+          <span className="text-white/40">Gastos</span>
+          <span className="text-expense">S/ {expense.toFixed(2)}</span>
+        </div>
+        <div className="h-px bg-white/6 my-0.5" />
+        <div className="flex items-center justify-between gap-8">
+          <span className="text-white/50">Balance</span>
+          <span
+            className={
+              balance >= 0
+                ? "text-income font-semibold"
+                : "text-expense font-semibold"
+            }
+          >
+            {balance >= 0 ? "+" : ""}S/ {balance.toFixed(2)}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -48,17 +106,22 @@ function SkeletonChart() {
   return (
     <div className="w-full rounded-2xl bg-white/3 border border-white/6 p-5 flex flex-col gap-3">
       <div className="h-3 w-24 rounded bg-white/6 animate-pulse" />
+      <div className="h-8 w-full rounded-lg bg-white/4 animate-pulse" />
       <div className="h-44 w-full rounded-xl bg-white/6 animate-pulse" />
     </div>
   );
 }
 
-interface MonthlyChartProps {
-  data: DashboardChartPoint[];
-  loading: boolean;
-}
+export function MonthlyChart() {
+  const [period, setPeriod] = useState<ChartPeriod>("last-6-month");
+  const { data, loading } = useDashboardChart(period);
 
-export function MonthlyChart({ data, loading }: MonthlyChartProps) {
+  const totals = useMemo(() => {
+    const income = data.reduce((s, d) => s + d.totalAmountIncomes, 0);
+    const expense = data.reduce((s, d) => s + d.totalAmountExpenses, 0);
+    return { income, expense, balance: income - expense };
+  }, [data]);
+
   if (loading) return <SkeletonChart />;
 
   if (data.length === 0) {
@@ -74,157 +137,140 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
     );
   }
 
-  const allValues = data.flatMap((d) => [
-    d.totalAmountIncomes,
-    d.totalAmountExpenses,
-  ]);
-  const min = 0;
-  const max = Math.max(...allValues, 1);
-
-  const incomePoints = toPoints(data, "totalAmountIncomes", min, max);
-  const expensePoints = toPoints(data, "totalAmountExpenses", min, max);
-  const incomeArea = toAreaPath(data, "totalAmountIncomes", min, max);
-  const expenseArea = toAreaPath(data, "totalAmountExpenses", min, max);
-
-  // Y-axis ticks (3 labels: 0, mid, max)
-  const yTicks = [0, max / 2, max];
-
   return (
     <div className="w-full rounded-2xl bg-white/3 border border-white/6 px-5 py-5 flex flex-col gap-3">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase">
           Evolución mensual
         </span>
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400/70">
-            <span className="w-4 h-0.5 bg-emerald-400 rounded-full inline-block" />
-            Ingresos
-          </span>
-          <span className="flex items-center gap-1.5 text-[10px] font-mono text-rose-400">
-            <span className="w-4 h-0.5 bg-rose-400 rounded-full inline-block" />
-            Gastos
-          </span>
-        </div>
+        <Select
+          value={period}
+          onValueChange={(v) => setPeriod(v as ChartPeriod)}
+        >
+          <SelectTrigger
+            size="sm"
+            className="border-white/8 bg-white/4 text-white/60 hover:border-white/20 hover:text-white/90 data-[state=open]:border-gold/50 data-[state=open]:text-white font-mono text-[10px] h-auto py-1 px-2 shadow-none"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="dark min-w-28">
+            {PERIOD_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <svg
-        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-        className="w-full"
-        aria-label="Gráfico de evolución mensual de ingresos y gastos"
-      >
-        <defs>
-          <linearGradient id="income-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#34d399" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="expense-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ff2056" stopOpacity="0.10" />
-            <stop offset="100%" stopColor="#ff2056" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-
-        {/* Grid lines */}
-        {yTicks.map((tick, i) => {
-          const y =
-            PADDING.top + (1 - (tick - min) / (max - min || 1)) * CHART_H;
-          return (
-            <g key={i}>
-              <line
-                x1={PADDING.left}
-                y1={y}
-                x2={VIEW_W - PADDING.right}
-                y2={y}
-                stroke="white"
-                strokeOpacity="0.05"
-                strokeWidth="1"
-              />
-              <text
-                x={PADDING.left - 8}
-                y={y + 4}
-                textAnchor="end"
-                fontSize="4"
-                fontFamily="monospace"
-                fill="rgba(255,255,255,0.25)"
-              >
-                {tick >= 1000
-                  ? `${(tick / 1000).toFixed(1)}k`
-                  : tick.toFixed(0)}
-              </text>
-            </g>
-          );
-        })}
-
-        {/* Filled areas */}
-        <path d={incomeArea} fill="url(#income-gradient)" />
-        <path d={expenseArea} fill="url(#expense-gradient)" />
-
-        {/* Lines */}
-        <polyline
-          points={incomePoints}
-          fill="none"
-          stroke="#34d399"
-          strokeWidth="1"
-          strokeLinejoin="round"
-          strokeLinecap="round"
+      {/* Period stats */}
+      <div className="flex divide-x divide-white/5 rounded-xl border border-white/5 overflow-hidden">
+        <StatCell
+          label="Ingresos"
+          value={fmtAmount(totals.income)}
+          color="text-income font-semibold"
         />
-        <polyline
-          points={expensePoints}
-          fill="none"
-          stroke="#ff2056"
-          strokeWidth="1"
-          strokeLinejoin="round"
-          strokeLinecap="round"
+        <StatCell
+          label="Balance"
+          value={`${totals.balance >= 0 ? "+" : "-"}${fmtAmount(totals.balance)}`}
+          color={
+            totals.balance >= 0
+              ? "text-income font-semibold"
+              : "text-expense font-semibold"
+          }
         />
+        <StatCell
+          label="Gastos"
+          value={fmtAmount(totals.expense)}
+          color="text-expense font-semibold"
+        />
+      </div>
 
-        {/* Dots + month labels */}
-        {data.map((d, i) => {
-          const x = PADDING.left + (i / Math.max(data.length - 1, 1)) * CHART_W;
-          const range = max - min || 1;
-          const yIncome =
-            PADDING.top + (1 - (d.totalAmountIncomes - min) / range) * CHART_H;
-          const yExpense =
-            PADDING.top + (1 - (d.totalAmountExpenses - min) / range) * CHART_H;
-          const label = DateTime.fromFormat(d.month, "yyyy-MM").toFormat(
-            "MMM",
-            { locale: "es" },
-          );
+      {/* Chart */}
+      <ChartContainer config={chartConfig} className="h-44 w-full">
+        <BarChart
+          data={data}
+          barGap={2}
+          barCategoryGap="25%"
+          margin={{ top: 8, right: 48, left: 0, bottom: 0 }}
+        >
+          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
 
-          return (
-            <g key={d.month}>
-              {/* Income dot */}
-              <circle cx={x} cy={yIncome} r="2" fill="#34d399" />
-              <circle
-                cx={x}
-                cy={yIncome}
-                r="4"
-                fill="#34d399"
-                fillOpacity="0.15"
-              />
-              {/* Expense dot */}
-              <circle cx={x} cy={yExpense} r="2" fill="#ff2056" />
-              <circle
-                cx={x}
-                cy={yExpense}
-                r="4"
-                fill="#ff2056"
-                fillOpacity="0.12"
-              />
-              {/* Month label */}
-              <text
-                x={x}
-                y={VIEW_H - 6}
-                textAnchor="middle"
-                fontSize="4"
-                fontFamily="monospace"
-                fill="rgba(255,255,255,0.18)"
-                style={{ textTransform: "capitalize" }}
-              >
-                {label}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+          <XAxis
+            dataKey="month"
+            axisLine={false}
+            tickLine={false}
+            interval={0}
+            tick={{
+              fill: "rgba(255,255,255,0.2)",
+              fontSize: 10,
+              fontFamily: "monospace",
+            }}
+            tickFormatter={(m: string) =>
+              DateTime.fromFormat(m, "yyyy-MM")
+                .toFormat("MMM", {
+                  locale: "es",
+                })
+                .toUpperCase()
+            }
+          />
+
+          <YAxis
+            orientation="left"
+            axisLine={false}
+            tickLine={false}
+            width={40}
+            tick={{
+              fill: "rgba(255,255,255,0.2)",
+              fontSize: 10,
+              fontFamily: "monospace",
+            }}
+            tickFormatter={(v: number) =>
+              v >= 1000 ? `${(v / 1000).toFixed(1)}k` : `${v}`
+            }
+          />
+
+          <Tooltip
+            cursor={{ fill: "#ffffff", fillOpacity: 0.05, stroke: "none" }}
+            content={<CustomTooltip />}
+            wrapperStyle={{ outline: "none" }}
+          />
+
+          <Bar
+            dataKey="totalAmountIncomes"
+            fill="var(--color-income)"
+            radius={[3, 3, 0, 0]}
+            activeBar={{ fill: "var(--color-income)", fillOpacity: 0.85 }}
+          />
+          <Bar
+            dataKey="totalAmountExpenses"
+            fill="var(--color-expense)"
+            radius={[3, 3, 0, 0]}
+            activeBar={{ fill: "var(--color-expense)", fillOpacity: 0.85 }}
+          />
+          <Legend
+            verticalAlign="bottom"
+            height={28}
+            content={() => (
+              <div className="flex items-center justify-center gap-5 pt-2">
+                <span className="flex items-center gap-1.5 text-[10px] font-mono text-white/40">
+                  <span
+                    className={`w-2.5 h-2.5 rounded-sm inline-block opacity-80 bg-income`}
+                  />
+                  {chartConfig.totalAmountIncomes.label}
+                </span>
+                <span className="flex items-center gap-1.5 text-[10px] font-mono text-white/40">
+                  <span
+                    className={`w-2.5 h-2.5 rounded-sm inline-block opacity-80 bg-expense`}
+                  />
+                  {chartConfig.totalAmountExpenses.label}
+                </span>
+              </div>
+            )}
+          />
+        </BarChart>
+      </ChartContainer>
     </div>
   );
 }
