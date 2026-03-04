@@ -7,6 +7,13 @@ import {
 import { DateTime } from "luxon";
 import { useState } from "react";
 
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import {
+  PopoverContent,
+  PopoverRoot,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useCreateExpense } from "@/hooks/expenses/useCreateExpense";
 import { useDeleteExpense } from "@/hooks/expenses/useDeleteExpense";
 import { useUpdateExpense } from "@/hooks/expenses/useUpdateExpense";
@@ -17,7 +24,7 @@ import {
   PAYMENT_METHOD_LABELS,
 } from "@/types/expense";
 
-interface CreateExpenseDrawerProps {
+interface ExpenseDrawerProps {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
@@ -33,12 +40,12 @@ const EMPTY = {
   paymentDate: DateTime.local().toISODate()!,
 };
 
-export function CreateExpenseDrawer({
+export function ExpenseDrawer({
   open,
   onClose,
   onCreated,
   expense,
-}: CreateExpenseDrawerProps) {
+}: ExpenseDrawerProps) {
   const isEdit = !!expense;
 
   const [form, setForm] = useState({ ...EMPTY });
@@ -282,7 +289,7 @@ export function CreateExpenseDrawer({
                 required
                 value={form.description}
                 onChange={(e) => set("description", e.target.value)}
-                className={inputCls}
+                className="w-full px-4 py-3 bg-white/4 border border-white/8 rounded-xl text-white placeholder-white/20 text-sm outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/12"
               />
             </div>
 
@@ -343,13 +350,54 @@ export function CreateExpenseDrawer({
             {/* Date */}
             <div className="flex flex-col gap-2">
               <Label>Fecha del gasto</Label>
-              <input
-                type="date"
-                required
-                value={form.paymentDate}
-                onChange={(e) => set("paymentDate", e.target.value)}
-                className={`${inputCls} scheme-dark`}
-              />
+              <PopoverRoot>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/8 bg-white/4 text-sm font-medium text-white/70 transition cursor-pointer w-full text-left hover:border-white/20 hover:text-white/90 data-[state=open]:border-gold/60 data-[state=open]:bg-gold/8 data-[state=open]:text-white"
+                  >
+                    <svg
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      width="14"
+                      height="14"
+                      className="shrink-0 text-white/30"
+                    >
+                      <path d="M4.75 0a.75.75 0 01.75.75V2h5V.75a.75.75 0 011.5 0V2h1.25c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0113.25 16H2.75A1.75 1.75 0 011 14.25V3.75C1 2.784 1.784 2 2.75 2H4V.75A.75.75 0 014.75 0zm0 3.5h-2a.25.25 0 00-.25.25V6h10.5V3.75a.25.25 0 00-.25-.25h-2V4.25a.75.75 0 01-1.5 0V3.5h-5V4.25a.75.75 0 01-1.5 0V3.5zM2.5 7.5v6.75c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25V7.5H2.5z" />
+                    </svg>
+                    <span className="flex-1">
+                      {DateTime.fromISO(form.paymentDate)
+                        .setLocale("es")
+                        .toLocaleString({
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                    </span>
+                    <svg
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      width="12"
+                      height="12"
+                      className="shrink-0 text-white/30"
+                    >
+                      <path d="M12.78 5.22a.749.749 0 010 1.06l-4.25 4.25a.749.749 0 01-1.06 0L3.22 6.28a.749.749 0 111.06-1.06L8 8.939l3.72-3.719a.749.749 0 011.06 0z" />
+                    </svg>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-auto dark">
+                  <Calendar
+                    mode="single"
+                    selected={new Date(form.paymentDate + "T12:00:00")}
+                    onSelect={(d) => {
+                      if (d) {
+                        set("paymentDate", DateTime.fromJSDate(d).toISODate()!);
+                      }
+                    }}
+                    className="text-foreground"
+                  />
+                </PopoverContent>
+              </PopoverRoot>
             </div>
 
             {/* Error */}
@@ -462,17 +510,5 @@ export function CreateExpenseDrawer({
         </div>
       </aside>
     </>
-  );
-}
-
-/* ── Shared helpers ── */
-const inputCls =
-  "w-full px-4 py-3 bg-white/4 border border-white/8 rounded-xl text-white placeholder-white/20 text-sm outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/12";
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-[10px] font-mono tracking-[0.15em] text-white/40 uppercase">
-      {children}
-    </span>
   );
 }

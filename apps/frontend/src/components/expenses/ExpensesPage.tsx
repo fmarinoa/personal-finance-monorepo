@@ -10,8 +10,8 @@ import type { Period } from "@/utils/getDateRange";
 import { Table } from "./Table";
 
 const CreateExpenseDrawer = lazy(() =>
-  import("@/components/shared/CreateExpenseDrawer").then((m) => ({
-    default: m.CreateExpenseDrawer,
+  import("@/components/shared/ExpenseDrawer").then((m) => ({
+    default: m.ExpenseDrawer,
   })),
 );
 

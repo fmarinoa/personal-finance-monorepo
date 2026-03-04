@@ -14,13 +14,13 @@ const MonthlyChart = lazy(() =>
   import("./MonthlyChart").then((m) => ({ default: m.MonthlyChart })),
 );
 const CreateIncomeDrawer = lazy(() =>
-  import("@/components/shared/CreateIncomeDrawer").then((m) => ({
-    default: m.CreateIncomeDrawer,
+  import("@/components/shared/IncomeDrawer").then((m) => ({
+    default: m.IncomeDrawer,
   })),
 );
 const CreateExpenseDrawer = lazy(() =>
-  import("@/components/shared/CreateExpenseDrawer").then((m) => ({
-    default: m.CreateExpenseDrawer,
+  import("@/components/shared/ExpenseDrawer").then((m) => ({
+    default: m.ExpenseDrawer,
   })),
 );
 

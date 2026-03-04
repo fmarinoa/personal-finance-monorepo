@@ -10,8 +10,8 @@ import type { Period } from "@/utils/getDateRange";
 import { IncomesTable } from "./IncomesTable";
 
 const CreateIncomeDrawer = lazy(() =>
-  import("@/components/shared/CreateIncomeDrawer").then((m) => ({
-    default: m.CreateIncomeDrawer,
+  import("@/components/shared/IncomeDrawer").then((m) => ({
+    default: m.IncomeDrawer,
   })),
 );
 
