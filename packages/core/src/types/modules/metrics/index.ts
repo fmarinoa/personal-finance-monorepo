@@ -11,8 +11,14 @@ export interface DashboardSummary extends BaseDashboard {
   lastIncomes: Income[];
 }
 
-export interface DashboardChartPoint extends BaseDashboard {
-  month: string; // "YYYY-MM"
+export interface DashboardChartPoint {
+  months: (BaseDashboard & {
+    month: string; // "YYYY-MM"
+    balance: number;
+  })[];
+  total: BaseDashboard & {
+    balance: number;
+  };
 }
 
 export interface MonthlyMetric {

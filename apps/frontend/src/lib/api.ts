@@ -52,7 +52,7 @@ export async function listExpenses(
 }
 
 export async function listIncomes(
-  filters: FiltersForList,
+  filters: FiltersForList & { onlyReceived?: boolean },
 ): Promise<PaginatedResponse<Income>> {
   const response = await api.get("/incomes", { params: filters });
   return response.data;
@@ -82,7 +82,7 @@ export async function fetchDashboardSummary(
 
 export async function fetchDashboardChart(
   params: DateRange & { onlyReceived?: boolean },
-): Promise<DashboardChartPoint[]> {
+): Promise<DashboardChartPoint> {
   const response = await api.get("/metrics/dashboard-chart", { params });
   return response.data;
 }

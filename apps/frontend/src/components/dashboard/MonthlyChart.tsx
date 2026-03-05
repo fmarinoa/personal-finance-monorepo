@@ -1,10 +1,11 @@
 import { DateTime } from "luxon";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useEffect } from "react";
 import type { TooltipProps } from "recharts";
 import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from "recharts";
 import { Tooltip } from "recharts";
 
-import { type ChartConfig,ChartContainer } from "@/components/ui/chart";
+import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
 import {
   Select,
   SelectContent,
@@ -51,6 +52,50 @@ function StatCell({
       <span className={cn("text-sm font-mono font-medium", color)}>
         {value}
       </span>
+    </div>
+  );
+}
+
+function PeriodStatSection({
+  label,
+  incomes,
+  expenses,
+  balance,
+}: {
+  label: string;
+  incomes: number;
+  expenses: number;
+  balance: number;
+}) {
+  return (
+    <div>
+      <div className="px-3 pb-0.5 text-center">
+        <span className="text-[9px] font-mono tracking-[0.15em] text-white/20 uppercase">
+          {label}
+        </span>
+        <div className="h-px bg-white/5 my-2" />
+      </div>
+      <div className="flex divide-x divide-white/5">
+        <StatCell
+          label="Ingresos"
+          value={fmtAmount(incomes)}
+          color="text-income font-semibold"
+        />
+        <StatCell
+          label="Balance"
+          value={`${balance >= 0 ? "+" : "-"}${fmtAmount(balance)}`}
+          color={
+            balance >= 0
+              ? "text-income font-semibold"
+              : "text-expense font-semibold"
+          }
+        />
+        <StatCell
+          label="Gastos"
+          value={fmtAmount(expenses)}
+          color="text-expense font-semibold"
+        />
+      </div>
     </div>
   );
 }
@@ -112,19 +157,17 @@ function SkeletonChart() {
   );
 }
 
-export function MonthlyChart() {
+export function MonthlyChart({ refreshTrigger }: { refreshTrigger?: number }) {
   const [period, setPeriod] = useState<ChartPeriod>("last-6-month");
-  const { data, loading } = useDashboardChart(period);
+  const { data, loading, refresh } = useDashboardChart(period);
 
-  const totals = useMemo(() => {
-    const income = data.reduce((s, d) => s + d.totalAmountIncomes, 0);
-    const expense = data.reduce((s, d) => s + d.totalAmountExpenses, 0);
-    return { income, expense, balance: income - expense };
-  }, [data]);
+  useEffect(() => {
+    if (refreshTrigger) refresh();
+  }, [refreshTrigger]);  
 
   if (loading) return <SkeletonChart />;
 
-  if (data.length === 0) {
+  if (data.months.length === 0) {
     return (
       <div className="w-full rounded-2xl bg-white/3 border border-white/6 px-5 py-5 flex flex-col gap-3">
         <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase">
@@ -136,6 +179,10 @@ export function MonthlyChart() {
       </div>
     );
   }
+
+  const lastMonth = data.months[data.months.length - 1];
+  const periodLabel =
+    PERIOD_OPTIONS.find((o) => o.value === period)?.label ?? period;
 
   return (
     <div className="w-full rounded-2xl bg-white/3 border border-white/6 px-5 py-5 flex flex-col gap-3">
@@ -165,32 +212,28 @@ export function MonthlyChart() {
       </div>
 
       {/* Period stats */}
-      <div className="flex divide-x divide-white/5 rounded-xl border border-white/5 overflow-hidden">
-        <StatCell
-          label="Ingresos"
-          value={fmtAmount(totals.income)}
-          color="text-income font-semibold"
+      <div className="rounded-xl border border-white/5 overflow-hidden divide-y divide-white/5">
+        <PeriodStatSection
+          label={DateTime.fromFormat(lastMonth.month, "yyyy-MM").toFormat(
+            "MMMM yyyy",
+            { locale: "es" },
+          )}
+          incomes={lastMonth.totalAmountIncomes}
+          expenses={lastMonth.totalAmountExpenses}
+          balance={lastMonth.balance}
         />
-        <StatCell
-          label="Balance"
-          value={`${totals.balance >= 0 ? "+" : "-"}${fmtAmount(totals.balance)}`}
-          color={
-            totals.balance >= 0
-              ? "text-income font-semibold"
-              : "text-expense font-semibold"
-          }
-        />
-        <StatCell
-          label="Gastos"
-          value={fmtAmount(totals.expense)}
-          color="text-expense font-semibold"
+        <PeriodStatSection
+          label={`Total · ${periodLabel}`}
+          incomes={data.total.totalAmountIncomes}
+          expenses={data.total.totalAmountExpenses}
+          balance={data.total.balance}
         />
       </div>
 
       {/* Chart */}
       <ChartContainer config={chartConfig} className="h-44 w-full">
         <BarChart
-          data={data}
+          data={data.months}
           barGap={2}
           barCategoryGap="25%"
           margin={{ top: 8, right: 48, left: 0, bottom: 0 }}

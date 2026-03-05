@@ -12,5 +12,5 @@ export interface MetricsService {
   getDashboardChart(
     userId: string,
     params: DateRange & { onlyReceived?: boolean },
-  ): Promise<DashboardChartPoint[]>;
+  ): Promise<DashboardChartPoint>;
 }

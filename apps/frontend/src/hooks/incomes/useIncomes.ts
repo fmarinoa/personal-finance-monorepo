@@ -12,7 +12,13 @@ interface State {
 }
 
 export function useIncomes(
-  { startDate, endDate, limit = 10, page = 1 }: FiltersForList,
+  {
+    startDate,
+    endDate,
+    limit = 10,
+    page = 1,
+    onlyReceived = false,
+  }: FiltersForList & { onlyReceived?: boolean },
   enabled = true,
 ) {
   const [state, setState] = useState<State>({
@@ -31,7 +37,7 @@ export function useIncomes(
     if (!enabled) return;
     const key = `${startDate}-${endDate}-${page}-${limit}`;
     const controller = new AbortController();
-    listIncomes({ limit, page, startDate, endDate })
+    listIncomes({ limit, page, startDate, endDate, onlyReceived })
       .then((res) => {
         if (!controller.signal.aborted) {
           setState({

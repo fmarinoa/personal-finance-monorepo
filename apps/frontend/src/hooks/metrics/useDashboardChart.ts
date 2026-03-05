@@ -2,10 +2,13 @@ import type { DashboardChartPoint } from "@packages/core";
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchDashboardChart } from "@/lib/api";
-import { type ChartPeriod,getDateRange } from "@/utils/getDateRange";
+import { type ChartPeriod, getDateRange } from "@/utils/getDateRange";
 
 export function useDashboardChart(period: ChartPeriod = "last-6-month") {
-  const [data, setData] = useState<DashboardChartPoint[]>([]);
+  const [data, setData] = useState<DashboardChartPoint>({
+    months: [],
+    total: { totalAmountIncomes: 0, totalAmountExpenses: 0, balance: 0 },
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

@@ -41,7 +41,6 @@ export class MetricsServiceImp implements MetricsService {
 
     const totalAmountExpenses =
       Expense.calculateTotalExpenseAmount(lastExpenses);
-
     const totalAmountIncomes = Income.calculateTotalIncomeAmount(lastIncomes);
 
     return {
@@ -62,8 +61,7 @@ export class MetricsServiceImp implements MetricsService {
   async getDashboardChart(
     userId: string,
     params: DateRange & { onlyReceived?: boolean },
-  ): Promise<DashboardChartPoint[]> {
-    const chartData: DashboardChartPoint[] = [];
+  ): Promise<DashboardChartPoint> {
     const [{ data: allExpenses }, { data: allIncomes }] = await Promise.all([
       this.props.expensesRepository.list(userId, {
         startDate: params.startDate,
@@ -84,22 +82,38 @@ export class MetricsServiceImp implements MetricsService {
       ...Object.keys(incomesByMonth),
     ]);
 
-    for (const month of allMonths) {
-      const totalAmountExpenses = expensesByMonth[month]
+    let totalAmountExpenses = 0;
+    let totalAmountIncomes = 0;
+    let totalBalance = 0;
+
+    const months = [...allMonths].sort().map((month) => {
+      const monthExpenses = expensesByMonth[month]
         ? Expense.calculateTotalExpenseAmount(expensesByMonth[month])
         : 0;
-
-      const totalAmountIncomes = incomesByMonth[month]
+      const monthIncomes = incomesByMonth[month]
         ? Income.calculateTotalIncomeAmount(incomesByMonth[month])
         : 0;
+      const balance = monthIncomes - monthExpenses;
 
-      chartData.push({
+      totalAmountExpenses += monthExpenses;
+      totalAmountIncomes += monthIncomes;
+      totalBalance += balance;
+
+      return {
         month,
-        totalAmountExpenses,
-        totalAmountIncomes,
-      });
-    }
+        totalAmountIncomes: monthIncomes,
+        totalAmountExpenses: monthExpenses,
+        balance,
+      };
+    });
 
-    return [...chartData].sort((a, b) => a.month.localeCompare(b.month));
+    return {
+      months,
+      total: {
+        totalAmountIncomes,
+        totalAmountExpenses,
+        balance: totalBalance,
+      },
+    };
   }
 }

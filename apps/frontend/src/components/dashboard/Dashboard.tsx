@@ -3,9 +3,11 @@ import { DateTime } from "luxon";
 import { lazy, Suspense, useState } from "react";
 
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
-import { useDashboardMetrics } from "@/hooks/metrics/useDashboardMetrics";
+import { useExpenses } from "@/hooks/expenses/useExpenses";
+import { useIncomes } from "@/hooks/incomes/useIncomes";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "@/types/expense";
 import { INCOME_CATEGORY_ICONS, INCOME_CATEGORY_LABELS } from "@/types/income";
+import { getDateRange } from "@/utils/getDateRange";
 
 import { MobileFAB } from "./MobileFAB";
 
@@ -24,57 +26,6 @@ const CreateExpenseDrawer = lazy(() =>
 );
 
 /* ── Sub-components ── */
-
-function StatCard({
-  label,
-  value,
-  valueNode,
-  mono = false,
-  accent = false,
-}: {
-  label: string;
-  value?: string;
-  valueNode?: React.ReactNode;
-  mono?: boolean;
-  accent?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 px-5 py-5 rounded-2xl bg-white/3 border border-white/6 min-h-27.5">
-      <span className="text-[10px] font-mono tracking-[0.15em] text-white/30 uppercase shrink-0">
-        {label}
-      </span>
-      <div className="flex-1 flex items-center justify-center">
-        {valueNode ?? (
-          <span
-            className={`text-3xl font-bold tracking-tight ${accent ? "text-gold" : "text-white"} ${mono ? "font-mono" : ""}`}
-          >
-            {value}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function MonthAmount({
-  loading,
-  amount,
-  color = "text-gold",
-}: {
-  loading: boolean;
-  amount: number;
-  color?: string;
-}) {
-  if (loading)
-    return (
-      <div className="h-9 w-24 rounded-lg bg-white/6 animate-pulse mt-1" />
-    );
-  return (
-    <span className={`text-3xl font-bold tracking-tight font-mono ${color}`}>
-      S/ {amount.toFixed(2)}
-    </span>
-  );
-}
 
 function LastExpensesTable({
   loading,
@@ -222,15 +173,39 @@ export function Dashboard({
   const [incomeDrawerOpen, setIncomeDrawerOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [chartRefreshKey, setChartRefreshKey] = useState(0);
 
-  const { data, loading, refreshing, error, refresh } = useDashboardMetrics();
+  const { startDate, endDate } = getDateRange("this-month");
 
   function handleCreated(message: string) {
-    refresh();
+    incomesRefresh();
+    expensesRefresh();
+    setChartRefreshKey((k) => k + 1);
     setToastMessage(message);
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 3000);
   }
+
+  const {
+    data: incomesData,
+    loading: incomesLoading,
+    refresh: incomesRefresh,
+  } = useIncomes({
+    startDate,
+    endDate,
+    limit: 5,
+    onlyReceived: true,
+  });
+
+  const {
+    data: expensesData,
+    loading: expensesLoading,
+    refresh: expensesRefresh,
+  } = useExpenses({
+    startDate,
+    endDate,
+    limit: 5,
+  });
 
   return (
     <AppLayout
@@ -264,83 +239,25 @@ export function Dashboard({
         </div>
       }
     >
-      {/* Stats row */}
-      {error && !loading && (
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
-          <svg
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            width="14"
-            height="14"
-            className="shrink-0"
-          >
-            <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 4.25a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 7a.875.875 0 110-1.75.875.875 0 010 1.75z" />
-          </svg>
-          {error}
-        </div>
-      )}
-      <div
-        className={`grid grid-cols-1 sm:grid-cols-3 gap-4 transition-opacity duration-500 ${refreshing ? "opacity-40" : "opacity-100"}`}
-      >
-        <StatCard
-          label="Gastos del mes"
-          valueNode={
-            <MonthAmount
-              loading={loading}
-              amount={data.totalAmountExpenses}
-              color="text-rose-400"
-            />
-          }
-        />
-        <StatCard
-          label="Ingresos del mes"
-          valueNode={
-            <MonthAmount
-              loading={loading}
-              amount={data.totalAmountIncomes}
-              color="text-emerald-400"
-            />
-          }
-        />
-        <StatCard
-          label="Balance neto"
-          valueNode={
-            <MonthAmount
-              loading={loading}
-              amount={data.balance}
-              color={
-                loading
-                  ? "text-white"
-                  : data.balance <= data.totalAmountExpenses * 0.1
-                    ? "text-red-400"
-                    : data.balance <= data.totalAmountIncomes * 0.5
-                      ? "text-amber-400"
-                      : "text-emerald-400"
-              }
-            />
-          }
-        />
-      </div>
-
       {/* Monthly chart */}
       <Suspense
         fallback={
           <div className="h-44 w-full rounded-xl bg-white/6 animate-pulse" />
         }
       >
-        <MonthlyChart />
+        <MonthlyChart refreshTrigger={chartRefreshKey} />
       </Suspense>
 
       {/* Last expenses */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <LastExpensesTable
-          loading={loading}
-          expenses={data.lastExpenses}
+          loading={expensesLoading}
+          expenses={expensesData}
           onViewMore={() => onNavigate("expenses")}
         />
         <LastIncomesTable
-          loading={loading}
-          incomes={data.lastIncomes}
+          loading={incomesLoading}
+          incomes={incomesData}
           onViewMore={() => onNavigate("incomes")}
         />
       </div>
