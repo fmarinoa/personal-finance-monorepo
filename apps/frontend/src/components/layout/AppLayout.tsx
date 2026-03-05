@@ -203,7 +203,7 @@ export function AppLayout({
 
       {/* ── Main content ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-white/6">
+        <header className="flex items-center justify-between px-6 md:px-10 py-3 md:py-5 border-b border-white/6">
           <div>
             <p className="text-[10px] font-mono tracking-[0.2em] text-gold uppercase mb-0.5">
               Portal de finanzas
@@ -230,7 +230,7 @@ export function AppLayout({
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-6 md:px-10 pt-8 pb-24 md:pb-8 flex flex-col gap-8">
+        <main className="flex-1 overflow-y-auto px-5 md:px-8 pt-5  pb-24 md:pb-8 flex flex-col gap-8">
           {children}
         </main>
       </div>

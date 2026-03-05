@@ -57,31 +57,37 @@ function LastExpensesTable({
           Sin gastos este mes
         </p>
       ) : (
-        <table className="w-full text-sm">
-          <tbody className="divide-y divide-white/5">
-            {expenses.map((e) => (
-              <tr key={e.id} className="group">
-                <td className="py-2.5 pr-3 w-8 text-base leading-none">
-                  {CATEGORY_ICONS[e.category as keyof typeof CATEGORY_ICONS]}
-                </td>
-                <td className="py-2.5 pr-3 text-white/80 max-w-40 truncate">
-                  {e.description}
-                </td>
-                <td className="py-2.5 pr-3 text-white/35 hidden sm:table-cell whitespace-nowrap">
-                  {CATEGORY_LABELS[e.category as keyof typeof CATEGORY_LABELS]}
-                </td>
-                <td className="py-2.5 pr-3 text-white/35 whitespace-nowrap">
-                  {DateTime.fromMillis(e.paymentDate).toFormat("dd MMM", {
-                    locale: "es",
-                  })}
-                </td>
-                <td className="py-2.5 text-right font-mono text-gold font-semibold whitespace-nowrap">
-                  S/ {e.amount.toFixed(2)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto -mx-5 px-5">
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-white/5">
+              {expenses.map((e) => (
+                <tr key={e.id} className="group">
+                  <td className="py-2.5 pr-3 w-8 text-base leading-none">
+                    {CATEGORY_ICONS[e.category as keyof typeof CATEGORY_ICONS]}
+                  </td>
+                  <td className="py-2.5 pr-3 text-white/80 max-w-40 truncate">
+                    {e.description}
+                  </td>
+                  <td className="py-2.5 pr-3 text-white/35 hidden sm:table-cell whitespace-nowrap">
+                    {
+                      CATEGORY_LABELS[
+                        e.category as keyof typeof CATEGORY_LABELS
+                      ]
+                    }
+                  </td>
+                  <td className="py-2.5 pr-3 text-white/35 whitespace-nowrap">
+                    {DateTime.fromMillis(e.paymentDate).toFormat("dd MMM", {
+                      locale: "es",
+                    })}
+                  </td>
+                  <td className="py-2.5 text-right font-mono text-gold font-semibold whitespace-nowrap">
+                    S/ {e.amount.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <button
         onClick={onViewMore}
@@ -118,39 +124,41 @@ function LastIncomesTable({
           Sin ingresos este mes
         </p>
       ) : (
-        <table className="w-full text-sm">
-          <tbody className="divide-y divide-white/5">
-            {incomes.map((i) => (
-              <tr key={i.id} className="group">
-                <td className="py-2.5 pr-3 w-8 text-base leading-none">
-                  {
-                    INCOME_CATEGORY_ICONS[
-                      i.category as keyof typeof INCOME_CATEGORY_ICONS
-                    ]
-                  }
-                </td>
-                <td className="py-2.5 pr-3 text-white/80 max-w-40 truncate">
-                  {i.description}
-                </td>
-                <td className="py-2.5 pr-3 text-white/35 hidden sm:table-cell whitespace-nowrap">
-                  {
-                    INCOME_CATEGORY_LABELS[
-                      i.category as keyof typeof INCOME_CATEGORY_LABELS
-                    ]
-                  }
-                </td>
-                <td className="py-2.5 pr-3 text-white/35 whitespace-nowrap">
-                  {DateTime.fromMillis(i.effectiveDate).toFormat("dd MMM", {
-                    locale: "es",
-                  })}
-                </td>
-                <td className="py-2.5 text-right font-mono text-emerald-400 font-semibold whitespace-nowrap">
-                  S/ {i.amount.toFixed(2)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto -mx-5 px-5">
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-white/5">
+              {incomes.map((i) => (
+                <tr key={i.id} className="group">
+                  <td className="py-2.5 pr-3 w-8 text-base leading-none">
+                    {
+                      INCOME_CATEGORY_ICONS[
+                        i.category as keyof typeof INCOME_CATEGORY_ICONS
+                      ]
+                    }
+                  </td>
+                  <td className="py-2.5 pr-3 text-white/80 max-w-40 truncate">
+                    {i.description}
+                  </td>
+                  <td className="py-2.5 pr-3 text-white/35 hidden sm:table-cell whitespace-nowrap">
+                    {
+                      INCOME_CATEGORY_LABELS[
+                        i.category as keyof typeof INCOME_CATEGORY_LABELS
+                      ]
+                    }
+                  </td>
+                  <td className="py-2.5 pr-3 text-white/35 whitespace-nowrap">
+                    {DateTime.fromMillis(i.effectiveDate).toFormat("dd MMM", {
+                      locale: "es",
+                    })}
+                  </td>
+                  <td className="py-2.5 text-right font-mono text-emerald-400 font-semibold whitespace-nowrap">
+                    S/ {i.amount.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <button
         onClick={onViewMore}

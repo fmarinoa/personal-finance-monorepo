@@ -163,7 +163,7 @@ export function MonthlyChart({ refreshTrigger }: { refreshTrigger?: number }) {
 
   useEffect(() => {
     if (refreshTrigger) refresh();
-  }, [refreshTrigger]);  
+  }, [refreshTrigger]);
 
   if (loading) return <SkeletonChart />;
 
@@ -295,6 +295,7 @@ export function MonthlyChart({ refreshTrigger }: { refreshTrigger?: number }) {
           <Legend
             verticalAlign="bottom"
             height={28}
+            wrapperStyle={{ left: 0, right: 0, width: "100%" }}
             content={() => (
               <div className="flex items-center justify-center gap-5 pt-2">
                 <span className="flex items-center gap-1.5 text-[10px] font-mono text-white/40">
