@@ -260,7 +260,7 @@ export function AppLayout({
               </span>
             </div>
             <span className="font-bold text-sm tracking-tight text-white">
-              Hola, {username ?? "usuario"} 👋
+              Hola, {username} 👋
             </span>
           </div>
           <button

@@ -10,17 +10,18 @@ import type { AppPage } from "@/components/layout/AppLayout";
 import { LoginPage } from "@/components/LoginPage";
 
 type AuthState = "loading" | "unauthenticated" | "authenticated";
+const defaultUsername = "usuario";
 
 function App() {
   const [authState, setAuthState] = useState<AuthState>("loading");
-  const [username, setUsername] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(defaultUsername);
   const [page, setPage] = useState<AppPage>("dashboard");
 
   useEffect(() => {
     getCurrentUser()
       .then(() => fetchUserAttributes())
       .then((attrs) => {
-        setUsername(attrs.given_name ?? attrs.email ?? null);
+        setUsername(attrs.given_name ?? attrs.email ?? defaultUsername);
         setAuthState("authenticated");
       })
       .catch(() => setAuthState("unauthenticated"));
