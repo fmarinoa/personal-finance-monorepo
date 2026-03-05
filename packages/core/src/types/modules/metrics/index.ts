@@ -25,3 +25,14 @@ export interface MonthlyMetric {
   month: string;
   total: number;
 }
+
+export interface CategoryBreakdownItem {
+  category: string;
+  total: number;
+  percentage: number;
+}
+
+export interface CategoryBreakdown {
+  expenses: CategoryBreakdownItem[];
+  incomes: CategoryBreakdownItem[];
+}

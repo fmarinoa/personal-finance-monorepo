@@ -14,6 +14,11 @@ const CreateIncomeDrawer = lazy(() =>
     default: m.IncomeDrawer,
   })),
 );
+const CategoryTreemap = lazy(() =>
+  import("@/components/shared/CategoryTreemap").then((m) => ({
+    default: m.CategoryTreemap,
+  })),
+);
 
 interface IncomesPageProps {
   username: string | null;
@@ -70,6 +75,14 @@ export function IncomesPage({
         </button>
       }
     >
+      <Suspense
+        fallback={
+          <div className="h-52 w-full rounded-2xl bg-white/3 border border-white/6 animate-pulse" />
+        }
+      >
+        <CategoryTreemap mode="incomes" />
+      </Suspense>
+
       <IncomesTable
         data={data}
         loading={loading}

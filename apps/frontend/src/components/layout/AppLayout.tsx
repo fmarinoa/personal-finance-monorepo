@@ -164,7 +164,7 @@ export function AppLayout({
 
   return (
     <div
-      className="flex min-h-screen bg-canvas text-white"
+      className="flex h-screen overflow-hidden bg-canvas text-white"
       style={{ fontFamily: "'Plus Jakarta Sans Variable', sans-serif" }}
     >
       {/* ── Sidebar (desktop) ── */}
@@ -195,16 +195,14 @@ export function AppLayout({
 
         <div className="flex-1" />
 
-        <div className="relative w-full">
-          <div className="fixed bottom-8 left-0 w-55 px-4 z-30 flex flex-col items-stretch gap-1">
-            <SignOutButton onClick={handleSignOut} loading={signingOut} />
-            <PoweredBy />
-          </div>
+        <div className="flex flex-col items-stretch gap-1">
+          <SignOutButton onClick={handleSignOut} loading={signingOut} />
+          <PoweredBy />
         </div>
       </nav>
 
       {/* ── Main content ── */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <header className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-white/6">
           <div>
             <p className="text-[10px] font-mono tracking-[0.2em] text-gold uppercase mb-0.5">
@@ -232,7 +230,7 @@ export function AppLayout({
           </div>
         </header>
 
-        <main className="flex-1 px-6 md:px-10 pt-8 pb-24 md:pb-8 flex flex-col gap-8">
+        <main className="flex-1 overflow-y-auto px-6 md:px-10 pt-8 pb-24 md:pb-8 flex flex-col gap-8">
           {children}
         </main>
       </div>

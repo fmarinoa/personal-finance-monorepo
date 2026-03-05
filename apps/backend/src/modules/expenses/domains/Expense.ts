@@ -166,4 +166,16 @@ export class Expense extends BaseDomain<Expense> implements ExpenseInterface {
 
     return grouped;
   }
+
+  static groupExpensesByCategory(expenses: Expense[]) {
+    const grouped: Record<string, Expense[]> = {};
+
+    expenses.forEach((expense) => {
+      const key = expense.category as string;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(expense);
+    });
+
+    return grouped;
+  }
 }

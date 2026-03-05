@@ -14,6 +14,11 @@ const CreateExpenseDrawer = lazy(() =>
     default: m.ExpenseDrawer,
   })),
 );
+const CategoryTreemap = lazy(() =>
+  import("@/components/shared/CategoryTreemap").then((m) => ({
+    default: m.CategoryTreemap,
+  })),
+);
 
 interface ExpensesPageProps {
   username: string | null;
@@ -73,6 +78,14 @@ export function ExpensesPage({
         </button>
       }
     >
+      <Suspense
+        fallback={
+          <div className="h-52 w-full rounded-2xl bg-white/3 border border-white/6 animate-pulse" />
+        }
+      >
+        <CategoryTreemap mode="expenses" />
+      </Suspense>
+
       <Table
         data={data}
         loading={loading}

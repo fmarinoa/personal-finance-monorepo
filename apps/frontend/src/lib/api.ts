@@ -1,4 +1,5 @@
 import type {
+  CategoryBreakdown,
   CreateExpensePayload,
   CreateIncomePayload,
   DashboardChartPoint,
@@ -84,5 +85,12 @@ export async function fetchDashboardChart(
   params: DateRange & { onlyReceived?: boolean },
 ): Promise<DashboardChartPoint> {
   const response = await api.get("/metrics/dashboard-chart", { params });
+  return response.data;
+}
+
+export async function fetchCategoryBreakdown(
+  params: DateRange & { onlyReceived?: boolean },
+): Promise<CategoryBreakdown> {
+  const response = await api.get("/metrics/category-breakdown", { params });
   return response.data;
 }

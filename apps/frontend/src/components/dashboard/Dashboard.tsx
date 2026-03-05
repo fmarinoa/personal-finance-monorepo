@@ -14,6 +14,11 @@ import { MobileFAB } from "./MobileFAB";
 const MonthlyChart = lazy(() =>
   import("./MonthlyChart").then((m) => ({ default: m.MonthlyChart })),
 );
+const CategoryTreemap = lazy(() =>
+  import("../shared/CategoryTreemap").then((m) => ({
+    default: m.CategoryTreemap,
+  })),
+);
 const CreateIncomeDrawer = lazy(() =>
   import("@/components/shared/IncomeDrawer").then((m) => ({
     default: m.IncomeDrawer,
@@ -246,6 +251,15 @@ export function Dashboard({
         }
       >
         <MonthlyChart refreshTrigger={chartRefreshKey} />
+      </Suspense>
+
+      {/* Category treemap */}
+      <Suspense
+        fallback={
+          <div className="h-52 w-full rounded-2xl bg-white/3 border border-white/6 animate-pulse" />
+        }
+      >
+        <CategoryTreemap mode="both" refreshTrigger={chartRefreshKey} />
       </Suspense>
 
       {/* Last expenses */}

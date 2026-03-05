@@ -62,4 +62,25 @@ export class MetricsController extends BaseController {
 
     return this.ok(chartData);
   }
+
+  async getDashboardCategoryBreakdown(
+    event: APIGatewayProxyEvent,
+  ): Promise<APIGatewayProxyResult> {
+    const { context, queryParams } = this.retrieveRequestContext(event);
+    const [startDate, endDate, onlyReceived] = this.retrieveFromQueryParams(
+      queryParams!,
+      ["startDate", "endDate", "onlyReceived"],
+    );
+
+    const { error, data } = periodSchema.safeParse({ startDate, endDate });
+    if (error) throw new BadRequestError({ details: error.message });
+
+    const userId = context.authorizer?.claims["sub"];
+    const breakdown = await this.props.metricsService.getCategoryBreakdown(
+      userId,
+      { ...data, onlyReceived: onlyReceived === "true" },
+    );
+
+    return this.ok(breakdown);
+  }
 }

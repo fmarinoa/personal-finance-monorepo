@@ -157,4 +157,16 @@ export class Income extends BaseDomain<Income> implements IncomeInterface {
 
     return grouped;
   }
+
+  static groupIncomesByCategory(incomes: Income[]) {
+    const grouped: Record<string, Income[]> = {};
+
+    incomes.forEach((income) => {
+      const key = income.category as string;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(income);
+    });
+
+    return grouped;
+  }
 }

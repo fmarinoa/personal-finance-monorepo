@@ -1,4 +1,5 @@
 import {
+  CategoryBreakdown,
   DashboardChartPoint,
   DashboardSummary,
   DateRange,
@@ -115,5 +116,52 @@ export class MetricsServiceImp implements MetricsService {
         balance: totalBalance,
       },
     };
+  }
+
+  async getCategoryBreakdown(
+    userId: string,
+    params: DateRange & { onlyReceived?: boolean },
+  ): Promise<CategoryBreakdown> {
+    const [{ data: allExpenses }, { data: allIncomes }] = await Promise.all([
+      this.props.expensesRepository.list(userId, {
+        startDate: params.startDate,
+        endDate: params.endDate,
+      }),
+      this.props.incomesRepository.list(userId, {
+        startDate: params.startDate,
+        endDate: params.endDate,
+        onlyReceived: params.onlyReceived,
+      }),
+    ]);
+
+    const totalExpenses = Expense.calculateTotalExpenseAmount(allExpenses);
+    const totalIncomes = Income.calculateTotalIncomeAmount(allIncomes);
+
+    const expensesByCategory = Expense.groupExpensesByCategory(allExpenses);
+    const incomesByCategory = Income.groupIncomesByCategory(allIncomes);
+
+    const expenses = Object.entries(expensesByCategory)
+      .map(([category, items]) => {
+        const total = Expense.calculateTotalExpenseAmount(items);
+        return {
+          category,
+          total,
+          percentage: totalExpenses > 0 ? (total / totalExpenses) * 100 : 0,
+        };
+      })
+      .sort((a, b) => b.total - a.total);
+
+    const incomes = Object.entries(incomesByCategory)
+      .map(([category, items]) => {
+        const total = Income.calculateTotalIncomeAmount(items);
+        return {
+          category,
+          total,
+          percentage: totalIncomes > 0 ? (total / totalIncomes) * 100 : 0,
+        };
+      })
+      .sort((a, b) => b.total - a.total);
+
+    return { expenses, incomes };
   }
 }

@@ -69,6 +69,14 @@ export const dispatcher = new Dispatcher(middyAdapter)
       description: "Get dashboard chart metrics for a last 6 months period",
     },
   )
+  .get(
+    "/metrics/category-breakdown",
+    (e) => metricsController.getDashboardCategoryBreakdown(e),
+    {
+      timeout: 10,
+      description: "Get expense and income totals grouped by category",
+    },
+  )
   .post("/incomes", (e) => incomeController.create(e), {
     timeout: 10,
     description: "Create a new income",
