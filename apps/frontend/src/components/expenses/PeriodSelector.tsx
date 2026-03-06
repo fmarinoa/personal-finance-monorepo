@@ -1,3 +1,4 @@
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PERIOD_OPTIONS } from "@/hooks/usePeriod";
 import type { Period } from "@/utils/getDateRange";
 
@@ -38,29 +39,24 @@ export function PeriodSelector({
       <span className="pl-1.5 pr-1 text-white/20 hidden sm:flex">
         <CalendarIcon />
       </span>
-      {PERIOD_OPTIONS.map((option) => {
-        const isActive = period === option.id;
-        return (
-          <button
+      <ToggleGroup
+        type="single"
+        value={period}
+        onValueChange={(v) => v && onPeriodChange(v as Period)}
+        className="flex items-center gap-0.5"
+      >
+        {PERIOD_OPTIONS.map((option) => (
+          <ToggleGroupItem
             key={option.id}
-            onClick={() => onPeriodChange(option.id)}
-            aria-pressed={isActive}
-            className={`
-              px-2.5 py-1.5 rounded-lg cursor-pointer whitespace-nowrap
-              text-[11px] font-mono tracking-wider
-              transition-all duration-150
-              ${
-                isActive
-                  ? "bg-gold/12 text-gold ring-1 ring-inset ring-gold/25 shadow-[0_1px_4px_rgba(212,168,83,0.08)]"
-                  : "text-white/30 hover:text-white/60 hover:bg-white/5"
-              }
-            `}
+            value={option.id}
+            aria-label={option.label}
+            className="px-2.5 py-1.5 h-auto rounded-lg whitespace-nowrap text-[11px] font-mono tracking-wider text-white/30 hover:text-white/60 hover:bg-white/5 data-[state=on]:bg-gold/12 data-[state=on]:text-gold data-[state=on]:ring-1 data-[state=on]:ring-inset data-[state=on]:ring-gold/25 data-[state=on]:shadow-[0_1px_4px_rgba(212,168,83,0.08)] transition-all duration-150"
           >
             <span className="hidden sm:inline">{option.label}</span>
             <span className="sm:hidden">{option.shortLabel}</span>
-          </button>
-        );
-      })}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
     </div>
   );
 }

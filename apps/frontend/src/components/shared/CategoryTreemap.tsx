@@ -227,7 +227,7 @@ export function CategoryTreemap({
 
   useEffect(() => {
     if (refreshTrigger) refresh();
-  }, [refreshTrigger]);  
+  }, [refreshTrigger]);
 
   const expenseCells = buildExpenseCells(data.expenses);
   const incomeCells = buildIncomeCells(data.incomes);

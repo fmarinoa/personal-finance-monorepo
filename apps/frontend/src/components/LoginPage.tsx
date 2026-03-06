@@ -1,6 +1,9 @@
 import { confirmSignIn, fetchUserAttributes, signIn } from "aws-amplify/auth";
 import { useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { APP_CONFIG } from "@/config/app";
 
 /* ── Icons ── */
@@ -304,7 +307,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
                   <Field label="Correo electrónico">
                     <div className="relative flex items-center">
                       <EmailIcon />
-                      <input
+                      <Input
                         type="email"
                         autoComplete="email"
                         placeholder="usuario@ejemplo.com"
@@ -319,7 +322,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
                   <Field label="Contraseña">
                     <div className="relative flex items-center">
                       <LockIcon />
-                      <input
+                      <Input
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
                         placeholder="••••••••"
@@ -354,7 +357,10 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
             <div className={panelCls}>
               <div className="mb-8">
                 {/* Amber badge */}
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold mb-4">
+                <Badge
+                  variant="outline"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border-amber-500/25 text-amber-400 text-xs font-semibold mb-4"
+                >
                   <svg
                     viewBox="0 0 20 20"
                     fill="currentColor"
@@ -368,7 +374,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
                     />
                   </svg>
                   Primer acceso
-                </span>
+                </Badge>
                 <h2 className="text-3xl font-extrabold tracking-tight text-slate-100 mb-1">
                   Configura tu contraseña
                 </h2>
@@ -389,7 +395,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
                   <Field label="Nueva contraseña">
                     <div className="relative flex items-center">
                       <LockIcon />
-                      <input
+                      <Input
                         type={showNew ? "text" : "password"}
                         autoComplete="new-password"
                         placeholder="••••••••"
@@ -445,7 +451,7 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
                   <Field label="Confirmar contraseña">
                     <div className="relative flex items-center">
                       <LockIcon />
-                      <input
+                      <Input
                         type={showConfirm ? "text" : "password"}
                         autoComplete="new-password"
                         placeholder="••••••••"
@@ -455,8 +461,8 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
                         className={`${inputCls} pr-10 ${
                           confirmPassword.length > 0
                             ? passwordsMatch
-                              ? "border-emerald-600/60 focus:border-emerald-500 focus:ring-emerald-500/20"
-                              : "border-red-600/60 focus:border-red-500 focus:ring-red-500/20"
+                              ? "border-emerald-600/60 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20"
+                              : "border-red-600/60 focus-visible:border-red-500 focus-visible:ring-red-500/20"
                             : ""
                         }`}
                       />
@@ -518,23 +524,17 @@ function SubmitButton({
   children,
   loading,
   disabled,
-  amber = false,
 }: {
   children: React.ReactNode;
   loading: boolean;
   disabled: boolean;
   amber?: boolean;
 }) {
-  const color = amber
-    ? "bg-gold hover:bg-gold-light focus-visible:ring-gold/30"
-    : "bg-gold hover:bg-gold-light focus-visible:ring-gold/30";
-  const textColor = "text-canvas";
-
   return (
-    <button
+    <Button
       type="submit"
       disabled={loading || disabled}
-      className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl ${color} ${textColor} text-sm font-semibold tracking-wide transition-all active:scale-[.99] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-3`}
+      className="flex items-center justify-center gap-2 w-full py-3 h-auto rounded-xl bg-gold hover:bg-gold-light text-canvas text-sm font-semibold tracking-wide transition-all active:scale-[.99] disabled:opacity-45 disabled:cursor-not-allowed focus-visible:ring-gold/30"
     >
       {loading ? (
         <>
@@ -546,7 +546,7 @@ function SubmitButton({
       ) : (
         children
       )}
-    </button>
+    </Button>
   );
 }
 

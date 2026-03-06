@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+
 interface MobileFABProps {
   onNewExpense: () => void;
   onNewIncome?: () => void;
@@ -78,10 +80,10 @@ function FABActions({
       </div>
 
       {/* Main FAB */}
-      <button
+      <Button
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Cerrar acciones" : "Nueva transacción"}
-        className="w-14 h-14 rounded-2xl bg-gold hover:bg-gold-light active:scale-95 text-canvas shadow-lg shadow-gold/20 flex items-center justify-center transition-all duration-200 cursor-pointer"
+        className="w-14 h-14 rounded-2xl bg-gold hover:bg-gold-light active:scale-95 text-canvas shadow-lg shadow-gold/20 transition-all duration-200"
       >
         <svg
           viewBox="0 0 16 16"
@@ -92,7 +94,7 @@ function FABActions({
         >
           <path d="M8 1.5a.75.75 0 01.75.75V7.5h5.25a.75.75 0 010 1.5H8.75v5.25a.75.75 0 01-1.5 0V9H2a.75.75 0 010-1.5h5.25V2.25A.75.75 0 018 1.5z" />
         </svg>
-      </button>
+      </Button>
     </>
   );
 }
@@ -115,9 +117,9 @@ function FABOption({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
       onClick={onClick}
-      className={`flex items-center gap-2.5 pl-3.5 pr-4 h-10 rounded-xl ${color} ${textColor} text-sm font-semibold shadow-lg transition-all duration-200 ${delay} cursor-pointer ${
+      className={`flex items-center justify-start gap-2.5 pl-3.5 pr-4 h-10 rounded-xl ${color} ${textColor} text-sm font-semibold shadow-lg transition-all duration-200 ${delay} ${
         open
           ? "opacity-100 translate-y-0 scale-100"
           : "opacity-0 translate-y-3 scale-95"
@@ -125,6 +127,6 @@ function FABOption({
     >
       {icon}
       {label}
-    </button>
+    </Button>
   );
 }

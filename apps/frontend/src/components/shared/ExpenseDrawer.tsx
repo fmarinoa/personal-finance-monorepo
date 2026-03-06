@@ -7,13 +7,16 @@ import {
 import { DateTime } from "luxon";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   PopoverContent,
   PopoverRoot,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useCreateExpense } from "@/hooks/expenses/useCreateExpense";
 import { useDeleteExpense } from "@/hooks/expenses/useDeleteExpense";
 import { useUpdateExpense } from "@/hooks/expenses/useUpdateExpense";
@@ -156,23 +159,16 @@ export function ExpenseDrawer({
     form.paymentDate;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={handleClose}
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
-          open
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        }`}
-      />
-
-      {/* Drawer */}
-      <aside
-        className={`fixed right-0 top-0 h-full z-50 w-full max-w-120 flex flex-col bg-surface border-l border-white/6 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(.32,.72,0,1)] ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
+    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        className="w-full sm:max-w-[480px] flex flex-col bg-surface border-l border-white/6 shadow-2xl gap-0 p-0"
       >
+        <SheetTitle className="sr-only">
+          {isEdit ? "Editar gasto" : "Agregar gasto"}
+        </SheetTitle>
+
         {/* Header */}
         <div className="flex items-start justify-between px-8 pt-8 pb-6 border-b border-white/6">
           <div>
@@ -183,15 +179,17 @@ export function ExpenseDrawer({
               {isEdit ? "Editar gasto" : "Agregar gasto"}
             </h2>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleClose}
             disabled={loading}
-            className="mt-1 w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/8 transition cursor-pointer"
+            className="mt-1 w-8 h-8 rounded-lg text-white/30 hover:text-white hover:bg-white/8"
           >
             <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
               <path d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         {/* Body: form OR delete confirmation */}
@@ -266,7 +264,7 @@ export function ExpenseDrawer({
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-gold text-lg font-semibold pointer-events-none">
                   S/
                 </span>
-                <input
+                <Input
                   type="number"
                   min="0.01"
                   step="0.01"
@@ -274,7 +272,7 @@ export function ExpenseDrawer({
                   required
                   value={form.amount}
                   onChange={(e) => set("amount", e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-white/4 border border-white/8 rounded-xl text-white text-xl font-mono font-semibold placeholder-white/20 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full pl-12 pr-4 py-3.5 h-auto bg-white/4 border-white/8 rounded-xl text-white text-xl font-mono font-semibold placeholder-white/20 focus-visible:border-gold/60 focus-visible:ring-gold/12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>
@@ -282,14 +280,14 @@ export function ExpenseDrawer({
             {/* Description */}
             <div className="flex flex-col gap-2">
               <Label>Descripción</Label>
-              <input
+              <Input
                 type="text"
                 placeholder="ej. Almuerzo en el centro"
                 maxLength={120}
                 required
                 value={form.description}
                 onChange={(e) => set("description", e.target.value)}
-                className="w-full px-4 py-3 bg-white/4 border border-white/8 rounded-xl text-white placeholder-white/20 text-sm outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/12"
+                className="w-full px-4 py-3 h-auto bg-white/4 border-white/8 rounded-xl text-white placeholder-white/20 text-sm focus-visible:border-gold/60 focus-visible:ring-gold/12"
               />
             </div>
 
@@ -422,31 +420,34 @@ export function ExpenseDrawer({
         <div className="px-8 py-6 border-t border-white/6 flex gap-3">
           {confirmDelete ? (
             <>
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setConfirmDelete(false)}
                 disabled={loading}
-                className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:border-white/20 hover:text-white/80 transition cursor-pointer disabled:opacity-40"
+                className="flex-1 py-3 h-auto rounded-xl border-white/10 text-white/50 hover:border-white/20 hover:text-white/80 bg-transparent hover:bg-transparent"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleDelete}
                 disabled={loading || !deleteReason}
-                className="flex-2 flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/90 hover:bg-red-500 active:scale-[.99] text-white text-sm font-bold tracking-wide transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="flex-[2] flex items-center justify-center gap-2 py-3 h-auto rounded-xl bg-red-500/90 hover:bg-red-500 text-white text-sm font-bold tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {loading ? "Eliminando…" : "Confirmar eliminación"}
-              </button>
+              </Button>
             </>
           ) : (
             <>
               {isEdit && (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => setConfirmDelete(true)}
                   disabled={loading}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl border border-red-500/20 text-red-400/60 hover:border-red-500/40 hover:text-red-400 transition cursor-pointer disabled:opacity-40 shrink-0"
+                  className="w-10 h-10 rounded-xl border-red-500/20 text-red-400/60 hover:border-red-500/40 hover:text-red-400 bg-transparent hover:bg-transparent shrink-0"
                   title="Eliminar gasto"
                 >
                   <svg
@@ -457,21 +458,22 @@ export function ExpenseDrawer({
                   >
                     <path d="M6.5 1.75a.25.25 0 01.25-.25h2.5a.25.25 0 01.25.25V3h-3V1.75zm4.5 0V3h2.25a.75.75 0 010 1.5H2.75a.75.75 0 010-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75zM4.496 6.675a.75.75 0 10-1.492.15l.66 6.6A1.75 1.75 0 005.41 15h5.178a1.75 1.75 0 001.746-1.575l.66-6.6a.75.75 0 00-1.492-.15l-.66 6.6a.25.25 0 01-.249.225H5.41a.25.25 0 01-.249-.225l-.66-6.6z" />
                   </svg>
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={handleClose}
                 disabled={loading}
-                className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:border-white/20 hover:text-white/80 transition cursor-pointer disabled:opacity-40"
+                className="flex-1 py-3 h-auto rounded-xl border-white/10 text-white/50 hover:border-white/20 hover:text-white/80 bg-transparent hover:bg-transparent"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={loading || !canSubmit}
                 onClick={handleSubmit}
-                className="flex-2 flex items-center justify-center gap-2 py-3 rounded-xl bg-gold hover:bg-gold-light active:scale-[.99] text-canvas text-sm font-bold tracking-wide transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="flex-[2] flex items-center justify-center gap-2 py-3 h-auto rounded-xl bg-gold hover:bg-gold-light text-canvas text-sm font-bold tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -504,11 +506,11 @@ export function ExpenseDrawer({
                 ) : (
                   "Registrar gasto"
                 )}
-              </button>
+              </Button>
             </>
           )}
         </div>
-      </aside>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -3,6 +3,9 @@ import { IncomeStatus } from "@packages/core";
 import { DateTime } from "luxon";
 
 import { PeriodSelector } from "@/components/expenses/PeriodSelector";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   INCOME_CATEGORY_ICONS,
   INCOME_CATEGORY_LABELS,
@@ -58,9 +61,9 @@ export function IncomesTable({
       {loading && (
         <div className="flex flex-col gap-2">
           {[1, 2, 3].map((i) => (
-            <div
+            <Skeleton
               key={i}
-              className="h-14 rounded-xl bg-white/4 animate-pulse"
+              className="h-14 rounded-xl bg-white/4"
               style={{ animationDelay: `${i * 80}ms` }}
             />
           ))}
@@ -123,10 +126,12 @@ export function IncomesTable({
       {/* Pagination */}
       {!loading && !error && totalPages > 1 && (
         <div className="flex items-center justify-between pt-1">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-white/40 hover:text-white/70 hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 h-auto rounded-lg text-xs font-mono text-white/40 hover:text-white/70 hover:bg-white/5 disabled:opacity-20"
           >
             <svg
               viewBox="0 0 12 12"
@@ -141,16 +146,18 @@ export function IncomesTable({
               <path d="M7.5 9L4.5 6l3-3" />
             </svg>
             Anterior
-          </button>
+          </Button>
 
           <span className="text-[10px] font-mono text-white/25 tracking-widest">
             {page} / {totalPages}
           </span>
 
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-white/40 hover:text-white/70 hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 h-auto rounded-lg text-xs font-mono text-white/40 hover:text-white/70 hover:bg-white/5 disabled:opacity-20"
           >
             Siguiente
             <svg
@@ -165,7 +172,7 @@ export function IncomesTable({
             >
               <path d="M4.5 3l3 3-3 3" />
             </svg>
-          </button>
+          </Button>
         </div>
       )}
     </section>
@@ -212,9 +219,13 @@ function IncomeRow({
           {isProjected && (
             <>
               <span className="mx-1.5 opacity-40">·</span>
-              <span className="text-gold/60">
-                {INCOME_STATUS_LABELS[IncomeStatus.PROJECTED]}
-              </span>
+              <Badge
+                asChild
+                variant="outline"
+                className="text-[10px] text-gold/60 border-gold/20 bg-gold/5 font-mono py-0 px-1 align-middle"
+              >
+                <span>{INCOME_STATUS_LABELS[IncomeStatus.PROJECTED]}</span>
+              </Badge>
             </>
           )}
         </p>

@@ -2,7 +2,7 @@ import type { CategoryBreakdown } from "@packages/core";
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchCategoryBreakdown } from "@/lib/api";
-import { getDateRange,type Period } from "@/utils/getDateRange";
+import { getDateRange, type Period } from "@/utils/getDateRange";
 
 const EMPTY: CategoryBreakdown = { expenses: [], incomes: [] };
 

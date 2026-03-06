@@ -1,6 +1,8 @@
 import { signOut } from "aws-amplify/auth";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { APP_CONFIG } from "@/config/app";
 
 export type AppPage = "dashboard" | "expenses" | "incomes";
@@ -55,17 +57,18 @@ function NavItem({
   onClick?: () => void;
 }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
-      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer w-full text-left ${
+      className={`flex items-center gap-2.5 px-3 py-2.5 h-auto rounded-lg text-sm font-medium w-full justify-start ${
         active
-          ? "bg-white/8 text-white"
+          ? "bg-white/8 text-white hover:bg-white/8 hover:text-white"
           : "text-white/30 hover:text-white/70 hover:bg-white/5"
       }`}
     >
       {icon}
       {label}
-    </button>
+    </Button>
   );
 }
 
@@ -77,10 +80,11 @@ function SignOutButton({
   loading: boolean;
 }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       disabled={loading}
-      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 text-sm font-medium transition cursor-pointer disabled:opacity-40 w-full"
+      className="flex items-center gap-2.5 px-3 py-2.5 h-auto rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 text-sm font-medium w-full justify-start disabled:opacity-40"
     >
       <svg
         viewBox="0 0 16 16"
@@ -94,7 +98,7 @@ function SignOutButton({
         <path d="M10 3h3a1 1 0 011 1v8a1 1 0 01-1 1h-3M7 11l3-3-3-3M10 8H2" />
       </svg>
       {loading ? "Saliendo…" : "Cerrar sesión"}
-    </button>
+    </Button>
   );
 }
 
@@ -212,10 +216,12 @@ export function AppLayout({
           </div>
           <div className="flex items-center gap-2">
             {/* Hamburger — mobile only */}
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setMobileNavOpen(true)}
               aria-label="Abrir menú"
-              className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-white/8 text-white/40 hover:text-white/80 hover:border-white/20 hover:bg-white/5 transition cursor-pointer"
+              className="md:hidden w-9 h-9 rounded-xl border border-white/8 text-white/40 hover:text-white/80 hover:border-white/20 hover:bg-white/5"
             >
               <svg
                 viewBox="0 0 16 16"
@@ -225,7 +231,7 @@ export function AppLayout({
               >
                 <path d="M1 2.75A.75.75 0 011.75 2h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 2.75zm0 5A.75.75 0 011.75 7h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 7.75zM1.75 12a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75z" />
               </svg>
-            </button>
+            </Button>
             {headerActions}
           </div>
         </header>
@@ -236,88 +242,90 @@ export function AppLayout({
       </div>
 
       {/* ── Mobile nav panel ── */}
-      {/* Backdrop */}
-      <div
-        onClick={() => setMobileNavOpen(false)}
-        className={`fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
-          mobileNavOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        }`}
-      />
-      {/* Panel */}
-      <div
-        className={`fixed left-0 top-0 h-full z-50 w-72 flex flex-col bg-surface border-r border-white/6 transition-transform duration-300 ease-[cubic-bezier(.32,.72,0,1)] md:hidden ${
-          mobileNavOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex items-center justify-between px-5 pt-7 pb-6 border-b border-white/6">
-          <AppLogo size={30} />
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2.5">
-              <span className="text-[10px] font-mono tracking-[0.15em] text-gold uppercase leading-none">
-                {APP_CONFIG.NAME}
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className="w-72 flex flex-col bg-surface border-r border-white/6 gap-0 p-0"
+        >
+          <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
+          <div className="flex items-center justify-between px-5 pt-7 pb-6 border-b border-white/6">
+            <AppLogo size={30} />
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2.5">
+                <span className="text-[10px] font-mono tracking-[0.15em] text-gold uppercase leading-none">
+                  {APP_CONFIG.NAME}
+                </span>
+              </div>
+              <span className="font-bold text-sm tracking-tight text-white">
+                Hola, {username} 👋
               </span>
             </div>
-            <span className="font-bold text-sm tracking-tight text-white">
-              Hola, {username} 👋
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileNavOpen(false)}
+              className="w-8 h-8 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/8"
+            >
+              <svg
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                width="13"
+                height="13"
+              >
+                <path d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z" />
+              </svg>
+            </Button>
+          </div>
+
+          <div className="px-5 pt-5 pb-2">
+            <span className="text-[9px] font-mono tracking-[0.2em] text-white/25 uppercase">
+              Menú
             </span>
           </div>
-          <button
-            onClick={() => setMobileNavOpen(false)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white/70 hover:bg-white/8 transition cursor-pointer"
-          >
-            <svg viewBox="0 0 16 16" fill="currentColor" width="13" height="13">
-              <path d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z" />
-            </svg>
-          </button>
-        </div>
 
-        <div className="px-5 pt-5 pb-2">
-          <span className="text-[9px] font-mono tracking-[0.2em] text-white/25 uppercase">
-            Menú
-          </span>
-        </div>
+          <nav className="flex flex-col gap-1 px-3">
+            {NAV_ITEMS.map((item) => {
+              const isActive = item.page === activePage;
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    onNavigate(item.page);
+                    setMobileNavOpen(false);
+                  }}
+                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition cursor-pointer w-full text-left ${
+                    isActive
+                      ? "bg-white/8 text-white"
+                      : "text-white/35 hover:text-white/70 hover:bg-white/5"
+                  }`}
+                >
+                  <span className={isActive ? "text-gold" : ""}>
+                    {item.icon}
+                  </span>
+                  {item.label}
+                  {isActive && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-gold" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
 
-        <nav className="flex flex-col gap-1 px-3">
-          {NAV_ITEMS.map((item) => {
-            const isActive = item.page === activePage;
-            return (
-              <button
-                key={item.label}
-                onClick={() => {
-                  onNavigate(item.page);
-                  setMobileNavOpen(false);
-                }}
-                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition cursor-pointer w-full text-left ${
-                  isActive
-                    ? "bg-white/8 text-white"
-                    : "text-white/35 hover:text-white/70 hover:bg-white/5"
-                }`}
-              >
-                <span className={isActive ? "text-gold" : ""}>{item.icon}</span>
-                {item.label}
-                {isActive && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-gold" />
-                )}
-              </button>
-            );
-          })}
-        </nav>
+          <div className="flex-1" />
 
-        <div className="flex-1" />
-
-        <div className="px-3 pb-8 pt-4 border-t border-white/6">
-          <SignOutButton
-            onClick={() => {
-              setMobileNavOpen(false);
-              handleSignOut();
-            }}
-            loading={signingOut}
-          />
-          <PoweredBy />
-        </div>
-      </div>
+          <div className="px-3 pb-8 pt-4 border-t border-white/6">
+            <SignOutButton
+              onClick={() => {
+                setMobileNavOpen(false);
+                handleSignOut();
+              }}
+              loading={signingOut}
+            />
+            <PoweredBy />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
