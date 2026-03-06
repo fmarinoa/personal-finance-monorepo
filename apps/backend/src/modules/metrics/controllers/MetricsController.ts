@@ -67,10 +67,16 @@ export class MetricsController extends BaseController {
     event: APIGatewayProxyEvent,
   ): Promise<APIGatewayProxyResult> {
     const { context, queryParams } = this.retrieveRequestContext(event);
-    const [startDate, endDate, onlyReceived] = this.retrieveFromQueryParams(
-      queryParams!,
-      ["startDate", "endDate", "onlyReceived"],
-    );
+    const [startDate, endDate, onlyExpenses, onlyIncomes] =
+      this.retrieveFromQueryParams(queryParams!, [
+        "startDate",
+        "endDate",
+        "onlyExpenses",
+        "onlyIncomes",
+      ]);
+
+    const isOnlyExpenses = onlyExpenses === "true";
+    const isOnlyIncomes = onlyIncomes === "true";
 
     const { error, data } = periodSchema.safeParse({ startDate, endDate });
     if (error) throw new BadRequestError({ details: error.message });
@@ -78,7 +84,7 @@ export class MetricsController extends BaseController {
     const userId = context.authorizer?.claims["sub"];
     const breakdown = await this.props.metricsService.getCategoryBreakdown(
       userId,
-      { ...data, onlyReceived: onlyReceived === "true" },
+      { ...data, onlyExpenses: isOnlyExpenses, onlyIncomes: isOnlyIncomes },
     );
 
     return this.ok(breakdown);

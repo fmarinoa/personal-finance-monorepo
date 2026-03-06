@@ -3,3 +3,6 @@ pnpm-lock.yaml
 
 # Ignore all Skills
 .agents/skills/*
+
+.husky/_/*
+.plans/*

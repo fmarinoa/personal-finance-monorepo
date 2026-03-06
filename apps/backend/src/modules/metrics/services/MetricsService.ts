@@ -1,5 +1,6 @@
 import {
   CategoryBreakdown,
+  CategoryBreakdownFilters,
   DashboardChartPoint,
   DashboardSummary,
   DateRange,
@@ -16,6 +17,6 @@ export interface MetricsService {
   ): Promise<DashboardChartPoint>;
   getCategoryBreakdown(
     userId: string,
-    params: DateRange & { onlyReceived?: boolean },
+    params: CategoryBreakdownFilters,
   ): Promise<CategoryBreakdown>;
 }

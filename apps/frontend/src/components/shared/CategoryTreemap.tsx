@@ -185,7 +185,7 @@ function TreeBlock({
   loading,
 }: {
   title: string;
-  cells: CellData[];
+  cells?: CellData[];
   loading: boolean;
 }) {
   return (
@@ -195,7 +195,7 @@ function TreeBlock({
       </span>
       {loading ? (
         <div className="h-52 bg-white/4 animate-pulse" />
-      ) : cells.length === 0 ? (
+      ) : !cells || cells === undefined ? (
         <div className="h-52 border-white/5 flex items-center justify-center">
           <p className="text-xs text-white/25 font-mono">Sin datos</p>
         </div>
@@ -222,15 +222,28 @@ export function CategoryTreemap({
   mode?: CategoryTreemapMode;
   refreshTrigger?: number;
 }) {
+  const { onlyExpenses, onlyIncomes } =
+    mode === "expenses"
+      ? { onlyExpenses: true, onlyIncomes: false }
+      : mode === "incomes"
+        ? { onlyExpenses: false, onlyIncomes: true }
+        : { onlyExpenses: false, onlyIncomes: false };
+
   const [period, setPeriod] = useState<Period>("this-month");
-  const { data, loading, refresh } = useCategoryBreakdown(period);
+  const { data, loading, refresh } = useCategoryBreakdown(
+    period,
+    onlyExpenses,
+    onlyIncomes,
+  );
 
   useEffect(() => {
     if (refreshTrigger) refresh();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, refresh]);
 
-  const expenseCells = buildExpenseCells(data.expenses);
-  const incomeCells = buildIncomeCells(data.incomes);
+  const expenseCells = data.expenses
+    ? buildExpenseCells(data.expenses)
+    : undefined;
+  const incomeCells = data.incomes ? buildIncomeCells(data.incomes) : undefined;
 
   return (
     <div className="w-full rounded-2xl bg-white/3 border border-white/6 px-4 py-4 flex flex-col gap-3">

@@ -1,3 +1,4 @@
+import type { DateRange } from "../..";
 import type { Expense, Income } from "..";
 
 export interface BaseDashboard {
@@ -21,9 +22,9 @@ export interface DashboardChartPoint {
   };
 }
 
-export interface MonthlyMetric {
-  month: string;
-  total: number;
+export interface CategoryBreakdownFilters extends DateRange {
+  onlyExpenses?: boolean;
+  onlyIncomes?: boolean;
 }
 
 export interface CategoryBreakdownItem {
@@ -33,6 +34,6 @@ export interface CategoryBreakdownItem {
 }
 
 export interface CategoryBreakdown {
-  expenses: CategoryBreakdownItem[];
-  incomes: CategoryBreakdownItem[];
+  expenses?: CategoryBreakdownItem[];
+  incomes?: CategoryBreakdownItem[];
 }

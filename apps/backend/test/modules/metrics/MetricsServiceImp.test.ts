@@ -1,4 +1,4 @@
-import { beforeEach,describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Expense } from "@/modules/expenses/domains/Expense";
 import type { DbRepository as ExpensesRepository } from "@/modules/expenses/repositories/DbRepository";

@@ -4,9 +4,14 @@
 
 ### 1. Front-end Development
 
-- **No compilation rule:** After completing tasks on the frontend, **it is prohibited** to execute `build` commands.
+- **No-Execution Rule:** After completing frontend tasks, you are FORBIDDEN from running any terminal commands to verify code integrity (this includes `build`, `tsc`, `lint`, or `type-check`).
 
+- **Forbidden Commands:** NEVER execute or suggest:
+  - `pnpm build` / `npm run build`
+  - `npx tsc` / `tsc --noEmit`
 - **Action:** Notify the user that they can refresh the browser directly to validate changes.
+
+- **Style:** Follow the design system and component library rules defined in `frontend-design` skill. Always check for existing components before creating new ones. Use envs of the `index.css` file for colors, spacing, etc. Avoid hardcoding styles in components.
 
 ### 2. Backend and Reliability
 

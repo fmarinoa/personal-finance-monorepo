@@ -6,7 +6,11 @@ import { getDateRange, type Period } from "@/utils/getDateRange";
 
 const EMPTY: CategoryBreakdown = { expenses: [], incomes: [] };
 
-export function useCategoryBreakdown(period: Period = "this-month") {
+export function useCategoryBreakdown(
+  period: Period = "this-month",
+  onlyExpenses: boolean = false,
+  onlyIncomes: boolean = false,
+) {
   const [data, setData] = useState<CategoryBreakdown>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +19,7 @@ export function useCategoryBreakdown(period: Period = "this-month") {
     setLoading(true);
     setError(null);
     const { startDate, endDate } = getDateRange(period);
-    fetchCategoryBreakdown({ startDate, endDate, onlyReceived: true })
+    fetchCategoryBreakdown({ startDate, endDate, onlyExpenses, onlyIncomes })
       .then((res) => {
         setData(res);
         setLoading(false);
