@@ -20,15 +20,28 @@
 
 - **Protocol:** BEFORE modifying any file in `infra/`, you must request explicit permission from the user.
 
-- **Verification:** Before proposing changes, consult `.agents/skills/manifest.json` to use the `check_aws_infra` skill.
-
 ### 4. Using Skills
 
 - Always consult the `.agents/skills/` folder to reuse existing logic before writing new scripts.
 
 - Read the skill's docstrings to understand their parameters and return values.
 
-### 5. Commit Messages
+### 5. Mandatory Planning Workflow
+
+- **Template:** All plans MUST follow the structure in `.plans/template.md`.
+- **Naming:** Save as `.plans/YYYY-MM-DD-feature-name.md`.
+- **No Execution:** You are strictly forbidden from modifying source code or running terminal commands (except for discovery) while a plan is in "PENDING APPROVAL" status.
+- **Approval:** Once I reply with "LGO", you must update the status to "IN PROGRESS" and begin execution.
+
+### 6. Dependency Management (STRICT)
+
+- **Exact Versions:** NEVER use carets (`^`) or tildes (`~`) when installing new dependencies.
+- **Strict Installation:** Always use the `--save-exact` (or `-E`) flag.
+- **Commands:** - Use `pnpm add -E <package>` for production dependencies.
+  - Use `pnpm add -DE <package>` for dev dependencies.
+- **Reasoning:** This ensures deterministic builds and prevents unexpected breaking changes in our AWS Lambda and Frontend environments.
+
+### 7. Commit Messages
 
 - Use conventional commits, English only, no emojis, lowercase type, max 100 chars:
 
@@ -83,9 +96,7 @@ pnpm lint        # ESLint
 
 ```bash
 pnpm diff:dev    # cdk diff -c stage=dev
-pnpm diff:prod   # cdk diff -c stage=prod
 pnpm deploy:dev  # cdk deploy -c stage=dev
-pnpm deploy:prod # cdk deploy -c stage=prod
 ```
 
 ## Architecture
