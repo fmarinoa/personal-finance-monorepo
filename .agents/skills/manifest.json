@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "skill_type": "instructional_markdown",
+  "skills_directory": ".agents/skills/",
+  "available_skills": [
+    {
+      "name": "frontend-design",
+      "file": "frontend-design/SKILL.md",
+      "trigger": "web UI, CSS, styling"
+    },
+    {
+      "name": "nodejs-backend-patterns",
+      "file": "nodejs-backend-patterns/SKILL.md",
+      "trigger": "API Rest, Patterns, Node.js"
+    },
+    {
+      "name": "vercel-react-best-practices",
+      "file": "vercel-react-best-practices/SKILL.md",
+      "rules": "vercel-react-best-practices/rules/*",
+      "agent": "vercel-react-best-practices/AGENTS.md",
+      "trigger": "React, Vercel, best practices"
+    }
+  ]
+}

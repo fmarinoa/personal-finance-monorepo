@@ -1,8 +1,58 @@
 # Copilot Instructions
 
+## Rules and Workflow:
+
+### 1. Front-end Development
+
+- **No compilation rule:** After completing tasks on the frontend, **it is prohibited** to execute `build` commands.
+
+- **Action:** Notify the user that they can refresh the browser directly to validate changes.
+
+### 2. Backend and Reliability
+
+- **Test-Driven:** When creating new features on the backend, it is mandatory to add unit/integration tests.
+
+- **Verification:** Always run `pnpm test` after any changes. The task is not considered complete until the tests pass.
+
+### 3. Infrastructure and Security (CRITICAL)
+
+- **Restricted workspace:** The `infra` workspace affects the live AWS environment.
+
+- **Protocol:** BEFORE modifying any file in `infra/`, you must request explicit permission from the user.
+
+- **Verification:** Before proposing changes, consult `.agents/skills/manifest.json` to use the `check_aws_infra` skill.
+
+### 4. Using Skills
+
+- Always consult the `.agents/skills/` folder to reuse existing logic before writing new scripts.
+
+- Read the skill's docstrings to understand their parameters and return values.
+
+### 5. Commit Messages
+
+- Use conventional commits, English only, no emojis, lowercase type, max 100 chars:
+
+## Skill System:
+
+You have access to specialized behaviors in `.agents/skills/`. Before starting a task, scan that folder and:
+
+1. If the task is UI/Frontend, adopt the persona and constraints defined in `frontend-design`.
+2. If the task is react/hooks, adopt the persona and constraints defined in `vercel-react-best-practices`.
+3. If the task is backend, adopt the persona and constraints defined in `nodejs-backend-patterns`.
+4. Use the "description" field in each skill file to determine if it's applicable to the current request.
+5. Always prioritize the specific rules inside a skill over general rules.
+
+## Knowledge Retrieval Protocol:
+
+- **Context First:** For any complex task, architectural change, or new feature, consult the relevant documentation in `docs/architecture/` (backend.md, frontend.md, infrastructure.md).
+- **Stay Updated:** Do not rely on your general training data if a project document in `docs/` provides specific instructions.
+- **Traceability:** If a change is driven by a rule in the documentation, mention which file you are following (e.g., "Following `docs/architecture/backend.md`...").
+
 ## Project Overview
 
 pnpm monorepo for a personal finance application on AWS. Backend uses Lambda + DynamoDB + Cognito. Frontend uses Vite + React + AWS Amplify. Infrastructure managed with AWS CDK.
+
+Architecture docs: [`docs/architecture/backend.md`](../docs/architecture/backend.md) · [`docs/architecture/frontend.md`](../docs/architecture/frontend.md) · [`docs/architecture/infrastructure.md`](../docs/architecture/infrastructure.md)
 
 ## Commands
 
@@ -16,8 +66,8 @@ pnpm prettier    # Prettier across all workspaces
 ### apps/backend
 
 ```bash
-pnpm test                                              # run all tests (vitest)
-pnpm test:coverage                                     # run with coverage report (60% threshold)
+pnpm test                                                      # run all tests (vitest)
+pnpm test:coverage                                             # run with coverage report (60% threshold)
 pnpm vitest run test/modules/expenses/domains/Expense.test.ts  # run a single test file
 ```
 
@@ -38,12 +88,6 @@ pnpm deploy:dev  # cdk deploy -c stage=dev
 pnpm deploy:prod # cdk deploy -c stage=prod
 ```
 
-### Deployment prerequisites
-
-- AWS CLI configured with valid credentials
-- `npm install -g aws-cdk`
-- First time: `cdk bootstrap`
-
 ## Architecture
 
 ### Monorepo Structure
@@ -51,213 +95,89 @@ pnpm deploy:prod # cdk deploy -c stage=prod
 ```
 apps/
   backend/    → Lambda functions (Node.js 22), DynamoDB
-  frontend/   → Vite + React 19 + Tailwind + AWS Amplify
+  frontend/   → Vite + React 19 + Tailwind v4 + AWS Amplify + shadcn/ui
   infra/      → AWS CDK (Cognito, DynamoDB, API Gateway)
 packages/
   core/       → Shared TypeScript types (src/types/modules/)
   lambda/     → Dispatcher class for Lambda auto-discovery
-  db/         → SQL migrations (prepared for future RDS migration)
 ```
 
-### Backend Layer Architecture
-
-Strict one-way dependency flow:
+### Backend Layer Flow
 
 ```
 Handler → Controller → Service → Repository → Database
 ```
 
-1. **Handler** (`handler/index.ts`): registers routes via `Dispatcher` with Middy middleware
-2. **Controller**: HTTP parsing, Zod validation, response formatting
-3. **Service**: business logic, calls repository
-4. **Repository**: DynamoDB access only
-5. **Domain**: entity models with Zod static factory methods
+All backend layers live under `apps/backend/src/modules/{feature}/`. Modules: `expenses`, `incomes`, `metrics`, `shared`.
 
-All backend layers live under `apps/backend/src/modules/{feature}/`.
+**Currently implemented endpoints:**
+
+- `POST /expenses`, `GET /expenses`, `GET /expenses/{id}`, `PATCH /expenses/{id}`, `DELETE /expenses/{id}`
+- `POST /incomes`, `GET /incomes`, `PATCH /incomes/{id}`
+- `GET /metrics/dashboard-summary`, `GET /metrics/dashboard-chart`, `GET /metrics/category-breakdown`
+
+See [`docs/architecture/backend.md`](../docs/architecture/backend.md) for full detail on layers, domain patterns, DI, middleware, and conventions.
 
 ### Infrastructure Auto-Discovery
 
-`apps/infra/lib/BackendStack.ts` reads `handler/index.ts` and creates a Lambda + API Gateway route for each registered entry. To add a new endpoint:
+`FinanceApi` (CDK construct) reads `dispatcher.routes` from `handler/index.ts` at synth time and creates one Lambda per route. Each Lambda gets a `ROUTE_ID` env var; `dispatcher.getHandler()` uses it at runtime to invoke the right handler.
 
-1. Create controller method
-2. Register in `handler/index.ts` via `dispatcher.{method}(path, handler)`
-3. CDK auto-deploys on next `cdk deploy`
+To add an endpoint: register it in `handler/index.ts` → CDK auto-creates the Lambda on next deploy.
 
-### packages/lambda Dispatcher
-
-`@packages/lambda` provides the `Dispatcher` class. `handler/index.ts` uses method chaining with a Middy adapter:
-
-```typescript
-export const dispatcher = new Dispatcher(middyAdapter)
-  .post("/expenses", (e) => expenseController.create(e))
-  .get("/expenses", (e) => expenseController.list(e))
-  .get("/expenses/{id}", (e) => expenseController.getById(e))
-  .patch("/expenses/{id}", (e) => expenseController.update(e))
-  .delete("/expenses/{id}", (e) => expenseController.delete(e));
-
-export const handler: APIGatewayProxyHandler = (...args) =>
-  dispatcher.getHandler()(...args);
-```
+See [`docs/architecture/infrastructure.md`](../docs/architecture/infrastructure.md) for full detail.
 
 ## Key Conventions
 
-### userId — Wrapped in User Object
+### Domain Factory Methods
 
-`userId` is extracted from Cognito claims (`context.authorizer?.claims["sub"]`) and immediately wrapped in a `User` domain object. The `User` is passed through every layer:
+Validate with Zod, throw `BadRequestError` on failure. Use:
 
-```typescript
-// Controller
-const user = new User({ id: context.authorizer?.claims["sub"] });
+- `Domain.instanceForCreate(data)` / `instanceForUpdate(data)` / `instanceForDelete(data)`
+- `Domain.validateFilters(filters)` — validates `startDate`, `endDate`, `limit`, `page`
+- `Domain.buildFromDbItem(item)` — hydrates from raw DynamoDB record
 
-// Service interface
-list(user: User, filters: FiltersForList): Promise<PaginatedResponse<Expense>>
+### Safe Partial Merging
 
-// Repository
-list(userId: string, filters: FiltersForList): Promise<...>
-// (repositories receive user.id, not the User object)
-```
+Domain instances have `useDefineForClassFields: true` — all fields are own enumerable properties, including `undefined` ones. Use `domain.updateFromExisting(existing)` (from `BaseDomain`) in service-layer updates instead of manual spreading.
 
-### Domain Validation — Static Factory Methods That Throw
+### `userId` Flow
 
-Domain factory methods validate with Zod and **throw** `BadRequestError` on failure. Never return a ZodError:
+Cognito `sub` → wrapped in `User` at the controller level → passed as `User` to services → unwrapped to `user.id` string at repositories.
 
-```typescript
-// instanceForCreate uses the parsed Zod output (transforms applied)
-static instanceForCreate(data: CreateExpensePayload & { user: User }): Expense {
-  const { error, data: newData } = schemaForCreate.safeParse(data);
-  if (error) throw new BadRequestError({ details: error.message });
-  return new Expense({ ...newData, user: new User({ id: data.user.id }) });
-}
+### Dates
 
-// instanceForUpdate / instanceForDelete follow the same throw pattern
-```
+All dates are Unix timestamps in **milliseconds**. Backend & frontend use `luxon`.
 
-### Expense Class Fields and Partial Spreading
+### Enums
 
-The Expense class uses `useDefineForClassFields: true` (inherited from Node22 target). All declared fields initialize to `undefined` as own enumerable properties, even when not passed to the constructor. **Never spread an Expense instance directly over another** when patching — all undefined fields will override existing values:
+`const` object + type alias (never TypeScript `enum`). Defined in `packages/core/src/types/modules/`.
 
-```typescript
-// ❌ Wrong — overrides existing.category with undefined
-const merged = { ...existing, ...partialExpense };
+### DELETE Reason
 
-// ✅ Correct — strip undefined fields first
-const patch = Object.fromEntries(
-  Object.entries(partialExpense).filter(([, v]) => v !== undefined),
-);
-const merged = { ...existing, ...patch, user: partialExpense.user };
-```
-
-### Controller Helpers (BaseController)
-
-```typescript
-const { context, body, pathParams, queryParams } =
-  this.retrieveRequestContext(event);
-
-this.retrieveFromBody(body!, ["amount", "description"]);
-this.retrieveFromPathParameters(pathParams!, ["id"]);
-this.retrieveFromQueryParams(queryParams!, ["limit", "page"]);
-```
-
-Response methods: `ok()`, `created()`, `noContent()`. Errors are thrown as `BadRequestError`, `NotFoundError`, `InternalError` from `@packages/lambda` and caught by Middy's `httpErrorHandler`.
-
-### DELETE uses Query Params for Reason
-
-The DELETE endpoint receives `reason` as a **query param**, not in the body (DELETE requests have no body middleware):
-
-```typescript
-const [reason] = this.retrieveFromQueryParams(queryParams!, ["reason"]);
-const expense = Expense.instanceForDelete({ user, id: expenseId, reason });
-```
-
-`reason` must be a valid `DeleteReason` enum value (`DUPLICATE`, `WRONG_AMOUNT`, `WRONG_CATEGORY`, `CANCELLED`, `OTHER`).
+`DELETE /expenses/{id}` receives `reason` as a **query param** (no body middleware on DELETE). Valid values: `DUPLICATE`, `WRONG_AMOUNT`, `WRONG_CATEGORY`, `CANCELLED`, `OTHER`.
 
 ### Soft Delete
 
-Expenses are never hard-deleted. The repository sets `status: "DELETED"` and records `deletionDate` + `reason` in the `onDelete` field.
-
-### DynamoDB Pagination
-
-`nextToken` is a base64-encoded `ExclusiveStartKey`. Repositories encode/decode it transparently — controllers and services never handle raw DynamoDB keys.
+Expenses: repository sets `status: "DELETED"` + `onDelete.{deletionDate, reason}`. Incomes: no DELETE endpoint — use `PATCH` to set `status: "DELETED"`.
 
 ### Dependency Injection
 
-Constructor injection throughout. Singletons exported from each module's `index.ts`:
-
-```typescript
-// modules/expenses/index.ts
-export const dbRepository = new DynamoDbRepositoryImp();
-export const expenseService = new ExpenseServiceImp({ dbRepository });
-export const expenseController = new ExpenseController({ expenseService });
-```
-
-### Middy Middleware Order
-
-Path param endpoints get `requirePathParameters` before `httpErrorHandler`. Body endpoints additionally get `requireBody` + `jsonBodyParser`. This is wired automatically in `handler/index.ts` based on the route path and method — controllers receive already-parsed body and validated path params.
-
-```typescript
-// Auto-applied in handler/index.ts middyAdapter:
-if (pathParams.length) handler.use(requirePathParameters(pathParams));
-if (BODY_METHODS.includes(method))
-  handler.use(requireBody()).use(jsonBodyParser());
-handler.use(httpErrorHandler());
-```
+Constructor injection. Singletons exported from each module's `index.ts` and imported by `handler/index.ts`.
 
 ### TypeScript Path Aliases
 
-Backend uses `@/` mapped to `src/`:
+Backend and frontend both use `@/` → `src/`. Configured in each app's `tsconfig.json` and `vitest.config.ts`.
+
+### Shared Types
+
+Import from `@packages/core`:
 
 ```typescript
-import { Expense } from "@/modules/expenses/domains";
-import { expenseController } from "@/modules/expenses/controllers";
+import type { Expense, PaginatedResponse } from "@packages/core";
 ```
 
-Tests in `apps/backend/test/` use the same alias (configured in `vitest.config.ts`).
+### Frontend Data Fetching
 
-### Shared Types (packages/core)
+No React Query / SWR. Custom hooks in `src/hooks/{module}/` using `useState`/`useEffect`. API calls go through `src/lib/api.ts` (axios + Amplify auth interceptor). Do **not** edit `src/components/ui/` — those are shadcn components.
 
-Types are organized by module under `src/types/modules/`:
-
-```
-core/src/types/
-  modules/expenses/
-    subtypes.ts.ts  → ExpenseCategory, PaymentMethod, ExpenseStatus, DeleteReason (const objects + types)
-    expense.ts      → Expense, CreateExpensePayload, FiltersForList
-  common.ts         → PaginatedResponse<T>, DeleteReason
-  metrics.ts        → MonthlyMetric
-```
-
-Import via the package name: `import type { Expense } from "@packages/core"`.
-
-### Test Structure
-
-Backend tests live in `apps/backend/test/` mirroring the source structure:
-
-```
-test/
-  eventFactory.ts                          → buildEvent() helper for APIGatewayProxyEvent mocks
-  modules/expenses/
-    controllers/ExpenseController.test.ts
-    domains/Expense.test.ts
-    services/ExpenseServiceImp.test.ts
-```
-
-Services and repositories are mocked with `vi.fn()`. Never mock the domain classes — test them directly.
-
-## AWS Infrastructure
-
-- **Auth:** Cognito User Pool — userId = `context.authorizer?.claims["sub"]`
-- **Database:** DynamoDB (current); `packages/db/migrations/` has PL/pgSQL ready for a future RDS migration
-- **Stage:** `dev` or `prod` via `-c stage=dev`. Stack name: `FinanceBackendStack{stage}`
-- **Lambda env vars:** `STAGE`, `TABLE_NAME`, `DB_SECRET_ARN` (future RDS)
-
-## Commits
-
-Conventional Commits format, English only, no emojis, lowercase type, no scope, max 100 chars:
-
-```
-feat: add new feature
-fix: bug fix
-refactor: code change that neither fixes a bug nor adds a feature
-test: adding missing tests or correcting existing tests
-chore: changes to the build process or auxiliary tools
-```
+See [`docs/architecture/frontend.md`](../docs/architecture/frontend.md) for full detail.
