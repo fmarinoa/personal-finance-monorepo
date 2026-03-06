@@ -168,7 +168,7 @@ export function AppLayout({
 
   return (
     <div
-      className="flex h-screen overflow-hidden bg-canvas text-white"
+      className="flex h-dvh overflow-hidden bg-canvas text-white"
       style={{ fontFamily: "'Plus Jakarta Sans Variable', sans-serif" }}
     >
       {/* ── Sidebar (desktop) ── */}
