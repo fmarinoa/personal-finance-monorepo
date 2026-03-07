@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "prettier": "prettier --write .",
+    "lint": "eslint --cache --fix .",
     "diff:dev": "cdk diff -c stage=Dev",
     "diff:prod": "cdk diff -c stage=Prod",
     "deploy:dev": "cdk deploy -c stage=Dev --require-approval never --telemetry-file=cdk.out/telemetry.json",

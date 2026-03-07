@@ -1,12 +1,12 @@
-import * as path from "node:path";
-
-import type { Dispatcher, RouteDefinition } from "@packages/lambda";
+import type { Dispatcher } from "@packages/lambda";
 import * as cdk from "aws-cdk-lib";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
-import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
+
+import { ExpensesApi } from "./api/ExpensesApi";
+import { IncomesApi } from "./api/IncomesApi";
+import { MetricsApi } from "./api/MetricsApi";
 
 interface FinanceApiProps {
   stage: string;
@@ -41,97 +41,49 @@ export class FinanceApi extends Construct {
       },
     });
 
-    this.registerRoutes(props);
+    const dispatcher = this.loadDispatcher();
+
+    const baseProps = {
+      api: this.api,
+      authorizer: props.authorizer,
+      stage: props.stage,
+      isProd: props.isProd,
+    };
+
+    new ExpensesApi(this, "ExpensesApi", {
+      ...baseProps,
+      routes: dispatcher.routes.filter((r) => r.path.startsWith("/expenses")),
+      table: props.tables.expenses,
+    });
+
+    new IncomesApi(this, "IncomesApi", {
+      ...baseProps,
+      routes: dispatcher.routes.filter((r) => r.path.startsWith("/incomes")),
+      table: props.tables.incomes,
+    });
+
+    new MetricsApi(this, "MetricsApi", {
+      ...baseProps,
+      routes: dispatcher.routes.filter((r) => r.path.startsWith("/metrics")),
+      tables: props.tables,
+    });
   }
 
-  private registerRoutes(props: FinanceApiProps): void {
-    let dispatcher: Dispatcher;
-
+  private loadDispatcher(): Dispatcher {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const module = require("@/handler/index.ts");
-      dispatcher = module.dispatcher;
+      const dispatcher = module.dispatcher;
 
       if (!dispatcher) {
         throw new Error("dispatcher not exported from handler/index.ts");
       }
+
+      return dispatcher;
     } catch (error) {
       throw new Error(
         `Failed to load dispatcher: ${error instanceof Error ? error.message : error}`,
       );
     }
-
-    const resourceCache = new Map<string, apigateway.IResource>();
-
-    for (const route of dispatcher.routes) {
-      const fn = this.createLambdaFunction(route, props);
-      props.tables.expenses.grantReadWriteData(fn);
-      props.tables.incomes.grantReadWriteData(fn);
-
-      const resource = this.resolveApiResource(route.path, resourceCache);
-      resource.addMethod(
-        route.method,
-        new apigateway.LambdaIntegration(fn, {
-          proxy: true,
-        }),
-        {
-          authorizer: props.authorizer,
-          authorizationType: apigateway.AuthorizationType.COGNITO,
-        },
-      );
-    }
-  }
-
-  private createLambdaFunction(
-    route: RouteDefinition,
-    props: FinanceApiProps,
-  ): lambdaNodejs.NodejsFunction {
-    const kebabId = route.id.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
-
-    return new lambdaNodejs.NodejsFunction(
-      this,
-      `${route.id}Lambda${props.stage}`,
-      {
-        functionName: `finance-${kebabId}-${props.stage.toLowerCase()}`,
-        runtime: lambda.Runtime.NODEJS_22_X,
-        entry: path.join(__dirname, "../../../backend/src/handler/index.ts"),
-        handler: "handler",
-        description: route.description,
-        environment: {
-          EXPENSES_TABLE_NAME: props.tables.expenses.tableName,
-          INCOMES_TABLE_NAME: props.tables.incomes.tableName,
-          NODE_ENV: props.isProd ? "production" : "development",
-          ROUTE_ID: route.id,
-        },
-        timeout: cdk.Duration.seconds(route.timeout ?? 10),
-        memorySize: route.memorySize ?? 1024,
-        bundling: {
-          minify: true,
-          sourceMap: true,
-          target: "es2022",
-          format: lambdaNodejs.OutputFormat.CJS,
-          mainFields: ["module", "main"],
-          externalModules: ["@aws-sdk/*"],
-          forceDockerBundling: false,
-        },
-      },
-    );
-  }
-
-  private resolveApiResource(
-    routePath: string,
-    cache: Map<string, apigateway.IResource>,
-  ): apigateway.IResource {
-    let current: apigateway.IResource = this.api.root;
-
-    for (const part of routePath.replace(/^\//, "").split("/")) {
-      const key = `${current.path}/${part}`;
-      if (!cache.has(key)) {
-        cache.set(key, current.addResource(part));
-      }
-      current = cache.get(key)!;
-    }
-
-    return current;
   }
 }

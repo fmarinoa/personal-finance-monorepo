@@ -7,12 +7,23 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 
-const extedsBase = [js.configs.recommended, tseslint.configs.recommended];
+const extendsBase = [js.configs.recommended, tseslint.configs.recommended];
 
 const rulesBase = {
   "simple-import-sort/imports": "error",
   "simple-import-sort/exports": "error",
+  "@typescript-eslint/explicit-function-return-type": "off",
+  "@typescript-eslint/no-explicit-any": "off",
+  "@typescript-eslint/no-unused-vars": [
+    "error",
+    { argsIgnorePattern: "^_" },
+  ]
 };
+
+const pluginsBase = {
+  import: pluginImport,
+  "simple-import-sort": simpleImportSort,
+}
 
 export default defineConfig(
   {
@@ -21,35 +32,29 @@ export default defineConfig(
       "**/build",
       "**/dist",
       "**/coverage",
-      "cdk.out",
+      "**/cdk.out",
     ],
   },
   {
-    files: ["apps/backend/**/*.ts", "packages/**/*.ts", "apps/infra/**/*.ts"],
-    extends: [...extedsBase],
-    plugins: {
-      import: pluginImport,
-      "simple-import-sort": simpleImportSort,
-    },
+    files: ["apps/backend/**/*.ts", "packages/**/*.ts"],
+    extends: [...extendsBase],
+    plugins: { ...pluginsBase },
     languageOptions: {
       parserOptions: { projectService: true },
     },
-    rules: {
-      ...rulesBase,
-      "@typescript-eslint/explicit-function-return-type": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { argsIgnorePattern: "^_" },
-      ],
-    },
+    rules: { ...rulesBase },
+  },
+  {
+    files: ["apps/infra/**/*.ts"],
+    extends: [...extendsBase],
+    plugins: { ...pluginsBase },
+    rules: { ...rulesBase },
   },
   {
     files: ["apps/frontend/**/*.{ts,tsx}"],
-    extends: [...extedsBase],
+    extends: [...extendsBase],
     plugins: {
-      import: pluginImport,
-      "simple-import-sort": simpleImportSort,
+      ...pluginsBase,
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
     },
@@ -57,6 +62,6 @@ export default defineConfig(
       ecmaVersion: 2020,
       globals: globals.browser,
     },
-    rules: { ...rulesBase },
+    rules: { ...rulesBase, },
   },
 );
