@@ -131,6 +131,19 @@
 }
 
 @layer base {
+  /* Prevent browser from treating html/body as scroll candidates on mobile.
+     iOS Safari walks up the DOM to find a scroll target — without these rules
+     it absorbs touch gestures before reaching the actual overflow-y-auto container. */
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+  }
+
   * {
     @apply border-border outline-ring/50;
     scrollbar-width: thin;
