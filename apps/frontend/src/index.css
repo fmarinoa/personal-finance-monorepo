@@ -131,9 +131,6 @@
 }
 
 @layer base {
-  /* Prevent browser from treating html/body as scroll candidates on mobile.
-     iOS Safari walks up the DOM to find a scroll target — without these rules
-     it absorbs touch gestures before reaching the actual overflow-y-auto container. */
   html,
   body {
     height: 100%;
@@ -142,6 +139,14 @@
 
   #root {
     height: 100%;
+    width: 100%;
+  }
+
+  /* Prevent SVG/image overflow — fixes Recharts ResponsiveContainer
+     measuring before layout settles on mobile */
+  img,
+  svg {
+    max-width: 100%;
   }
 
   * {

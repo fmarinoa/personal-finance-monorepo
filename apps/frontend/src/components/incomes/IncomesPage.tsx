@@ -1,13 +1,19 @@
 import type { Income } from "@packages/core";
-import { lazy, Suspense, useState } from "react";
+import { IncomeStatus } from "@packages/core";
+import { DateTime } from "luxon";
+import { lazy, memo, Suspense, useState } from "react";
 
 import { MobileFAB } from "@/components/dashboard/MobileFAB";
 import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
+import { TransactionList } from "@/components/shared/TransactionList";
 import { useIncomes } from "@/hooks/incomes/useIncomes";
 import { usePeriod } from "@/hooks/usePeriod";
+import {
+  INCOME_CATEGORY_ICONS,
+  INCOME_CATEGORY_LABELS,
+  INCOME_STATUS_LABELS,
+} from "@/types/income";
 import type { Period } from "@/utils/getDateRange";
-
-import { IncomesTable } from "./IncomesTable";
 
 const CreateIncomeDrawer = lazy(() =>
   import("@/components/shared/IncomeDrawer").then((m) => ({
@@ -19,6 +25,77 @@ const CategoryTreemap = lazy(() =>
     default: m.CategoryTreemap,
   })),
 );
+
+// Hoisted — never re-created on render
+const editIcon = (
+  <svg
+    viewBox="0 0 16 16"
+    fill="currentColor"
+    width="12"
+    height="12"
+    className="text-white/20 group-hover:text-white/50 transition-colors"
+  >
+    <path d="M11.013 1.427a1.75 1.75 0 012.474 0l1.086 1.086a1.75 1.75 0 010 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 01-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61zm1.414 1.06a.25.25 0 00-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 000-.354l-1.086-1.086zM11.189 6.25L9.75 4.81l-6.286 6.287a.25.25 0 00-.064.108l-.558 1.953 1.953-.558a.249.249 0 00.108-.064l6.286-6.286z" />
+  </svg>
+);
+
+const IncomeRow = memo(function IncomeRow({
+  income,
+  index,
+  onEdit,
+}: {
+  income: Income;
+  index: number;
+  onEdit: () => void;
+}) {
+  const isProjected = income.status === IncomeStatus.PROJECTED;
+  const date = income.receivedDate ?? income.projectedDate;
+  const time = date ? DateTime.fromMillis(date).toFormat("dd LLL") : "—";
+
+  return (
+    <div
+      onClick={onEdit}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Enter" && onEdit()}
+      className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-white/3 border border-white/5 hover:border-white/10 hover:bg-white/5 transition-all duration-150 cursor-pointer"
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
+      <div className="w-8 h-8 rounded-lg bg-white/6 flex items-center justify-center shrink-0 text-sm">
+        {INCOME_CATEGORY_ICONS[income.category]}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-white/85 truncate leading-snug">
+          {income.description}
+        </p>
+        <p className="text-[11px] text-white/30 truncate mt-0.5">
+          {INCOME_CATEGORY_LABELS[income.category]}
+          <span className="mx-1.5 opacity-40">·</span>
+          {time}
+        </p>
+        {isProjected && (
+          <span className="inline-block mt-0.5 text-[10px] font-mono text-gold/60 border border-gold/20 bg-gold/5 rounded px-1 leading-tight">
+            {INCOME_STATUS_LABELS[IncomeStatus.PROJECTED]}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        <span
+          className={`font-mono text-sm font-semibold transition-colors ${
+            isProjected
+              ? "text-white/40 group-hover:text-white/60"
+              : "text-white/80 group-hover:text-gold"
+          }`}
+        >
+          S/ {income.amount.toFixed(2)}
+        </span>
+        {editIcon}
+      </div>
+    </div>
+  );
+});
 
 interface IncomesPageProps {
   username: string | null;
@@ -83,22 +160,31 @@ export function IncomesPage({
         <CategoryTreemap mode="incomes" />
       </Suspense>
 
-      <IncomesTable
-        data={data}
+      <TransactionList
         loading={loading}
         error={error}
+        isEmpty={data.length === 0}
+        emptyMessage="Sin ingresos registrados en este período"
         periodLabel={periodLabel}
         totalCount={totalCount}
         period={period}
-        setPeriod={setPeriod}
+        onPeriodChange={setPeriod}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
-        onEditIncome={(income) => {
-          setSelectedIncome(income);
-          setDrawerOpen(true);
-        }}
-      />
+      >
+        {data.map((income, i) => (
+          <IncomeRow
+            key={income.id}
+            income={income}
+            index={i}
+            onEdit={() => {
+              setSelectedIncome(income);
+              setDrawerOpen(true);
+            }}
+          />
+        ))}
+      </TransactionList>
 
       <MobileFAB
         onNewExpense={() => setDrawerOpen(true)}
