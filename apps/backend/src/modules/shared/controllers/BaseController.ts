@@ -1,3 +1,4 @@
+import { BadRequestError } from "@packages/lambda";
 import {
   APIGatewayEventRequestContext,
   APIGatewayProxyEvent,
@@ -8,16 +9,17 @@ import {
 
 export abstract class BaseController {
   protected retrieveRequestContext(event: APIGatewayProxyEvent): {
-    context: APIGatewayEventRequestContext;
+    context: APIGatewayEventRequestContext & { userId: string };
     pathParams: APIGatewayProxyEventPathParameters | null;
-    queryParams: APIGatewayProxyEventQueryStringParameters | null;
-    body: Record<string, any> | null;
+    queryParams: APIGatewayProxyEventQueryStringParameters;
+    body: Record<string, unknown> | null;
   } {
+    const userId = event.requestContext?.authorizer?.claims["sub"];
     return {
-      context: event.requestContext,
+      context: { ...event.requestContext, userId },
       pathParams: event.pathParameters,
       queryParams: event.queryStringParameters ?? {},
-      body: event.body as unknown as Record<string, any>,
+      body: event.body as unknown as Record<string, unknown> | null,
     };
   }
 
@@ -28,11 +30,13 @@ export abstract class BaseController {
   protected retrieveFromPathParameters(
     pathParameters: APIGatewayProxyEventPathParameters,
     keys: string[],
-  ): any[] {
+  ): string[] {
     return keys.map((key) => {
       const value = pathParameters[key];
       if (value === undefined)
-        throw new Error(`Missing path parameter: ${key}`);
+        throw new BadRequestError({
+          details: `Missing path parameter: ${key}`,
+        });
       return value;
     });
   }
@@ -40,7 +44,7 @@ export abstract class BaseController {
   protected retrieveFromQueryParams(
     queryParams: APIGatewayProxyEventQueryStringParameters,
     keys: string[],
-  ): any[] {
+  ): (string | any)[] {
     return keys.map((key) => queryParams[key]);
   }
 
@@ -72,8 +76,9 @@ export abstract class BaseController {
     return {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type,X-User-Id",
-      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+      "Access-Control-Allow-Headers":
+        "Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
     };
   }
 }

@@ -28,7 +28,7 @@ export class ExpenseController extends BaseController {
       ]);
 
     const expenseToCreate = Expense.instanceForCreate({
-      user: new User({ id: context.authorizer?.claims["sub"] }),
+      user: new User({ id: context.userId }),
       amount,
       description,
       paymentMethod,
@@ -47,7 +47,7 @@ export class ExpenseController extends BaseController {
       ["limit", "page", "startDate", "endDate"],
     );
 
-    const user = new User({ id: context.authorizer?.claims["sub"] });
+    const user = new User({ id: context.userId });
 
     const { filters } = Expense.validateFilters({
       limit,
@@ -66,7 +66,7 @@ export class ExpenseController extends BaseController {
     const [expenseId] = this.retrieveFromPathParameters(pathParams!, ["id"]);
 
     const expense = new Expense({
-      user: new User({ id: context.authorizer?.claims["sub"] }),
+      user: new User({ id: context.userId }),
       id: expenseId,
     });
 
@@ -88,7 +88,7 @@ export class ExpenseController extends BaseController {
     const [expenseId] = this.retrieveFromPathParameters(pathParams!, ["id"]);
 
     const expense = Expense.instanceForUpdate({
-      user: new User({ id: context.authorizer?.claims["sub"] }),
+      user: new User({ id: context.userId }),
       id: expenseId,
       amount,
       description,
@@ -109,7 +109,7 @@ export class ExpenseController extends BaseController {
     const [reason] = this.retrieveFromQueryParams(queryParams!, ["reason"]);
 
     const expense = Expense.instanceForDelete({
-      user: new User({ id: context.authorizer?.claims["sub"] }),
+      user: new User({ id: context.userId }),
       id: expenseId,
       reason,
     });

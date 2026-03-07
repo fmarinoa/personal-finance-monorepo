@@ -4,7 +4,7 @@ import jsonBodyParser from "@middy/http-json-body-parser";
 import { Dispatcher, HttpMethod } from "@packages/lambda";
 import { APIGatewayProxyHandler } from "aws-lambda";
 
-import { requireBody, requirePathParameters } from "@/middlewares";
+import { hasUserId, requireBody, requirePathParameters } from "@/middlewares";
 import { expenseController } from "@/modules/expenses/controllers";
 import { incomeController } from "@/modules/incomes/controllers";
 import { metricsController } from "@/modules/metrics/controllers";
@@ -29,7 +29,7 @@ function middyAdapter(
     handler = handler.use(requireBody()).use(jsonBodyParser());
   }
 
-  return handler.use(httpErrorHandler());
+  return handler.use(hasUserId()).use(httpErrorHandler());
 }
 
 export const dispatcher = new Dispatcher(middyAdapter)

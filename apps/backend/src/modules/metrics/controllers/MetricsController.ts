@@ -30,7 +30,7 @@ export class MetricsController extends BaseController {
     });
     if (error) throw new BadRequestError({ details: error.message });
 
-    const userId = context.authorizer?.claims["sub"];
+    const userId = context.userId;
     const summary = await this.props.metricsService.getDashboardSummary(
       userId,
       { ...data, onlyReceived: onlyReceived === "true" },
@@ -54,7 +54,7 @@ export class MetricsController extends BaseController {
     });
     if (error) throw new BadRequestError({ details: error.message });
 
-    const userId = context.authorizer?.claims["sub"];
+    const userId = context.userId;
     const chartData = await this.props.metricsService.getDashboardChart(
       userId,
       { ...data, onlyReceived: onlyReceived === "true" },
@@ -81,7 +81,7 @@ export class MetricsController extends BaseController {
     const { error, data } = periodSchema.safeParse({ startDate, endDate });
     if (error) throw new BadRequestError({ details: error.message });
 
-    const userId = context.authorizer?.claims["sub"];
+    const userId = context.userId;
     const breakdown = await this.props.metricsService.getCategoryBreakdown(
       userId,
       { ...data, onlyExpenses: isOnlyExpenses, onlyIncomes: isOnlyIncomes },

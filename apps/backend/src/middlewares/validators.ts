@@ -1,10 +1,12 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
+type MiddyRequest = {
+  event: APIGatewayProxyEvent;
+  response?: APIGatewayProxyResult;
+};
+
 export const requireBody = () => ({
-  before: async (request: {
-    event: APIGatewayProxyEvent;
-    response?: APIGatewayProxyResult;
-  }) => {
+  before: async (request: MiddyRequest) => {
     if (!request.event.body) {
       return {
         statusCode: 400,
@@ -14,13 +16,10 @@ export const requireBody = () => ({
   },
 });
 
-export const requirePathParameters = (paramName: string[]) => ({
-  before: async (request: {
-    event: APIGatewayProxyEvent;
-    response?: APIGatewayProxyResult;
-  }) => {
+export const requirePathParameters = (paramNames: string[]) => ({
+  before: async (request: MiddyRequest) => {
     const missingParams: string[] = [];
-    for (const name of paramName) {
+    for (const name of paramNames) {
       const paramValue = request.event.pathParameters?.[name];
       if (!paramValue) {
         missingParams.push(name);
@@ -32,6 +31,17 @@ export const requirePathParameters = (paramName: string[]) => ({
         body: JSON.stringify({
           message: `Missing required path parameter(s): ${missingParams.join(", ")}`,
         }),
+      };
+    }
+  },
+});
+
+export const hasUserId = () => ({
+  before: async (request: MiddyRequest) => {
+    if (!request.event.requestContext.authorizer?.claims["sub"]) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ message: "Unauthorized" }),
       };
     }
   },

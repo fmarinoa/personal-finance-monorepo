@@ -1,4 +1,3 @@
-import { BadRequestError } from "@packages/lambda";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 import { BaseController } from "@/modules/shared/controllers";
@@ -29,7 +28,7 @@ export class IncomeController extends BaseController {
       ]);
 
     const incomeToCreate = Income.instanceForCreate({
-      user: new User({ id: context.authorizer?.claims["sub"] }),
+      user: new User({ id: context.userId }),
       amount,
       description,
       category,
@@ -53,7 +52,7 @@ export class IncomeController extends BaseController {
         "onlyReceived",
       ]);
 
-    const user = new User({ id: context.authorizer?.claims["sub"] });
+    const user = new User({ id: context.userId });
 
     const { filters } = Income.validateFilters({
       limit,
@@ -72,10 +71,7 @@ export class IncomeController extends BaseController {
 
   async update(e: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
     const { context, body, pathParams } = this.retrieveRequestContext(e);
-    const id = pathParams?.id;
-    if (!id) {
-      throw new BadRequestError({ details: "Missing income ID" });
-    }
+    const [incomeId] = this.retrieveFromPathParameters(pathParams!, ["id"]);
 
     const [amount, description, category, status, receivedDate, projectedDate] =
       this.retrieveFromBody(body!, [
@@ -88,8 +84,8 @@ export class IncomeController extends BaseController {
       ]);
 
     const incomeToUpdate = Income.instanceForUpdate({
-      user: new User({ id: context.authorizer?.claims["sub"] }),
-      id,
+      user: new User({ id: context.userId }),
+      id: incomeId,
       amount,
       description,
       category,
