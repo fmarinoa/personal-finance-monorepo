@@ -42,7 +42,7 @@ export function Table({
   return (
     <section className="flex flex-col gap-4">
       {/* Section header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
           <span className="text-[10px] font-mono tracking-[0.2em] text-white/30 uppercase">
             {periodLabel}

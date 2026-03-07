@@ -189,7 +189,7 @@ function TreeBlock({
   loading: boolean;
 }) {
   return (
-    <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+    <div className="flex-1 min-w-0 overflow-hidden flex flex-col gap-1.5">
       <span className="text-[9px] font-mono tracking-[0.15em] text-white/20 uppercase px-0.5">
         {title}
       </span>
@@ -200,7 +200,7 @@ function TreeBlock({
           <p className="text-xs text-white/25 font-mono">Sin datos</p>
         </div>
       ) : (
-        <div className="h-52 overflow-hidden">
+        <div className="h-52 w-full overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
             <Treemap
               data={cells}
