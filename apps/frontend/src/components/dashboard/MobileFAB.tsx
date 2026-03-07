@@ -9,7 +9,7 @@ interface MobileFABProps {
 
 export function MobileFAB({ onNewExpense, onNewIncome }: MobileFABProps) {
   return (
-    <div className="fixed bottom-6 right-5 z-30 md:hidden flex flex-col items-end gap-3">
+    <div className="fixed bottom-6 right-5 z-30 md:hidden">
       <FABActions onNewExpense={onNewExpense} onNewIncome={onNewIncome} />
     </div>
   );
@@ -41,9 +41,9 @@ function FABActions({
         <div className="fixed inset-0 z-[-1]" onClick={() => setOpen(false)} />
       )}
 
-      {/* Action items — slide up when open */}
+      {/* Action items — absolutely positioned above the main FAB, no layout footprint */}
       <div
-        className={`flex flex-col items-end gap-2.5 transition-all duration-200 origin-bottom ${
+        className={`absolute bottom-full right-0 mb-3 flex flex-col items-end gap-2.5 transition-all duration-200 origin-bottom ${
           open
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 translate-y-4 pointer-events-none"
