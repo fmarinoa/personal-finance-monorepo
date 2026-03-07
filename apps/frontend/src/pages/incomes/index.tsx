@@ -1,22 +1,23 @@
-import type { Expense } from "@packages/core";
+import type { Income } from "@packages/core";
+import { IncomeStatus } from "@packages/core";
 import { DateTime } from "luxon";
 import { lazy, memo, Suspense, useState } from "react";
 
-import { MobileFAB } from "@/components/dashboard/MobileFAB";
-import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { MobileFAB } from "@/components/shared/MobileFAB";
 import { TransactionList } from "@/components/shared/TransactionList";
-import { useExpenses } from "@/hooks/expenses/useExpenses";
+import { useIncomes } from "@/hooks/incomes/useIncomes";
 import { usePeriod } from "@/hooks/usePeriod";
 import {
-  CATEGORY_ICONS,
-  CATEGORY_LABELS,
-  PAYMENT_METHOD_LABELS,
-} from "@/types/expense";
+  INCOME_CATEGORY_ICONS,
+  INCOME_CATEGORY_LABELS,
+  INCOME_STATUS_LABELS,
+} from "@/types/income";
 import type { Period } from "@/utils/getDateRange";
 
-const CreateExpenseDrawer = lazy(() =>
-  import("@/components/shared/ExpenseDrawer").then((m) => ({
-    default: m.ExpenseDrawer,
+const CreateIncomeDrawer = lazy(() =>
+  import("@/components/shared/IncomeDrawer").then((m) => ({
+    default: m.IncomeDrawer,
   })),
 );
 const CategoryTreemap = lazy(() =>
@@ -25,7 +26,6 @@ const CategoryTreemap = lazy(() =>
   })),
 );
 
-// Hoisted — never re-created on render
 const editIcon = (
   <svg
     viewBox="0 0 16 16"
@@ -38,16 +38,18 @@ const editIcon = (
   </svg>
 );
 
-const ExpenseRow = memo(function ExpenseRow({
-  expense,
+const IncomeRow = memo(function IncomeRow({
+  income,
   index,
   onEdit,
 }: {
-  expense: Expense;
+  income: Income;
   index: number;
   onEdit: () => void;
 }) {
-  const time = DateTime.fromMillis(expense.paymentDate).toFormat("dd LLL");
+  const isProjected = income.status === IncomeStatus.PROJECTED;
+  const date = income.receivedDate ?? income.projectedDate;
+  const time = date ? DateTime.fromMillis(date).toFormat("dd LLL") : "—";
 
   return (
     <div
@@ -59,25 +61,32 @@ const ExpenseRow = memo(function ExpenseRow({
       style={{ animationDelay: `${index * 40}ms` }}
     >
       <div className="w-8 h-8 rounded-lg bg-white/6 flex items-center justify-center shrink-0 text-sm">
-        {CATEGORY_ICONS[expense.category]}
+        {INCOME_CATEGORY_ICONS[income.category]}
       </div>
-
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white/85 truncate leading-snug">
-          {expense.description}
+          {income.description}
         </p>
         <p className="text-[11px] text-white/30 truncate mt-0.5">
-          {CATEGORY_LABELS[expense.category]}
-          <span className="mx-1.5 opacity-40">·</span>
-          {PAYMENT_METHOD_LABELS[expense.paymentMethod]}
+          {INCOME_CATEGORY_LABELS[income.category]}
           <span className="mx-1.5 opacity-40">·</span>
           {time}
         </p>
+        {isProjected && (
+          <span className="inline-block mt-0.5 text-[10px] font-mono text-gold/60 border border-gold/20 bg-gold/5 rounded px-1 leading-tight">
+            {INCOME_STATUS_LABELS[IncomeStatus.PROJECTED]}
+          </span>
+        )}
       </div>
-
       <div className="flex items-center gap-2 shrink-0">
-        <span className="font-mono text-sm font-semibold text-white/80 group-hover:text-gold transition-colors">
-          S/ {expense.amount.toFixed(2)}
+        <span
+          className={`font-mono text-sm font-semibold transition-colors ${
+            isProjected
+              ? "text-white/40 group-hover:text-white/60"
+              : "text-white/80 group-hover:text-gold"
+          }`}
+        >
+          S/ {income.amount.toFixed(2)}
         </span>
         {editIcon}
       </div>
@@ -85,21 +94,9 @@ const ExpenseRow = memo(function ExpenseRow({
   );
 });
 
-interface ExpensesPageProps {
-  username: string | null;
-  onSignOut: () => void;
-  activePage: AppPage;
-  onNavigate: (page: AppPage) => void;
-}
-
-export function ExpensesPage({
-  username,
-  onSignOut,
-  activePage,
-  onNavigate,
-}: ExpensesPageProps) {
+export default function IncomesPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>();
+  const [selectedIncome, setSelectedIncome] = useState<Income | undefined>();
   const [page, setPage] = useState(1);
 
   const {
@@ -114,31 +111,25 @@ export function ExpensesPage({
     setRawPeriod(p);
   };
 
-  const { data, loading, error, totalCount, totalPages, refresh } = useExpenses(
-    {
-      ...dateRange,
-      limit: 10,
-      page,
-    },
-  );
+  const { data, loading, error, totalCount, totalPages, refresh } = useIncomes({
+    ...dateRange,
+    limit: 10,
+    page,
+  });
 
   return (
     <AppLayout
-      username={username}
-      onSignOut={onSignOut}
-      activePage={activePage}
-      onNavigate={onNavigate}
-      title="Gastos"
+      title="Ingresos"
       headerActions={
         <button
           onClick={() => setDrawerOpen(true)}
-          id="new-expense-button"
-          className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 active:scale-[.98] text-white text-sm font-bold tracking-wide transition cursor-pointer"
+          id="new-income-button"
+          className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[.98] text-white font-bold tracking-wide transition cursor-pointer"
         >
           <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
-            <path d="M8 14.5a.75.75 0 01-.75-.75V4.31l-2.72 2.72a.75.75 0 11-1.06-1.06l4-4a.75.75 0 011.06 0l4 4a.75.75 0 11-1.06 1.06l-2.72-2.72v9.19a.75.75 0 01-.75.75z" />
+            <path d="M8 1.5a.75.75 0 01.75.75v9.19l2.72-2.72a.75.75 0 111.06 1.06l-4 4a.75.75 0 01-1.06 0l-4-4a.75.75 0 111.06-1.06l2.72 2.72V2.25A.75.75 0 018 1.5z" />
           </svg>
-          Nuevo gasto
+          Nuevo ingreso
         </button>
       }
     >
@@ -147,14 +138,14 @@ export function ExpensesPage({
           <div className="h-52 w-full rounded-2xl bg-white/3 border border-white/6 animate-pulse" />
         }
       >
-        <CategoryTreemap mode="expenses" />
+        <CategoryTreemap mode="incomes" />
       </Suspense>
 
       <TransactionList
         loading={loading}
         error={error}
         isEmpty={data.length === 0}
-        emptyMessage="Sin gastos registrados en este período"
+        emptyMessage="Sin ingresos registrados en este período"
         periodLabel={periodLabel}
         totalCount={totalCount}
         period={period}
@@ -163,13 +154,13 @@ export function ExpensesPage({
         totalPages={totalPages}
         onPageChange={setPage}
       >
-        {data.map((expense, i) => (
-          <ExpenseRow
-            key={expense.id}
-            expense={expense}
+        {data.map((income, i) => (
+          <IncomeRow
+            key={income.id}
+            income={income}
             index={i}
             onEdit={() => {
-              setSelectedExpense(expense);
+              setSelectedIncome(income);
               setDrawerOpen(true);
             }}
           />
@@ -177,21 +168,22 @@ export function ExpensesPage({
       </TransactionList>
 
       <MobileFAB
-        onNewExpense={() => {
-          setSelectedExpense(undefined);
+        onNewExpense={() => setDrawerOpen(true)}
+        onNewIncome={() => {
+          setSelectedIncome(undefined);
           setDrawerOpen(true);
         }}
       />
 
       <Suspense fallback={<div />}>
-        <CreateExpenseDrawer
+        <CreateIncomeDrawer
           open={drawerOpen}
           onClose={() => {
             setDrawerOpen(false);
-            setSelectedExpense(undefined);
+            setSelectedIncome(undefined);
           }}
           onCreated={refresh}
-          expense={selectedExpense}
+          income={selectedIncome}
         />
       </Suspense>
     </AppLayout>

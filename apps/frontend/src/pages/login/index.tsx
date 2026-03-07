@@ -1,10 +1,12 @@
 import { confirmSignIn, fetchUserAttributes, signIn } from "aws-amplify/auth";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { APP_CONFIG } from "@/config/app";
+import { useAuth } from "@/contexts/AuthContext";
 
 /* ── Icons ── */
 function EmailIcon() {
@@ -116,11 +118,9 @@ const REQUIREMENTS = [
 
 type Step = "login" | "new-password";
 
-interface LoginPageProps {
-  onSignIn: (username: string | null) => void;
-}
-
-export function LoginPage({ onSignIn }: LoginPageProps) {
+export default function LoginPage() {
+  const { signIn: authSignIn } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>("login");
   const [leaving, setLeaving] = useState(false);
 
@@ -160,7 +160,8 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
       });
       if (isSignedIn) {
         const attrs = await fetchUserAttributes();
-        onSignIn(attrs.given_name ?? attrs.email ?? null);
+        authSignIn(attrs.given_name ?? attrs.email ?? "usuario");
+        navigate("/dashboard", { replace: true });
       } else if (
         nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED"
       ) {
@@ -190,7 +191,8 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
       });
       if (isSignedIn) {
         const attrs = await fetchUserAttributes();
-        onSignIn(attrs.given_name ?? attrs.email ?? null);
+        authSignIn(attrs.given_name ?? attrs.email ?? "usuario");
+        navigate("/dashboard", { replace: true });
       }
     } catch (err: unknown) {
       setError(

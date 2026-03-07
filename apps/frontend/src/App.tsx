@@ -1,84 +1,31 @@
 import "@/lib/amplify-config";
 
-import { fetchUserAttributes, getCurrentUser } from "aws-amplify/auth";
-import { useEffect, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import { Dashboard } from "@/components/dashboard/Dashboard";
-import { ExpensesPage } from "@/components/expenses/ExpensesPage";
-import { IncomesPage } from "@/components/incomes/IncomesPage";
-import type { AppPage } from "@/components/layout/AppLayout";
-import { LoginPage } from "@/components/LoginPage";
-
-type AuthState = "loading" | "unauthenticated" | "authenticated";
-const defaultUsername = "usuario";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { AuthProvider } from "@/contexts/AuthContext";
+import DashboardPage from "@/pages/dashboard";
+import ExpensesPage from "@/pages/expenses";
+import IncomesPage from "@/pages/incomes";
+import LoginPage from "@/pages/login";
 
 function App() {
-  const [authState, setAuthState] = useState<AuthState>("loading");
-  const [username, setUsername] = useState<string | null>(defaultUsername);
-  const [page, setPage] = useState<AppPage>("dashboard");
-
-  useEffect(() => {
-    getCurrentUser()
-      .then(() => fetchUserAttributes())
-      .then((attrs) => {
-        setUsername(attrs.given_name ?? attrs.email ?? defaultUsername);
-        setAuthState("authenticated");
-      })
-      .catch(() => setAuthState("unauthenticated"));
-  }, []);
-
-  if (authState === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-canvas">
-        <svg
-          className="animate-spin"
-          viewBox="0 0 24 24"
-          fill="none"
-          width="32"
-          height="32"
-        >
-          <circle cx="12" cy="12" r="10" stroke="#1a1a1a" strokeWidth="3" />
-          <path
-            d="M12 2a10 10 0 0110 10"
-            stroke="gold"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
-      </div>
-    );
-  }
-
-  if (authState === "unauthenticated") {
-    return (
-      <LoginPage
-        onSignIn={(name) => {
-          setUsername(name);
-          setAuthState("authenticated");
-        }}
-      />
-    );
-  }
-
-  const sharedProps = {
-    username,
-    onSignOut: () => {
-      setUsername(null);
-      setAuthState("unauthenticated");
-    },
-    activePage: page,
-    onNavigate: setPage,
-  };
-
-  if (page === "expenses") {
-    return <ExpensesPage {...sharedProps} />;
-  }
-
-  if (page === "incomes") {
-    return <IncomesPage {...sharedProps} />;
-  }
-
-  return <Dashboard {...sharedProps} />;
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/expenses" element={<ExpensesPage />} />
+            <Route path="/incomes" element={<IncomesPage />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }
 
 export default App;

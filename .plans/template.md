@@ -25,6 +25,9 @@
 - **Success Criteria:** ¿Cómo sabemos que funciona? (ej. Test passing, UI looks like mockup).
 - **Rollback Plan:** ¿Cómo volvemos atrás si la infraestructura de AWS falla?
 
+## 5. Commit Message
+- Proposed message of commitment following conventions (ej. `feat(web): add login page`).
+
 ---
 
 **STOP:** Do not proceed until the user providing "LGO" or "APPROVED".

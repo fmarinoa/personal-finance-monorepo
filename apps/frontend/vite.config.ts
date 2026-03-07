@@ -23,12 +23,34 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.includes("aws-amplify")) return "vendor_amplify";
-            if (id.includes("react")) return "vendor_react";
-            if (id.includes("@packages/core")) return "vendor_core";
-            return "vendor_misc";
-          }
+          if (!id.includes("node_modules")) return;
+
+          if (id.includes("aws-amplify") || id.includes("@aws-amplify"))
+            return "vendor_amplify";
+
+          if (
+            id.includes("/react/") ||
+            id.includes("/react-dom/") ||
+            id.includes("/react-router") ||
+            id.includes("/scheduler/")
+          )
+            return "vendor_react";
+
+          if (
+            id.includes("/recharts") ||
+            id.includes("/d3-") ||
+            id.includes("/d3/")
+          )
+            return "vendor_charts";
+
+          if (
+            id.includes("/@radix-ui/") ||
+            id.includes("/lucide-react/") ||
+            id.includes("/class-variance-authority/") ||
+            id.includes("/clsx/") ||
+            id.includes("/tailwind-merge/")
+          )
+            return "vendor_ui";
         },
       },
     },

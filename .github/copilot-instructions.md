@@ -111,7 +111,7 @@ pnpm deploy:dev  # cdk deploy -c stage=dev
 ```
 apps/
   backend/    → Lambda functions (Node.js 22), DynamoDB
-  frontend/   → Vite + React 19 + Tailwind v4 + AWS Amplify + shadcn/ui
+  frontend/   → Vite + React 19 + Tailwind v4 + AWS Amplify + React Router v7 + shadcn/ui
   infra/      → AWS CDK (Cognito, DynamoDB, API Gateway)
 packages/
   core/       → Shared TypeScript types (src/types/modules/)
@@ -191,6 +191,32 @@ Import from `@packages/core`:
 ```typescript
 import type { Expense, PaginatedResponse } from "@packages/core";
 ```
+
+### Frontend Structure
+
+```
+src/
+  pages/              → one folder per page route
+    login/index.tsx
+    dashboard/index.tsx + page-specific sub-components
+    expenses/index.tsx
+    incomes/index.tsx
+  components/
+    layout/           → AppLayout (shell + nav), ProtectedRoute
+    shared/           → cross-page components (TransactionList, RecentTransactionsCard,
+                        MobileFAB, PeriodSelector, CategoryTreemap, drawers)
+    ui/               → shadcn/ui primitives — DO NOT edit manually
+  contexts/
+    AuthContext.tsx   → AuthProvider + useAuth() — auth state for the entire app
+```
+
+**Rules:**
+
+- Page-specific sub-components live in `src/pages/[name]/` alongside their page.
+- Cross-page components live in `src/components/shared/`.
+- Auth state (`username`, `authState`, `signIn`, `signOut`) always comes from `useAuth()` — never prop-drilled.
+- Navigation uses `useNavigate()` from `react-router-dom`. Active route detection uses `useLocation().pathname`.
+- URLs: `/login`, `/dashboard`, `/expenses`, `/incomes`.
 
 ### Frontend Data Fetching
 

@@ -1,11 +1,11 @@
-import { signOut } from "aws-amplify/auth";
+import { signOut as amplifySignOut } from "aws-amplify/auth";
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { APP_CONFIG } from "@/config/app";
-
-export type AppPage = "dashboard" | "expenses" | "incomes";
+import { useAuth } from "@/contexts/AuthContext";
 
 function PoweredBy() {
   return (
@@ -128,39 +128,30 @@ function IncomesIcon() {
 }
 
 /* ── Nav items shared between sidebar and mobile panel ── */
-const NAV_ITEMS: { label: string; icon: React.ReactNode; page: AppPage }[] = [
-  { label: "Dashboard", icon: <DashboardIcon />, page: "dashboard" },
-  { label: "Gastos", icon: <ExpensesIcon />, page: "expenses" },
-  { label: "Ingresos", icon: <IncomesIcon />, page: "incomes" },
+const NAV_ITEMS: { label: string; icon: React.ReactNode; path: string }[] = [
+  { label: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+  { label: "Gastos", icon: <ExpensesIcon />, path: "/expenses" },
+  { label: "Ingresos", icon: <IncomesIcon />, path: "/incomes" },
 ];
 
 interface AppLayoutProps {
-  username: string | null;
-  onSignOut: () => void;
-  activePage: AppPage;
-  onNavigate: (page: AppPage) => void;
   title: string;
   headerActions?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function AppLayout({
-  username,
-  onSignOut,
-  activePage,
-  onNavigate,
-  title,
-  headerActions,
-  children,
-}: AppLayoutProps) {
+export function AppLayout({ title, headerActions, children }: AppLayoutProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { username, signOut } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
   async function handleSignOut() {
     setSigningOut(true);
     try {
-      await signOut();
-      onSignOut();
+      await amplifySignOut();
+      signOut();
     } catch {
       setSigningOut(false);
     }
@@ -191,8 +182,8 @@ export function AppLayout({
               key={item.label}
               icon={item.icon}
               label={item.label}
-              active={item.page === activePage}
-              onClick={() => onNavigate(item.page)}
+              active={location.pathname === item.path}
+              onClick={() => navigate(item.path)}
             />
           ))}
         </div>
@@ -286,12 +277,12 @@ export function AppLayout({
 
           <nav className="flex flex-col gap-1 px-3">
             {NAV_ITEMS.map((item) => {
-              const isActive = item.page === activePage;
+              const isActive = location.pathname === item.path;
               return (
                 <button
                   key={item.label}
                   onClick={() => {
-                    onNavigate(item.page);
+                    navigate(item.path);
                     setMobileNavOpen(false);
                   }}
                   className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition cursor-pointer w-full text-left ${

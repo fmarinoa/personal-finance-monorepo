@@ -2,8 +2,10 @@ import type { Expense, Income } from "@packages/core";
 import { IncomeStatus } from "@packages/core";
 import { DateTime } from "luxon";
 import { lazy, memo, Suspense, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { AppLayout, type AppPage } from "@/components/layout/AppLayout";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { MobileFAB } from "@/components/shared/MobileFAB";
 import { RecentTransactionsCard } from "@/components/shared/RecentTransactionsCard";
 import { useExpenses } from "@/hooks/expenses/useExpenses";
 import { useIncomes } from "@/hooks/incomes/useIncomes";
@@ -15,13 +17,10 @@ import {
 } from "@/types/income";
 import { getDateRange } from "@/utils/getDateRange";
 
-import { MobileFAB } from "./MobileFAB";
+import { MonthlyChart } from "./MonthlyChart";
 
-const MonthlyChart = lazy(() =>
-  import("./MonthlyChart").then((m) => ({ default: m.MonthlyChart })),
-);
 const CategoryTreemap = lazy(() =>
-  import("../shared/CategoryTreemap").then((m) => ({
+  import("@/components/shared/CategoryTreemap").then((m) => ({
     default: m.CategoryTreemap,
   })),
 );
@@ -46,8 +45,10 @@ const RecentExpenseRow = memo(function RecentExpenseRow({
       <td className="py-2.5 pr-3 w-8 text-base leading-none">
         {CATEGORY_ICONS[expense.category as keyof typeof CATEGORY_ICONS]}
       </td>
-      <td className="py-2.5 pr-3 text-white/80 max-w-40 truncate">
-        {expense.description}
+      <td className="py-2.5 pr-3 max-w-40">
+        <p className="text-white/80 truncate leading-snug">
+          {expense.description}
+        </p>
       </td>
       <td className="py-2.5 pr-3 text-white/35 hidden sm:table-cell whitespace-nowrap">
         {CATEGORY_LABELS[expense.category as keyof typeof CATEGORY_LABELS]}
@@ -85,7 +86,7 @@ const RecentIncomeRow = memo(function RecentIncomeRow({
           {income.description}
         </p>
         {isProjected && (
-          <span className="text-[10px] font-mono text-gold/60 border border-gold/20 bg-gold/5 rounded px-1 leading-tight">
+          <span className="inline-block mt-0.5 text-[10px] font-mono text-gold/60 border border-gold/20 bg-gold/5 rounded px-1 leading-tight">
             {INCOME_STATUS_LABELS[IncomeStatus.PROJECTED]}
           </span>
         )}
@@ -113,19 +114,8 @@ const RecentIncomeRow = memo(function RecentIncomeRow({
   );
 });
 
-interface DashboardProps {
-  username: string | null;
-  onSignOut: () => void;
-  activePage: AppPage;
-  onNavigate: (page: AppPage) => void;
-}
-
-export function Dashboard({
-  username,
-  onSignOut,
-  activePage,
-  onNavigate,
-}: DashboardProps) {
+export default function DashboardPage() {
+  const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [incomeDrawerOpen, setIncomeDrawerOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
@@ -147,28 +137,16 @@ export function Dashboard({
     data: incomesData,
     loading: incomesLoading,
     refresh: incomesRefresh,
-  } = useIncomes({
-    startDate,
-    endDate,
-    limit: 5,
-  });
+  } = useIncomes({ startDate, endDate, limit: 5 });
 
   const {
     data: expensesData,
     loading: expensesLoading,
     refresh: expensesRefresh,
-  } = useExpenses({
-    startDate,
-    endDate,
-    limit: 5,
-  });
+  } = useExpenses({ startDate, endDate, limit: 5 });
 
   return (
     <AppLayout
-      username={username}
-      onSignOut={onSignOut}
-      activePage={activePage}
-      onNavigate={onNavigate}
       title="Dashboard"
       headerActions={
         <div className="hidden md:flex items-center gap-2">
@@ -220,7 +198,7 @@ export function Dashboard({
           loading={expensesLoading}
           isEmpty={expensesData.length === 0}
           emptyMessage="Sin gastos este mes"
-          onViewMore={() => onNavigate("expenses")}
+          onViewMore={() => navigate("/expenses")}
           viewMoreClassName="hover:text-gold"
         >
           {expensesData.map((e) => (
@@ -233,7 +211,7 @@ export function Dashboard({
           loading={incomesLoading}
           isEmpty={incomesData.length === 0}
           emptyMessage="Sin ingresos este mes"
-          onViewMore={() => onNavigate("incomes")}
+          onViewMore={() => navigate("/incomes")}
           viewMoreClassName="hover:text-emerald-400"
         >
           {incomesData.map((i) => (
@@ -248,7 +226,6 @@ export function Dashboard({
         onNewIncome={() => setIncomeDrawerOpen(true)}
       />
 
-      {/* Create income drawer */}
       <Suspense fallback={<div />}>
         <CreateIncomeDrawer
           open={incomeDrawerOpen}
@@ -257,7 +234,6 @@ export function Dashboard({
         />
       </Suspense>
 
-      {/* Create expense drawer */}
       <Suspense fallback={<div />}>
         <CreateExpenseDrawer
           open={drawerOpen}

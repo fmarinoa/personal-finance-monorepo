@@ -2,7 +2,7 @@
 
 ## Stack
 
-Vite + React 19 + TypeScript + Tailwind CSS v4 + AWS Amplify (auth) + Axios (HTTP)
+Vite + React 19 + TypeScript + Tailwind CSS v4 + AWS Amplify (auth) + Axios (HTTP) + React Router DOM v7 (routing)
 
 ## Environment Variables
 
@@ -13,6 +13,36 @@ VITE_USER_POOL_ID=us-east-1_xxxxxxxxx
 VITE_USER_POOL_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
 VITE_API_URL=https://your-api-id.execute-api.your-region.amazonaws.com/dev
 ```
+
+## Routing
+
+Uses `react-router-dom` v7 in SPA/library mode with `<BrowserRouter>`. Routes are declared in `src/App.tsx`:
+
+| Path         | Component                   | Auth      |
+| ------------ | --------------------------- | --------- |
+| `/login`     | `pages/login/index.tsx`     | Public    |
+| `/`          | Redirect → `/dashboard`     | Protected |
+| `/dashboard` | `pages/dashboard/index.tsx` | Protected |
+| `/expenses`  | `pages/expenses/index.tsx`  | Protected |
+| `/incomes`   | `pages/incomes/index.tsx`   | Protected |
+| `*`          | Redirect → `/dashboard`     | Protected |
+
+Protected routes are wrapped in `<ProtectedRoute>` (uses `<Outlet>`). If `authState === "unauthenticated"` it redirects to `/login`. AWS Amplify Hosting handles the SPA fallback (all URLs → `index.html`) in production — no infra changes needed.
+
+## Auth (`src/contexts/AuthContext.tsx`)
+
+Auth state is managed centrally in `AuthContext` (not in individual pages):
+
+```typescript
+interface AuthContextValue {
+  authState: "loading" | "unauthenticated" | "authenticated";
+  username: string | null;
+  signIn: (name: string) => void; // called by LoginPage after Cognito success
+  signOut: () => void; // called by AppLayout after amplifySignOut()
+}
+```
+
+`<AuthProvider>` wraps the entire app inside `<BrowserRouter>`. Components access it via `useAuth()`.
 
 ## API Client (`src/lib/api.ts`)
 
@@ -50,29 +80,46 @@ Hooks expose `{ data, loading, error, refresh }`. Staleness is tracked via a `fe
 
 Abort controllers are used to cancel in-flight requests on unmount.
 
-## Component Structure
+## Source Structure
 
 ```
-components/
-  layout/          → app shell, nav
-  dashboard/       → Dashboard page and widgets
-  expenses/        → ExpensesPage, Table, PeriodSelector
-  incomes/         → IncomeDrawer, list page
-  shared/          → ExpenseDrawer, IncomeDrawer, CategoryTreemap (cross-feature)
-  ui/              → shadcn components (DO NOT edit manually)
-  LoginPage.tsx
+src/
+  pages/
+    login/index.tsx        → LoginPage (public)
+    dashboard/
+      index.tsx            → DashboardPage
+      MonthlyChart.tsx     → dashboard-specific widget
+    expenses/index.tsx     → ExpensesPage
+    incomes/index.tsx      → IncomesPage
+  components/
+    layout/
+      AppLayout.tsx        → app shell, sidebar/mobile nav (uses useNavigate + useAuth)
+      ProtectedRoute.tsx   → auth guard using <Outlet>
+    shared/
+      TransactionList.tsx  → full-page transaction list scaffold (expenses + incomes)
+      RecentTransactionsCard.tsx → compact card used in Dashboard
+      CategoryTreemap.tsx
+      MobileFAB.tsx        → mobile floating action button (used by all 3 pages)
+      PeriodSelector.tsx   → period filter toggle (used by TransactionList)
+      ExpenseDrawer.tsx
+      IncomeDrawer.tsx
+    ui/                    → shadcn/ui primitives (DO NOT edit manually)
+  contexts/
+    AuthContext.tsx        → AuthProvider + useAuth() hook
 ```
 
-### `src/components/ui/`
+**Rules:**
 
-Contains shadcn/ui primitives (`Button`, `Card`, `Select`, etc.). **Never edit these by hand.** Add new components via:
+- Page-specific sub-components live in `src/pages/[name]/` alongside their page.
+- Cross-page components live in `src/components/shared/`.
+- `src/components/ui/` is managed exclusively by shadcn — never edit manually.
+
+### Adding a shadcn component
 
 ```bash
 pnpm dlx shadcn add <component>
 ```
 
-Feature-specific components live in `src/components/{feature}/`.
-
 ## Date Handling
 
-Use `date-fns` for display formatting in the frontend. Dates sent to and received from the API are Unix timestamps in **milliseconds** — never ISO strings.
+Use `luxon` for display formatting in the frontend. Dates sent to and received from the API are Unix timestamps in **milliseconds** — never ISO strings.

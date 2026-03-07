@@ -1,4 +1,4 @@
-import { PeriodSelector } from "@/components/expenses/PeriodSelector";
+import { PeriodSelector } from "@/components/shared/PeriodSelector";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Period } from "@/utils/getDateRange";
