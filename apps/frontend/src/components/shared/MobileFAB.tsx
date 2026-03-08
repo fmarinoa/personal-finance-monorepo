@@ -125,8 +125,8 @@ function FABOption({
           : "opacity-0 translate-y-3 scale-95"
       }`}
     >
-      {icon}
-      {label}
+      <span className="shrink-0 flex items-center">{icon}</span>
+      <span>{label}</span>
     </Button>
   );
 }
