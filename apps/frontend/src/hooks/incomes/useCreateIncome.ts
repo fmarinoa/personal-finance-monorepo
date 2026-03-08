@@ -12,12 +12,15 @@ export function useCreateIncome(onSuccess?: () => void) {
   const [state, setState] = useState<State>({ loading: false, error: null });
 
   const submit = useCallback(
-    async (payload: CreateIncomePayload) => {
+    async (
+      payload: CreateIncomePayload,
+    ): Promise<{ id: string } | undefined> => {
       setState({ loading: true, error: null });
       try {
-        await createIncome(payload);
+        const result = await createIncome(payload);
         setState({ loading: false, error: null });
         onSuccess?.();
+        return result;
       } catch (err) {
         setState({
           loading: false,

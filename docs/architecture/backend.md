@@ -3,7 +3,7 @@
 ## Layer Flow
 
 ```
-Handler → Controller → Service → Repository → DynamoDB
+Handler → Controller → Service → Repository → DynamoDB / S3
 ```
 
 All layers for a feature live under `apps/backend/src/modules/{feature}/`:
@@ -21,7 +21,7 @@ modules/
   shared/
     controllers/   → BaseController
     domains/       → BaseDomain, User
-    repositories/  → BaseDbRepository
+    repositories/  → BaseDbRepository, AttachmentRepository
     schemas.ts     → periodSchema, schemaForList (shared Zod schemas)
 ```
 
@@ -145,6 +145,68 @@ this.getCurrentTimestamp(); // → DateTime.now().toMillis()
 this.buildUpdateExpression(item, fields); // → { UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues }
 ```
 
+### `AttachmentRepository`
+
+Generates pre-signed S3 URLs for uploading and viewing file attachments. Lives in `modules/shared/repositories/` and is injected into `ExpenseServiceImp` and `IncomeServiceImpl`.
+
+```typescript
+await attachmentRepository.generateUrls(
+  userId,
+  recordId,
+  contentType,
+  filename,
+);
+// Returns: { uploadUrl, viewUrl, key }
+```
+
+- **`contentType`** — validated against the allowlist: `image/jpeg`, `image/png`, `application/pdf`
+- **`filename`** — original filename from the client; sanitized (spaces → `_`, unsafe chars stripped, extension stripped and replaced with the validated one from `contentType`)
+- **`key` pattern** — `{userId}/{recordId}/{sanitized_name}.{ext}` (e.g. `abc123/exp-456/receipt.jpg`)
+- Pre-signed URLs expire in **5 minutes**
+- The `key` returned is stored in the record's `attachmentKey` field via a subsequent PATCH
+
+**Two-step attachment flow (create):**
+
+1. `POST /expenses` → returns `{ id }`
+2. `GET /expenses/{id}/attachment?contentType=...&filename=...` → returns `{ uploadUrl, viewUrl, key }`
+3. Client `PUT` file directly to `uploadUrl` (no auth headers — pre-signed URL carries credentials)
+4. `PATCH /expenses/{id}` with `{ attachmentKey: key }`
+
+**Edit flow:** get pre-signed URL → upload → include `attachmentKey` in the same PATCH call.
+
+### `fieldsToUpdate` — Explicit Allowlist
+
+Both `DynamoDbRepositoryImp.update()` methods maintain an explicit allowlist of fields passed to `buildUpdateExpression`. When adding new updatable fields to a domain's `schemaForUpdate`, **always add them here too**:
+
+```typescript
+// expenses
+const fieldsToUpdate = [
+  "amount",
+  "description",
+  "category",
+  "paymentDate",
+  "paymentMethod",
+  "attachmentKey",
+  "lastUpdatedDate",
+].filter((field) => expense[field] !== undefined);
+
+// incomes
+const fieldsToUpdate = [
+  "amount",
+  "description",
+  "category",
+  "status",
+  "receivedDate",
+  "projectedDate",
+  "attachmentKey",
+  "effectiveDate",
+].filter((field) => income[field] !== undefined);
+```
+
+### `effectiveDate` (Incomes)
+
+A computed field written on every create and update — `receivedDate ?? projectedDate ?? getCurrentTimestamp()`. Used as the sort key on the `userIdEffectiveDateIndex` GSI so incomes can be queried by date regardless of status. It is always kept in sync with the latest date fields.
+
 ### DynamoDB Pagination
 
 `nextToken` is a base64-encoded `ExclusiveStartKey`. Repositories encode/decode it — controllers and services never see raw DynamoDB keys.
@@ -178,7 +240,7 @@ Incomes support two statuses before deletion: `PROJECTED` (expected future incom
 core/src/types/
   modules/expenses/
     subtypes.ts   → ExpenseCategory, PaymentMethod, ExpenseStatus, DeleteReason
-    expense.ts    → Expense, CreateExpensePayload, FiltersForList
+    expense.ts    → Expense, CreateExpensePayload, FiltersForList, AttachmentUrls
   modules/incomes/
     subtypes.ts   → IncomeCategory, IncomeStatus
     incomes.ts    → Income, CreateIncomePayload
@@ -186,7 +248,19 @@ core/src/types/
   metrics.ts      → DashboardSummary, DashboardChartPoint, CategoryBreakdown, MonthlyMetric
 ```
 
-Import via: `import type { Expense } from "@packages/core"`
+`AttachmentUrls` is defined in `expenses/expense.ts` but is module-agnostic — it applies to both expenses and incomes:
+
+```typescript
+export interface AttachmentUrls {
+  uploadUrl: string; // pre-signed PUT URL for S3 (5 min TTL)
+  viewUrl: string; // pre-signed GET URL for S3 (5 min TTL)
+  key: string; // S3 object key, stored as attachmentKey on the record
+}
+```
+
+`attachmentKey` is an optional field on both `Expense` and `Income` interfaces, and on their respective `CreateExpensePayload` / `CreateIncomePayload` types. It is also accepted by `schemaForUpdate` in both domain classes.
+
+Import via: `import type { Expense, AttachmentUrls } from "@packages/core"`
 
 ## Path Aliases
 

@@ -16,6 +16,7 @@ export interface Expense {
   category: ExpenseCategory;
   lastUpdatedDate?: number;
   status: ExpenseStatus;
+  attachmentKey?: string;
   onDelete?: {
     deletionDate?: number;
     reason?: DeleteReason;
@@ -28,4 +29,11 @@ export interface CreateExpensePayload {
   category: ExpenseCategory;
   paymentMethod: PaymentMethod;
   paymentDate: number;
+  attachmentKey?: string;
+}
+
+export interface AttachmentUrls {
+  uploadUrl: string;
+  viewUrl: string;
+  key: string;
 }

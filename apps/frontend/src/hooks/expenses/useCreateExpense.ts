@@ -12,12 +12,15 @@ export function useCreateExpense(onSuccess?: () => void) {
   const [state, setState] = useState<State>({ loading: false, error: null });
 
   const submit = useCallback(
-    async (payload: CreateExpensePayload) => {
+    async (
+      payload: CreateExpensePayload,
+    ): Promise<{ id: string } | undefined> => {
       setState({ loading: true, error: null });
       try {
-        await createExpense(payload);
+        const result = await createExpense(payload);
         setState({ loading: false, error: null });
         onSuccess?.();
+        return result;
       } catch (err) {
         setState({
           loading: false,

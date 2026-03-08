@@ -5,6 +5,7 @@ import { Income } from "@/modules/incomes/domains/Income";
 import type { DbRepository } from "@/modules/incomes/repositories/DbRepository";
 import { IncomeServiceImpl } from "@/modules/incomes/services/IncomeServiceImpl";
 import { User } from "@/modules/shared/domains/User";
+import type { AttachmentRepository } from "@/modules/shared/repositories";
 
 const user = new User({ id: "user-123" });
 
@@ -20,6 +21,7 @@ const mockIncome = new Income({
 
 describe("IncomeServiceImpl", () => {
   let repository: DbRepository;
+  let attachmentRepository: AttachmentRepository;
   let service: IncomeServiceImpl;
 
   beforeEach(() => {
@@ -29,7 +31,13 @@ describe("IncomeServiceImpl", () => {
       getById: vi.fn(),
       update: vi.fn(),
     };
-    service = new IncomeServiceImpl({ dbRepository: repository });
+    attachmentRepository = {
+      generateUrls: vi.fn(),
+    } as unknown as AttachmentRepository;
+    service = new IncomeServiceImpl({
+      dbRepository: repository,
+      attachmentRepository,
+    });
   });
 
   // ── POST /incomes ─────────────────────────────────────────────────────────
@@ -163,6 +171,53 @@ describe("IncomeServiceImpl", () => {
 
       // ceil(0 / 1) = 0, but fallback to 1 avoids division by zero
       expect(result.pagination.totalPages).toBe(0);
+    });
+  });
+
+  // ── GET /incomes/:id/attachment ───────────────────────────────────────────
+
+  describe("getAttachmentUrls", () => {
+    const mockUrls = {
+      uploadUrl: "https://s3.example.com/upload?sig=abc",
+      viewUrl: "https://s3.example.com/view?sig=xyz",
+      key: "user-123/income-1/payslip.jpg",
+    };
+
+    it("calls attachmentRepository.generateUrls with userId, incomeId, contentType and filename", async () => {
+      vi.mocked(attachmentRepository.generateUrls).mockResolvedValue(mockUrls);
+
+      await service.getAttachmentUrls(mockIncome, "image/jpeg", "payslip.jpg");
+
+      expect(attachmentRepository.generateUrls).toHaveBeenCalledWith(
+        "user-123",
+        "income-1",
+        "image/jpeg",
+        "payslip.jpg",
+      );
+    });
+
+    it("returns the URLs produced by the attachment repository", async () => {
+      vi.mocked(attachmentRepository.generateUrls).mockResolvedValue(mockUrls);
+
+      const result = await service.getAttachmentUrls(
+        mockIncome,
+        "image/png",
+        "invoice.png",
+      );
+
+      expect(result.uploadUrl).toBe(mockUrls.uploadUrl);
+      expect(result.viewUrl).toBe(mockUrls.viewUrl);
+      expect(result.key).toBe(mockUrls.key);
+    });
+
+    it("propagates errors thrown by the attachment repository", async () => {
+      vi.mocked(attachmentRepository.generateUrls).mockRejectedValue(
+        new Error("Unsupported content type"),
+      );
+
+      await expect(
+        service.getAttachmentUrls(mockIncome, "text/plain", "file.txt"),
+      ).rejects.toThrow("Unsupported content type");
     });
   });
 });

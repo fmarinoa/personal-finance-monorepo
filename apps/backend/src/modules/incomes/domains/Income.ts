@@ -53,6 +53,7 @@ const schemaForUpdate = z.object({
   status: z.enum(IncomeStatus).optional(),
   projectedDate: z.number().optional(),
   receivedDate: z.number().optional(),
+  attachmentKey: z.string().optional(),
 });
 
 export class Income extends BaseDomain<Income> implements IncomeInterface {
@@ -67,6 +68,7 @@ export class Income extends BaseDomain<Income> implements IncomeInterface {
   category: IncomeCategory;
   lastUpdatedDate?: number;
   status: IncomeStatus;
+  attachmentKey?: string;
   onDelete?: {
     deletionDate?: number;
     reason?: DeleteReason;
@@ -93,6 +95,7 @@ export class Income extends BaseDomain<Income> implements IncomeInterface {
       creationDate: item.creationDate,
       lastUpdatedDate: item?.lastUpdatedDate,
       status: item.status,
+      attachmentKey: item?.attachmentKey,
       ...(options?.includeDeleted && {
         onDelete: {
           deletionDate: item.onDelete?.deletionDate,

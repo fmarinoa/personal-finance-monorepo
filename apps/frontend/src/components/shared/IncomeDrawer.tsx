@@ -2,6 +2,7 @@ import { type Income, IncomeCategory, IncomeStatus } from "@packages/core";
 import { DateTime } from "luxon";
 import { useState } from "react";
 
+import { AttachmentUploader } from "@/components/shared/AttachmentUploader";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCreateIncome } from "@/hooks/incomes/useCreateIncome";
 import { useUpdateIncome } from "@/hooks/incomes/useUpdateIncome";
+import { getIncomeAttachment, updateIncome, uploadToS3 } from "@/lib/api";
 import {
   INCOME_CATEGORY_ICONS,
   INCOME_CATEGORY_LABELS,
@@ -48,26 +50,31 @@ export function IncomeDrawer({
 
   const [form, setForm] = useState({ ...EMPTY });
   const [formError, setFormError] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [attachmentUploading, setAttachmentUploading] = useState(false);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+
   const handleSuccess = () => {
     onCreated();
     setFormError(null);
     onClose();
   };
 
+  // Hooks without onSuccess — drawer orchestrates the full flow manually
   const {
     submit: submitCreate,
     loading: creating,
     error: createError,
-  } = useCreateIncome(handleSuccess);
+  } = useCreateIncome();
 
   const {
     submit: submitUpdate,
     loading: updating,
     error: updateError,
-  } = useUpdateIncome(handleSuccess);
+  } = useUpdateIncome();
 
-  const loading = creating || updating;
-  const error = formError ?? createError ?? updateError;
+  const loading = creating || updating || attachmentUploading;
+  const error = formError ?? createError ?? updateError ?? attachmentError;
 
   // Reset form when drawer opens or income changes (setState during render — no effect needed)
   const [prevOpen, setPrevOpen] = useState(open);
@@ -76,6 +83,8 @@ export function IncomeDrawer({
     setPrevOpen(open);
     setPrevIncomeId(income?.id);
     setFormError(null);
+    setPendingFile(null);
+    setAttachmentError(null);
     setForm(
       income
         ? {
@@ -119,10 +128,32 @@ export function IncomeDrawer({
     };
 
     if (isEdit && income) {
-      // Update path
+      // Upload attachment first if there's a pending file
+      let attachmentKey: string | undefined;
+      if (pendingFile) {
+        setAttachmentUploading(true);
+        setAttachmentError(null);
+        try {
+          const { uploadUrl, key } = await getIncomeAttachment(
+            income.id,
+            pendingFile.type,
+            pendingFile.name,
+          );
+          await uploadToS3(uploadUrl, pendingFile);
+          attachmentKey = key;
+        } catch {
+          setAttachmentUploading(false);
+          setAttachmentError("Error al subir el archivo. Intenta de nuevo.");
+          return;
+        }
+        setAttachmentUploading(false);
+      }
+
+      let ok: boolean;
       if (form.status === IncomeStatus.PROJECTED) {
-        await submitUpdate(income.id, {
+        ok = await submitUpdate(income.id, {
           ...payloadBase,
+          attachmentKey,
           status: IncomeStatus.PROJECTED,
           projectedDate: DateTime.fromISO(form.projectedDate, { zone: "local" })
             .startOf("day")
@@ -130,8 +161,9 @@ export function IncomeDrawer({
             .toMillis(),
         });
       } else {
-        await submitUpdate(income.id, {
+        ok = await submitUpdate(income.id, {
           ...payloadBase,
+          attachmentKey,
           status: IncomeStatus.RECEIVED,
           receivedDate: DateTime.fromISO(form.receivedDate, { zone: "local" })
             .startOf("day")
@@ -139,10 +171,12 @@ export function IncomeDrawer({
             .toMillis(),
         });
       }
+      if (ok) handleSuccess();
     } else {
-      // Create path
+      // Create first, then upload attachment if present
+      let result: { id: string } | undefined;
       if (form.status === IncomeStatus.PROJECTED) {
-        await submitCreate({
+        result = await submitCreate({
           ...payloadBase,
           status: IncomeStatus.PROJECTED,
           projectedDate: DateTime.fromISO(form.projectedDate, { zone: "local" })
@@ -151,7 +185,7 @@ export function IncomeDrawer({
             .toMillis(),
         });
       } else {
-        await submitCreate({
+        result = await submitCreate({
           ...payloadBase,
           status: IncomeStatus.RECEIVED,
           receivedDate: DateTime.fromISO(form.receivedDate, { zone: "local" })
@@ -160,6 +194,29 @@ export function IncomeDrawer({
             .toMillis(),
         });
       }
+      if (!result) return; // submitCreate set the error state
+
+      if (pendingFile) {
+        setAttachmentUploading(true);
+        setAttachmentError(null);
+        try {
+          const { uploadUrl, key } = await getIncomeAttachment(
+            result.id,
+            pendingFile.type,
+            pendingFile.name,
+          );
+          await uploadToS3(uploadUrl, pendingFile);
+          await updateIncome(result.id, { attachmentKey: key });
+        } catch {
+          setAttachmentUploading(false);
+          setAttachmentError(
+            "El ingreso fue creado pero no se pudo subir el adjunto.",
+          );
+          return;
+        }
+        setAttachmentUploading(false);
+      }
+      handleSuccess();
     }
   }
 
@@ -358,6 +415,19 @@ export function IncomeDrawer({
               </PopoverContent>
             </PopoverRoot>
           </div>
+
+          {/* Attachment */}
+          <AttachmentUploader
+            file={pendingFile}
+            onFileChange={(f) => {
+              setPendingFile(f);
+              setAttachmentError(null);
+            }}
+            hasExistingAttachment={!!income?.attachmentKey}
+            uploading={attachmentUploading}
+            uploadError={attachmentError}
+            disabled={loading}
+          />
 
           {/* Error */}
           {error && (

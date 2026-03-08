@@ -153,6 +153,7 @@ export class DynamoDbRepositoryImp
       "category",
       "paymentDate",
       "paymentMethod",
+      "attachmentKey",
       "lastUpdatedDate",
     ].filter((field) => expense[field as keyof Expense] !== undefined);
 

@@ -2,6 +2,7 @@ import type { Dispatcher } from "@packages/lambda";
 import * as cdk from "aws-cdk-lib";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as s3 from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 
 import { ExpensesApi } from "./api/ExpensesApi";
@@ -14,6 +15,10 @@ interface FinanceApiProps {
   tables: {
     expenses: dynamodb.Table;
     incomes: dynamodb.Table;
+  };
+  buckets: {
+    expensesAttachments: s3.Bucket;
+    incomesAttachments: s3.Bucket;
   };
   authorizer: apigateway.CognitoUserPoolsAuthorizer;
 }
@@ -54,12 +59,14 @@ export class FinanceApi extends Construct {
       ...baseProps,
       routes: dispatcher.routes.filter((r) => r.path.startsWith("/expenses")),
       table: props.tables.expenses,
+      attachmentsBucket: props.buckets.expensesAttachments,
     });
 
     new IncomesApi(this, "IncomesApi", {
       ...baseProps,
       routes: dispatcher.routes.filter((r) => r.path.startsWith("/incomes")),
       table: props.tables.incomes,
+      attachmentsBucket: props.buckets.incomesAttachments,
     });
 
     new MetricsApi(this, "MetricsApi", {

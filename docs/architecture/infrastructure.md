@@ -9,12 +9,15 @@ AWS CDK (TypeScript) in `apps/infra/`. Manages Cognito, DynamoDB, API Gateway, a
 | Construct            | File                                   | Description                                                                     |
 | -------------------- | -------------------------------------- | ------------------------------------------------------------------------------- |
 | `CognitoAuth`        | `constructs/CognitoAuth.ts`            | User Pool + Cognito authorizer                                                  |
-| `ExpensesTable`      | `constructs/ExpensesTable.ts`          | DynamoDB table for expenses                                                     |
-| `IncomesTable`       | `constructs/IncomesTable.ts`           | DynamoDB table for incomes                                                      |
+| `ExpensesTable`      | `constructs/db/ExpensesTable.ts`       | DynamoDB table for expenses                                                     |
+| `IncomesTable`       | `constructs/db/IncomesTable.ts`        | DynamoDB table for incomes                                                      |
+| `BaseTable`          | `constructs/db/BaseTable.ts`           | Abstract base: `createTable()` with `PAY_PER_REQUEST`, PITR, removal policy     |
+| `ExpensesBucket`     | `constructs/storage/ExpensesBucket.ts` | S3 bucket for expense attachments                                               |
+| `IncomesBucket`      | `constructs/storage/IncomesBucket.ts`  | S3 bucket for income attachments                                                |
 | `FinanceApi`         | `constructs/FinanceApi.ts`             | Orchestrator: creates RestApi, loads dispatcher, delegates to domain constructs |
 | `BaseRouteConstruct` | `constructs/api/BaseRouteConstruct.ts` | Abstract base: `createLambdaFunction`, `registerRoute`, `resolveApiResource`    |
-| `ExpensesApi`        | `constructs/api/ExpensesApi.ts`        | `/expenses` routes — expenses table ReadWrite                                   |
-| `IncomesApi`         | `constructs/api/IncomesApi.ts`         | `/incomes` routes — incomes table ReadWrite                                     |
+| `ExpensesApi`        | `constructs/api/ExpensesApi.ts`        | `/expenses` routes — expenses table + attachments bucket ReadWrite              |
+| `IncomesApi`         | `constructs/api/IncomesApi.ts`         | `/incomes` routes — incomes table + attachments bucket ReadWrite                |
 | `MetricsApi`         | `constructs/api/MetricsApi.ts`         | `/metrics` routes — both tables ReadOnly                                        |
 
 ## Lambda Auto-Discovery
@@ -28,13 +31,54 @@ AWS CDK (TypeScript) in `apps/infra/`. Manages Cognito, DynamoDB, API Gateway, a
 
 Adding a new endpoint requires only registering it in `handler/index.ts` — CDK picks it up automatically on the next deploy.
 
+## S3 Attachment Buckets
+
+Two buckets are created per stage — one per module:
+
+| Bucket name                    | Module   |
+| ------------------------------ | -------- |
+| `expenses-attachments-{stage}` | Expenses |
+| `incomes-attachments-{stage}`  | Incomes  |
+
+**Object key pattern:** `{userId}/{recordId}/{sanitized_filename}.{ext}`  
+Example: `abc-123/exp-456/recibo_almuerzo.jpg`
+
+- `{ext}` is derived from the validated `contentType` — never from the original filename extension
+- Only `image/jpeg`, `image/png`, and `application/pdf` are accepted
+- Only the Lambda functions that serve the `/attachment` route for a given module receive S3 permissions — all other Lambdas in that module do not
+
+**Removal policy:** `RETAIN` in prod, `DESTROY` in dev.
+
+## DynamoDB Tables
+
+Both tables share the same base configuration via `BaseTable` (`constructs/db/`):
+
+- **Billing:** `PAY_PER_REQUEST`
+- **Removal policy:** `RETAIN` in prod, `DESTROY` in dev
+- **PITR:** enabled in prod only
+
+### ExpensesTable GSIs
+
+| Index name               | PK       | SK            | Usage                         |
+| ------------------------ | -------- | ------------- | ----------------------------- |
+| `userIdPaymentDateIndex` | `userId` | `paymentDate` | `GET /expenses` list endpoint |
+
+### IncomesTable GSIs
+
+| Index name                 | PK       | SK              | Usage                            |
+| -------------------------- | -------- | --------------- | -------------------------------- |
+| `userIdEffectiveDateIndex` | `userId` | `effectiveDate` | `GET /incomes` (all statuses)    |
+| `userIdStatusIndex`        | `userId` | `status`        | `GET /incomes?onlyReceived=true` |
+
+`effectiveDate` is a computed attribute written by the repository: `receivedDate ?? projectedDate ?? creationDate`. It is updated on every income PATCH to keep the GSI sort key current.
+
 ## IAM Permissions (Least Privilege)
 
-| Domain construct | Tables granted                   | Permission             |
-| ---------------- | -------------------------------- | ---------------------- |
-| `ExpensesApi`    | `ExpensesTable` only             | `ReadWriteData`        |
-| `IncomesApi`     | `IncomesTable` only              | `ReadWriteData`        |
-| `MetricsApi`     | `ExpensesTable` + `IncomesTable` | `ReadData` (read-only) |
+| Domain construct | DynamoDB                           | S3                                               |
+| ---------------- | ---------------------------------- | ------------------------------------------------ |
+| `ExpensesApi`    | `ExpensesTable` — ReadWrite        | `ExpensesBucket` — only the `/attachment` Lambda |
+| `IncomesApi`     | `IncomesTable` — ReadWrite         | `IncomesBucket` — only the `/attachment` Lambda  |
+| `MetricsApi`     | Both tables — ReadData (read-only) | —                                                |
 
 ## Route ID Convention
 
@@ -48,14 +92,16 @@ This ID is used as the Lambda function name suffix and set as `ROUTE_ID`.
 
 ## Lambda Environment Variables
 
-Environment variables are injected per domain — each Lambda only receives the table names it actually uses:
+Environment variables are injected per domain — each Lambda only receives the variables it actually uses:
 
-| Variable              | Injected by                  | Present in                 |
-| --------------------- | ---------------------------- | -------------------------- |
-| `ROUTE_ID`            | `BaseRouteConstruct`         | All Lambdas                |
-| `NODE_ENV`            | `BaseRouteConstruct`         | All Lambdas                |
-| `EXPENSES_TABLE_NAME` | `ExpensesApi` / `MetricsApi` | Expenses + Metrics Lambdas |
-| `INCOMES_TABLE_NAME`  | `IncomesApi` / `MetricsApi`  | Incomes + Metrics Lambdas  |
+| Variable                           | Injected by                  | Present in                 |
+| ---------------------------------- | ---------------------------- | -------------------------- |
+| `ROUTE_ID`                         | `BaseRouteConstruct`         | All Lambdas                |
+| `NODE_ENV`                         | `BaseRouteConstruct`         | All Lambdas                |
+| `EXPENSES_TABLE_NAME`              | `ExpensesApi` / `MetricsApi` | Expenses + Metrics Lambdas |
+| `INCOMES_TABLE_NAME`               | `IncomesApi` / `MetricsApi`  | Incomes + Metrics Lambdas  |
+| `EXPENSES_ATTACHMENTS_BUCKET_NAME` | `ExpensesApi`                | Expenses Lambdas only      |
+| `INCOMES_ATTACHMENTS_BUCKET_NAME`  | `IncomesApi`                 | Incomes Lambdas only       |
 
 ## Stages
 

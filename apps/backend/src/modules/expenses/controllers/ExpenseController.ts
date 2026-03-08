@@ -120,4 +120,29 @@ export class ExpenseController extends BaseController {
 
     return this.noContent();
   }
+
+  async getAttachment(
+    event: APIGatewayProxyEvent,
+  ): Promise<APIGatewayProxyResult> {
+    const { context, pathParams, queryParams } =
+      this.retrieveRequestContext(event);
+    const [expenseId] = this.retrieveFromPathParameters(pathParams!, ["id"]);
+    const [contentType, filename] = this.retrieveFromQueryParams(queryParams!, [
+      "contentType",
+      "filename",
+    ]);
+
+    const expense = new Expense({
+      user: new User({ id: context.userId }),
+      id: expenseId,
+    });
+
+    const result = await this.props.expenseService.getAttachmentUrls(
+      expense,
+      contentType,
+      filename,
+    );
+
+    return this.ok(result);
+  }
 }

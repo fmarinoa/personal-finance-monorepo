@@ -32,7 +32,7 @@ export abstract class BaseController {
     keys: string[],
   ): string[] {
     return keys.map((key) => {
-      const value = pathParameters[key];
+      const value = pathParameters?.[key];
       if (value === undefined)
         throw new BadRequestError({
           details: `Missing path parameter: ${key}`,

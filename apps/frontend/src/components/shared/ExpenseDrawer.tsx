@@ -7,6 +7,7 @@ import {
 import { DateTime } from "luxon";
 import { useState } from "react";
 
+import { AttachmentUploader } from "@/components/shared/AttachmentUploader";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useCreateExpense } from "@/hooks/expenses/useCreateExpense";
 import { useDeleteExpense } from "@/hooks/expenses/useDeleteExpense";
 import { useUpdateExpense } from "@/hooks/expenses/useUpdateExpense";
+import { getExpenseAttachment, updateExpense, uploadToS3 } from "@/lib/api";
 import {
   CATEGORY_ICONS,
   CATEGORY_LABELS,
@@ -55,30 +57,35 @@ export function ExpenseDrawer({
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteReason, setDeleteReason] = useState<DeleteReason | "">("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [attachmentUploading, setAttachmentUploading] = useState(false);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
   const handleSuccess = () => {
     onCreated();
     onClose();
   };
+
+  // Hooks without onSuccess — drawer orchestrates the full flow manually
   const {
     submit: submitCreate,
     loading: creating,
     error: createError,
-  } = useCreateExpense(handleSuccess);
+  } = useCreateExpense();
   const {
     submit: submitUpdate,
     loading: updating,
     error: updateError,
-  } = useUpdateExpense(handleSuccess);
+  } = useUpdateExpense();
   const {
     submit: submitDelete,
     loading: deleting,
     error: deleteError,
   } = useDeleteExpense(handleSuccess);
 
-  const loading = creating || updating || deleting;
+  const loading = creating || updating || deleting || attachmentUploading;
   const submitError = createError ?? updateError ?? deleteError;
-  const error = formError ?? submitError;
+  const error = formError ?? submitError ?? attachmentError;
 
   // Reset form when drawer opens or expense changes (setState during render — avoids useEffect lint)
   const [prevOpen, setPrevOpen] = useState(open);
@@ -89,6 +96,8 @@ export function ExpenseDrawer({
     setFormError(null);
     setConfirmDelete(false);
     setDeleteReason("");
+    setPendingFile(null);
+    setAttachmentError(null);
     setForm(
       expense
         ? {
@@ -135,10 +144,55 @@ export function ExpenseDrawer({
       paymentMethod: form.paymentMethod as PaymentMethod,
       paymentDate,
     };
+
     if (isEdit) {
-      await submitUpdate(expense.id, payload);
+      // Upload attachment first if there's a pending file
+      let attachmentKey: string | undefined;
+      if (pendingFile) {
+        setAttachmentUploading(true);
+        setAttachmentError(null);
+        try {
+          const { uploadUrl, key } = await getExpenseAttachment(
+            expense.id,
+            pendingFile.type,
+            pendingFile.name,
+          );
+          await uploadToS3(uploadUrl, pendingFile);
+          attachmentKey = key;
+        } catch {
+          setAttachmentUploading(false);
+          setAttachmentError("Error al subir el archivo. Intenta de nuevo.");
+          return;
+        }
+        setAttachmentUploading(false);
+      }
+      const ok = await submitUpdate(expense.id, { ...payload, attachmentKey });
+      if (ok) handleSuccess();
     } else {
-      await submitCreate(payload);
+      // Create first, then upload attachment if present
+      const result = await submitCreate(payload);
+      if (!result) return; // submitCreate set the error state
+      if (pendingFile) {
+        setAttachmentUploading(true);
+        setAttachmentError(null);
+        try {
+          const { uploadUrl, key } = await getExpenseAttachment(
+            result.id,
+            pendingFile.type,
+            pendingFile.name,
+          );
+          await uploadToS3(uploadUrl, pendingFile);
+          await updateExpense(result.id, { attachmentKey: key });
+        } catch {
+          setAttachmentUploading(false);
+          setAttachmentError(
+            "El gasto fue creado pero no se pudo subir el adjunto.",
+          );
+          return;
+        }
+        setAttachmentUploading(false);
+      }
+      handleSuccess();
     }
   }
 
@@ -397,6 +451,19 @@ export function ExpenseDrawer({
                 </PopoverContent>
               </PopoverRoot>
             </div>
+
+            {/* Attachment */}
+            <AttachmentUploader
+              file={pendingFile}
+              onFileChange={(f) => {
+                setPendingFile(f);
+                setAttachmentError(null);
+              }}
+              hasExistingAttachment={!!expense?.attachmentKey}
+              uploading={attachmentUploading}
+              uploadError={attachmentError}
+              disabled={loading}
+            />
 
             {/* Error */}
             {error && (

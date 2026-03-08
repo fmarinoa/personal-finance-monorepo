@@ -97,4 +97,29 @@ export class IncomeController extends BaseController {
     const response = await this.props.incomeService.update(incomeToUpdate);
     return this.ok(response);
   }
+
+  async getAttachment(
+    event: APIGatewayProxyEvent,
+  ): Promise<APIGatewayProxyResult> {
+    const { context, pathParams, queryParams } =
+      this.retrieveRequestContext(event);
+    const [incomeId] = this.retrieveFromPathParameters(pathParams!, ["id"]);
+    const [contentType, filename] = this.retrieveFromQueryParams(queryParams!, [
+      "contentType",
+      "filename",
+    ]);
+
+    const income = new Income({
+      user: new User({ id: context.userId }),
+      id: incomeId,
+    });
+
+    const result = await this.props.incomeService.getAttachmentUrls(
+      income,
+      contentType,
+      filename,
+    );
+
+    return this.ok(result);
+  }
 }

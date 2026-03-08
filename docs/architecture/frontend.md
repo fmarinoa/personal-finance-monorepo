@@ -59,6 +59,20 @@ api.interceptors.request.use(async (config) => {
 
 All API functions are thin wrappers imported from `src/lib/api.ts`. Types come from `@packages/core`.
 
+### Attachment API functions
+
+```typescript
+// Get pre-signed URLs to upload/view a file for an expense or income
+getExpenseAttachment(id, contentType, filename): Promise<AttachmentUrls>
+getIncomeAttachment(id, contentType, filename): Promise<AttachmentUrls>
+
+// Upload a file directly to S3 using a pre-signed PUT URL
+// Uses native fetch — NOT axios — to avoid sending auth headers to S3
+uploadToS3(uploadUrl, file): Promise<void>
+```
+
+`createExpense` and `createIncome` return `{ id: string }` to support the two-step attachment flow.
+
 ## Data Fetching — Custom Hooks
 
 The frontend does **not** use React Query or SWR. Each resource has hand-written hooks in `src/hooks/{module}/`:
@@ -67,16 +81,18 @@ The frontend does **not** use React Query or SWR. Each resource has hand-written
 hooks/
   expenses/
     useExpenses.ts       → list with pagination, startDate/endDate filters
-    useCreateExpense.ts
-    useUpdateExpense.ts
+    useCreateExpense.ts  → returns Promise<{ id: string } | undefined>
+    useUpdateExpense.ts  → returns Promise<boolean>
     useDeleteExpense.ts
-  incomes/               → same pattern
+  incomes/               → same pattern (useCreateIncome returns { id }, useUpdateIncome returns boolean)
   metrics/
   usePeriod.ts           → shared period state (startDate, endDate)
   useIsMobile.ts
 ```
 
 Hooks expose `{ data, loading, error, refresh }`. Staleness is tracked via a `fetchedKey` string — the hook re-fetches when params change or `refresh()` is called.
+
+`useCreateExpense` and `useUpdateExpense` (and their income counterparts) return a value from `submit()` so that drawers can orchestrate multi-step flows (e.g. create → upload attachment → patch with key) without relying on an `onSuccess` callback.
 
 Abort controllers are used to cancel in-flight requests on unmount.
 
@@ -96,13 +112,14 @@ src/
       AppLayout.tsx        → app shell, sidebar/mobile nav (uses useNavigate + useAuth)
       ProtectedRoute.tsx   → auth guard using <Outlet>
     shared/
-      TransactionList.tsx  → full-page transaction list scaffold (expenses + incomes)
+      TransactionList.tsx        → full-page transaction list scaffold (expenses + incomes)
       RecentTransactionsCard.tsx → compact card used in Dashboard
       CategoryTreemap.tsx
-      MobileFAB.tsx        → mobile floating action button (used by all 3 pages)
-      PeriodSelector.tsx   → period filter toggle (used by TransactionList)
-      ExpenseDrawer.tsx
-      IncomeDrawer.tsx
+      MobileFAB.tsx              → mobile floating action button (used by all 3 pages)
+      PeriodSelector.tsx         → period filter toggle (used by TransactionList)
+      ExpenseDrawer.tsx          → create/edit drawer — orchestrates attachment upload flow
+      IncomeDrawer.tsx           → create/edit drawer — orchestrates attachment upload flow
+      AttachmentUploader.tsx     → file drop zone (JPG/PNG/PDF, max 10 MB, drag-and-drop)
     ui/                    → shadcn/ui primitives (DO NOT edit manually)
   contexts/
     AuthContext.tsx        → AuthProvider + useAuth() hook
@@ -113,6 +130,26 @@ src/
 - Page-specific sub-components live in `src/pages/[name]/` alongside their page.
 - Cross-page components live in `src/components/shared/`.
 - `src/components/ui/` is managed exclusively by shadcn — never edit manually.
+
+### Attachment Upload Flow (Drawers)
+
+Both `ExpenseDrawer` and `IncomeDrawer` manage file selection via local `pendingFile` state and orchestrate the full flow manually (hooks do NOT fire `onSuccess` — the drawer calls `handleSuccess()` at the end):
+
+**Create:**
+
+1. `submitCreate(payload)` → returns `{ id }` on success, `undefined` on error
+2. If `pendingFile`: `getExpenseAttachment(id, file.type, file.name)` → `{ uploadUrl, key }`
+3. `uploadToS3(uploadUrl, file)` — direct PUT, no auth headers
+4. `updateExpense(id, { attachmentKey: key })` — stores the S3 key
+5. `handleSuccess()` — closes drawer and refreshes list
+
+**Edit:**
+
+1. Upload file first (if `pendingFile`), obtain `attachmentKey`
+2. `submitUpdate(id, { ...payload, attachmentKey })` → returns `true` on success
+3. `handleSuccess()` if successful
+
+`AttachmentUploader` resets `pendingFile` when the drawer opens/closes (via the "setState during render" pattern).
 
 ### Adding a shadcn component
 

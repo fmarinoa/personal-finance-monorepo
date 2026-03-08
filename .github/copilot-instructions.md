@@ -33,7 +33,7 @@
 
 ### 5. Mandatory Planning Workflow
 
-- **Template:** All plans MUST follow the structure in `.plans/template.md`.
+- **Template:** All plans MUST follow the structure in `.plans/template.md` (folder already exists).
 - **Naming:** Save as `.plans/YYYY-MM-DD-feature-name.md`.
 - **No Execution:** You are strictly forbidden from modifying source code or running terminal commands (except for discovery) while a plan is in "PENDING APPROVAL" status.
 - **Approval:** Once I reply with "LGO", you must update the status to "IN PROGRESS" and begin execution.

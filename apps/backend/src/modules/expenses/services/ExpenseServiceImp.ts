@@ -3,16 +3,22 @@ import { BaseError, InternalError, NotFoundError } from "@packages/lambda";
 
 import { DbRepository } from "@/modules/expenses/repositories/DbRepository";
 import { User } from "@/modules/shared/domains";
+import {
+  AttachmentRepository,
+  AttachmentUrls,
+} from "@/modules/shared/repositories";
 
 import { Expense } from "../domains";
 import { ExpenseService } from "./ExpenseService";
 
 interface ExpenseServiceProps {
   dbRepository: DbRepository;
+  attachmentRepository: AttachmentRepository;
 }
 
 export class ExpenseServiceImp implements ExpenseService {
   constructor(private readonly props: ExpenseServiceProps) {}
+
   async create(expense: Expense): Promise<{ id: string }> {
     try {
       const response = await this.props.dbRepository.create(expense);
@@ -76,5 +82,18 @@ export class ExpenseServiceImp implements ExpenseService {
     } catch (error) {
       throw new InternalError({ details: error });
     }
+  }
+
+  async getAttachmentUrls(
+    expense: Expense,
+    contentType: string,
+    filename: string,
+  ): Promise<AttachmentUrls> {
+    return this.props.attachmentRepository.generateUrls(
+      expense.user.id,
+      expense.id,
+      contentType,
+      filename,
+    );
   }
 }

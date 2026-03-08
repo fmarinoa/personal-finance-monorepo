@@ -2,6 +2,10 @@ import { FiltersForList, PaginatedResponse } from "@packages/core";
 import { BaseError, InternalError, NotFoundError } from "@packages/lambda";
 
 import { User } from "@/modules/shared/domains";
+import {
+  AttachmentRepository,
+  AttachmentUrls,
+} from "@/modules/shared/repositories";
 
 import { Income } from "../domains";
 import { DbRepository } from "../repositories/DbRepository";
@@ -9,6 +13,7 @@ import { IncomeService } from "./IncomeService";
 
 interface IncomeServiceImplProps {
   dbRepository: DbRepository;
+  attachmentRepository: AttachmentRepository;
 }
 
 export class IncomeServiceImpl implements IncomeService {
@@ -60,5 +65,18 @@ export class IncomeServiceImpl implements IncomeService {
       }
       throw new InternalError({ details: error });
     }
+  }
+
+  async getAttachmentUrls(
+    income: Income,
+    contentType: string,
+    filename: string,
+  ): Promise<AttachmentUrls> {
+    return this.props.attachmentRepository.generateUrls(
+      income.user.id,
+      income.id,
+      contentType,
+      filename,
+    );
   }
 }

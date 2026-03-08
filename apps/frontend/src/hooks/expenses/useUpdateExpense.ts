@@ -12,18 +12,23 @@ export function useUpdateExpense(onSuccess?: () => void) {
   const [state, setState] = useState<State>({ loading: false, error: null });
 
   const submit = useCallback(
-    async (id: string, payload: Partial<CreateExpensePayload>) => {
+    async (
+      id: string,
+      payload: Partial<CreateExpensePayload>,
+    ): Promise<boolean> => {
       setState({ loading: true, error: null });
       try {
         await updateExpense(id, payload);
         setState({ loading: false, error: null });
         onSuccess?.();
+        return true;
       } catch (err) {
         setState({
           loading: false,
           error:
             err instanceof Error ? err.message : "Error al actualizar gasto",
         });
+        return false;
       }
     },
     [onSuccess],

@@ -53,6 +53,11 @@ export const dispatcher = new Dispatcher(middyAdapter)
     timeout: 5,
     description: "Delete an expense by ID",
   })
+  .get("/expenses/{id}/attachment", (e) => expenseController.getAttachment(e), {
+    timeout: 10,
+    description:
+      "Get pre-signed upload and view URLs for an expense attachment",
+  })
   .get(
     "/metrics/dashboard-summary",
     (e) => metricsController.getDashboardSummary(e),
@@ -88,6 +93,10 @@ export const dispatcher = new Dispatcher(middyAdapter)
   .patch("/incomes/{id}", (e) => incomeController.update(e), {
     timeout: 10,
     description: "Update an existing income by ID",
+  })
+  .get("/incomes/{id}/attachment", (e) => incomeController.getAttachment(e), {
+    timeout: 10,
+    description: "Get pre-signed upload and view URLs for an income attachment",
   });
 
 export const handler: APIGatewayProxyHandler = (...args) =>

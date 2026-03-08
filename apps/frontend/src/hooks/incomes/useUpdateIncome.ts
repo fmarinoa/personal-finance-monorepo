@@ -12,18 +12,23 @@ export function useUpdateIncome(onSuccess?: () => void) {
   const [state, setState] = useState<State>({ loading: false, error: null });
 
   const submit = useCallback(
-    async (id: string, payload: Partial<CreateIncomePayload>) => {
+    async (
+      id: string,
+      payload: Partial<CreateIncomePayload>,
+    ): Promise<boolean> => {
       setState({ loading: true, error: null });
       try {
         await updateIncome(id, payload);
         setState({ loading: false, error: null });
         onSuccess?.();
+        return true;
       } catch (err) {
         setState({
           loading: false,
           error:
             err instanceof Error ? err.message : "Error al actualizar ingreso",
         });
+        return false;
       }
     },
     [onSuccess],

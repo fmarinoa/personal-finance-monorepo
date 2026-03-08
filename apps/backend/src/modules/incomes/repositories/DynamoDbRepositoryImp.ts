@@ -176,10 +176,16 @@ export class DynamoDbRepositoryImp
       "status",
       "receivedDate",
       "projectedDate",
+      "attachmentKey",
+      "effectiveDate",
     ].filter((field) => income[field as keyof Income] !== undefined);
+
+    const effectiveDate =
+      income.receivedDate ?? income.projectedDate ?? this.getCurrentTimestamp();
 
     const request = new Income({
       ...income,
+      effectiveDate,
       lastUpdatedDate: this.getCurrentTimestamp(),
     });
 

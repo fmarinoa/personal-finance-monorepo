@@ -38,6 +38,7 @@ const schemaForUpdate = z.object({
   paymentMethod: z.enum(PaymentMethod).optional(),
   paymentDate: z.number().optional(),
   category: z.enum(ExpenseCategory).optional(),
+  attachmentKey: z.string().optional(),
 });
 
 const schemaForDelete = z.object({
@@ -57,6 +58,7 @@ export class Expense extends BaseDomain<Expense> implements ExpenseInterface {
   category: ExpenseCategory;
   lastUpdatedDate?: number;
   status: ExpenseStatus;
+  attachmentKey?: string;
   onDelete?: {
     deletionDate?: number;
     reason?: DeleteReason;
@@ -82,6 +84,7 @@ export class Expense extends BaseDomain<Expense> implements ExpenseInterface {
       creationDate: item.creationDate,
       lastUpdatedDate: item?.lastUpdatedDate,
       status: item.status,
+      attachmentKey: item?.attachmentKey,
       ...(options?.includeDeleted && {
         onDelete: {
           deletionDate: item.onDelete?.deletionDate,

@@ -5,6 +5,7 @@ import { Expense } from "@/modules/expenses/domains/Expense";
 import type { DbRepository } from "@/modules/expenses/repositories/DbRepository";
 import { ExpenseServiceImp } from "@/modules/expenses/services/ExpenseServiceImp";
 import { User } from "@/modules/shared/domains/User";
+import type { AttachmentRepository } from "@/modules/shared/repositories";
 
 const user = new User({ id: "user-123" });
 
@@ -24,6 +25,7 @@ const mockExpense = new Expense({
 
 describe("ExpenseServiceImp", () => {
   let repository: DbRepository;
+  let attachmentRepository: AttachmentRepository;
   let service: ExpenseServiceImp;
 
   beforeEach(() => {
@@ -34,7 +36,13 @@ describe("ExpenseServiceImp", () => {
       update: vi.fn(),
       delete: vi.fn(),
     };
-    service = new ExpenseServiceImp({ dbRepository: repository });
+    attachmentRepository = {
+      generateUrls: vi.fn(),
+    } as unknown as AttachmentRepository;
+    service = new ExpenseServiceImp({
+      dbRepository: repository,
+      attachmentRepository,
+    });
   });
 
   // ── POST /expenses ────────────────────────────────────────────────────────
@@ -215,6 +223,53 @@ describe("ExpenseServiceImp", () => {
       vi.mocked(repository.delete).mockRejectedValue(new Error("DB error"));
 
       await expect(service.delete(mockExpense)).rejects.toThrow(InternalError);
+    });
+  });
+
+  // ── GET /expenses/:id/attachment ──────────────────────────────────────────
+
+  describe("getAttachmentUrls", () => {
+    const mockUrls = {
+      uploadUrl: "https://s3.example.com/upload?sig=abc",
+      viewUrl: "https://s3.example.com/view?sig=xyz",
+      key: "user-123/expense-1/receipt.jpg",
+    };
+
+    it("calls attachmentRepository.generateUrls with userId, expenseId, contentType and filename", async () => {
+      vi.mocked(attachmentRepository.generateUrls).mockResolvedValue(mockUrls);
+
+      await service.getAttachmentUrls(mockExpense, "image/jpeg", "receipt.jpg");
+
+      expect(attachmentRepository.generateUrls).toHaveBeenCalledWith(
+        "user-123",
+        "expense-1",
+        "image/jpeg",
+        "receipt.jpg",
+      );
+    });
+
+    it("returns the URLs produced by the attachment repository", async () => {
+      vi.mocked(attachmentRepository.generateUrls).mockResolvedValue(mockUrls);
+
+      const result = await service.getAttachmentUrls(
+        mockExpense,
+        "image/png",
+        "invoice.png",
+      );
+
+      expect(result.uploadUrl).toBe(mockUrls.uploadUrl);
+      expect(result.viewUrl).toBe(mockUrls.viewUrl);
+      expect(result.key).toBe(mockUrls.key);
+    });
+
+    it("propagates errors thrown by the attachment repository", async () => {
+      vi.mocked(attachmentRepository.generateUrls).mockRejectedValue(
+        new Error("Unsupported content type"),
+      );
+
+      await expect(
+        service.getAttachmentUrls(mockExpense, "text/plain", "file.txt"),
+      ).rejects.toThrow("Unsupported content type");
     });
   });
 });

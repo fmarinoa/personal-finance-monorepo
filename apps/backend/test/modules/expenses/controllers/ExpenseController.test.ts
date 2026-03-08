@@ -46,6 +46,7 @@ describe("ExpenseController", () => {
       getById: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      getAttachmentUrls: vi.fn(),
     };
     controller = new ExpenseController({ expenseService: service });
   });
@@ -388,6 +389,88 @@ describe("ExpenseController", () => {
           buildEvent({
             pathParameters: { id: "expense-1" },
             queryStringParameters: { reason: "INVALID" },
+          }),
+        ),
+      ).rejects.toThrow(BadRequestError);
+    });
+  });
+
+  // ── GET /expenses/:id/attachment ──────────────────────────────────────────
+
+  describe("getAttachment", () => {
+    const mockUrls = {
+      uploadUrl: "https://s3.example.com/upload?sig=abc",
+      viewUrl: "https://s3.example.com/view?sig=xyz",
+      key: "user-123/expense-1/receipt.jpg",
+    };
+
+    it("returns 200 with upload and view URLs on success", async () => {
+      vi.mocked(service.getAttachmentUrls).mockResolvedValue(mockUrls);
+
+      const result = await controller.getAttachment(
+        buildEvent({
+          pathParameters: { id: "expense-1" },
+          queryStringParameters: {
+            contentType: "image/jpeg",
+            filename: "receipt.jpg",
+          },
+        }),
+      );
+
+      expect(result.statusCode).toBe(200);
+      const body = JSON.parse(result.body);
+      expect(body.uploadUrl).toBe(mockUrls.uploadUrl);
+      expect(body.viewUrl).toBe(mockUrls.viewUrl);
+      expect(body.key).toBe(mockUrls.key);
+    });
+
+    it("calls service.getAttachmentUrls with the expense id and filename from query params", async () => {
+      vi.mocked(service.getAttachmentUrls).mockResolvedValue(mockUrls);
+
+      await controller.getAttachment(
+        buildEvent({
+          pathParameters: { id: "expense-1" },
+          queryStringParameters: {
+            contentType: "image/png",
+            filename: "invoice.png",
+          },
+        }),
+      );
+
+      const [calledExpense, calledContentType, calledFilename] = vi.mocked(
+        service.getAttachmentUrls,
+      ).mock.calls[0];
+      expect(calledExpense.id).toBe("expense-1");
+      expect(calledContentType).toBe("image/png");
+      expect(calledFilename).toBe("invoice.png");
+    });
+
+    it("passes userId from Cognito claims to service", async () => {
+      vi.mocked(service.getAttachmentUrls).mockResolvedValue(mockUrls);
+
+      await controller.getAttachment(
+        buildEvent({
+          pathParameters: { id: "expense-1" },
+          queryStringParameters: {
+            contentType: "application/pdf",
+            filename: "ticket.pdf",
+          },
+        }),
+      );
+
+      const [calledExpense] = vi.mocked(service.getAttachmentUrls).mock
+        .calls[0];
+      expect(calledExpense.user.id).toBe(TEST_USER_ID);
+    });
+
+    it("throws BadRequestError when id is missing", async () => {
+      await expect(
+        controller.getAttachment(
+          buildEvent({
+            queryStringParameters: {
+              contentType: "image/jpeg",
+              filename: "receipt.jpg",
+            },
           }),
         ),
       ).rejects.toThrow(BadRequestError);

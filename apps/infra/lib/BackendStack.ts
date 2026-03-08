@@ -2,9 +2,10 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 
 import { CognitoAuth } from "./constructs/CognitoAuth";
-import { ExpensesTable } from "./constructs/ExpensesTable";
+import { ExpensesTable } from "./constructs/db/ExpensesTable";
+import { IncomesTable } from "./constructs/db/IncomesTable";
 import { FinanceApi } from "./constructs/FinanceApi";
-import { IncomesTable } from "./constructs/IncomesTable";
+import { StorageBucket } from "./constructs/StorageBucket";
 
 const STAGES = ["Dev", "Prod"] as const;
 type Stage = (typeof STAGES)[number];
@@ -31,15 +32,37 @@ export class BackendStack extends cdk.Stack {
     });
 
     // Create resources
-    const expensesTable = new ExpensesTable(this, "ExpensesTable", {
+    const expensesTable = new ExpensesTable({
+      scope: this,
+      id: "ExpensesTable",
       stage,
       isProd,
     });
 
-    const incomesTable = new IncomesTable(this, "IncomesTable", {
+    const incomesTable = new IncomesTable({
+      scope: this,
+      id: "IncomesTable",
       stage,
       isProd,
     });
+
+    const expensesAttachmentsBucket = new StorageBucket(
+      this,
+      "ExpensesAttachmentsBucket",
+      {
+        bucketName: `expenses-attachments-${stage.toLowerCase()}`,
+        isProd,
+      },
+    );
+
+    const incomesAttachmentsBucket = new StorageBucket(
+      this,
+      "IncomesAttachmentsBucket",
+      {
+        bucketName: `incomes-attachments-${stage.toLowerCase()}`,
+        isProd,
+      },
+    );
 
     const api = new FinanceApi(this, "FinanceApi", {
       stage,
@@ -47,6 +70,10 @@ export class BackendStack extends cdk.Stack {
       tables: {
         expenses: expensesTable.table,
         incomes: incomesTable.table,
+      },
+      buckets: {
+        expensesAttachments: expensesAttachmentsBucket.bucket,
+        incomesAttachments: incomesAttachmentsBucket.bucket,
       },
       authorizer: cognitoAuth.authorizer,
     });
@@ -75,6 +102,18 @@ export class BackendStack extends cdk.Stack {
       description: "DynamoDB table name for incomes",
       exportName: `IncomesTableName-${stage}`,
       value: incomesTable.table.tableName,
+    });
+
+    new cdk.CfnOutput(this, "ExpensesAttachmentsBucketName", {
+      description: "S3 bucket name for expenses attachments",
+      exportName: `ExpensesAttachmentsBucketName-${stage}`,
+      value: expensesAttachmentsBucket.bucket.bucketName,
+    });
+
+    new cdk.CfnOutput(this, "IncomesAttachmentsBucketName", {
+      description: "S3 bucket name for incomes attachments",
+      exportName: `IncomesAttachmentsBucketName-${stage}`,
+      value: incomesAttachmentsBucket.bucket.bucketName,
     });
 
     new cdk.CfnOutput(this, "Region", {

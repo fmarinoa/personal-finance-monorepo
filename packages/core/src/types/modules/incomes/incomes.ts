@@ -13,6 +13,7 @@ export interface Income {
   category: IncomeCategory;
   lastUpdatedDate?: number;
   status: IncomeStatus;
+  attachmentKey?: string;
   onDelete?: {
     deletionDate?: number;
     reason?: DeleteReason;
@@ -25,4 +26,5 @@ export interface CreateIncomePayload {
   status?: IncomeStatus;
   projectedDate?: number;
   receivedDate?: number;
+  attachmentKey?: string;
 }
