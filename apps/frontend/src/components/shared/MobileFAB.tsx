@@ -54,7 +54,7 @@ function FABActions({
           label="Ingreso"
           delay="delay-[40ms]"
           open={open}
-          color="bg-emerald-500 hover:bg-emerald-400"
+          color="bg-income hover:bg-emerald-400"
           onClick={handleIncome}
           icon={
             <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15">
@@ -68,8 +68,7 @@ function FABActions({
           label="Gasto"
           delay="delay-[0ms]"
           open={open}
-          color="bg-rose-500 hover:bg-rose-400 active:scale-[.98] text-white"
-          textColor="text-canvas"
+          color="bg-expense hover:bg-rose-400 active:scale-[.98] text-white"
           onClick={handleExpense}
           icon={
             <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15">

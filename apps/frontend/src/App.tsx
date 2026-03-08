@@ -3,6 +3,7 @@ import "@/lib/amplify-config";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { PublicRoute } from "@/components/layout/PublicRoute";
 import { AuthProvider } from "@/contexts/AuthContext";
 import DashboardPage from "@/pages/dashboard";
 import ExpensesPage from "@/pages/expenses";
@@ -14,7 +15,9 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<LoginPage />} />
+          </Route>
           <Route element={<ProtectedRoute />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<DashboardPage />} />
